@@ -107,8 +107,11 @@ Kembalikan DUA bagian:
 2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN (TEPAT 8 kota/kabupaten,
    tidak kurang tidak lebih; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
    Kota Semarang, Makassar, Medan, Jayapura, Banda Aceh, dll — spesifik kota/kabupaten, BUKAN provinsi):
-   - RENTANG WAKTU: berita yang terbit dalam 3 HARI TERAKHIR (hari ini sampai H-3). Buang yang lebih lama.
-   - Tiap kota/kabupaten: 1 headline politik/pemerintahan lokal paling penting & terbaru.
+   - RENTANG WAKTU: HANYA berita yang terbit HARI INI (00:00-23:59 waktu Indonesia). Bukan kemarin.
+   - Tiap kota/kabupaten: 1 headline dengan DAMPAK PALING BESAR hari ini — utamakan kejadian besar:
+     ledakan/bom, kebakaran, bencana (banjir/longsor/gempa), kecelakaan maut, kerusuhan/bentrok,
+     insiden keamanan, ATAU isu politik/pemerintahan lokal penting. Ambil yang paling update/terbaru
+     bila ada perkembangan di kota itu hari ini.
    - "kota" (nama kota/kabupaten), "provinsi" (induknya), "heat" 0-100, "sentiment",
      ringkasan singkat, URL + sumber + platform.
    - "lat" & "lon": KOORDINAT kota/kabupaten tsb (desimal, mis. Jakarta lat -6.2 lon 106.8).
@@ -208,7 +211,9 @@ export async function getTrending(
   const text = await runWeb(
     SYSTEM,
     `Tanggal HARI INI: ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
-      `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon, berita 3 hari terakhir). Sertakan sumber asli + tanggal terbit. ` +
+      `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon; berita kota HANYA hari ini ${today()}, ` +
+      `pilih yang dampaknya paling besar: ledakan/kebakaran/bencana/kerusuhan/insiden atau isu pemerintahan lokal). ` +
+      `Sertakan sumber asli + tanggal terbit. ` +
       `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +
       `berita hari lain breaking:false. ` +
       `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`,

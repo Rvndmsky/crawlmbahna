@@ -15,6 +15,7 @@ type NewsItem = {
   summary: string;
   sentiment: "positive" | "negative" | "neutral";
   sentiment_score: number;
+  breaking: boolean;
 };
 
 type ApiResult = {
@@ -152,6 +153,9 @@ function Results() {
                 onClick={() => openDossier(it)}
               >
                 <div className="head">
+                  {it.breaking && (
+                    <span className="threat-badge sm">🔴 BREAKING</span>
+                  )}
                   <span className="platform">{it.platform || "web"}</span>
                   <span className="title">{it.title}</span>
                 </div>

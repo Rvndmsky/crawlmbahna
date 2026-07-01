@@ -8,6 +8,7 @@ export type NewsItem = {
   summary: string;
   sentiment: "positive" | "negative" | "neutral";
   sentiment_score: number;
+  breaking: boolean;
 };
 
 // Bungkus promise konektor dengan timeout supaya satu sumber lambat/gagal

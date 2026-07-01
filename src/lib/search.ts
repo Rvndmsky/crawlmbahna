@@ -54,6 +54,11 @@ Aturan:
 - Ringkasan ("summary") Bahasa Indonesia, 1-2 kalimat, faktual, netral.
 - "sentiment" salah satu dari: positive, negative, neutral (nada pemberitaan terhadap pemerintah/isu).
   "sentiment_score" antara -1 dan 1.
+- "breaking": true untuk item MENDESAK / baru pecah yang TERBIT HARI INI — mis. OTT/penangkapan korupsi,
+  penetapan tersangka pejabat, teror/bom, insiden keamanan, pengesahan/revisi UU, keputusan MK,
+  dinamika parlemen (voting/paripurna/hak angket), pernyataan kontroversial pejabat, atau ancaman kedaulatan.
+  JUGA breaking:true bila JUDUL/sumber berita memang memuat label "BREAKING" atau "BREAKING NEWS".
+  Selain itu false. Jangan berlebihan.
 - Setiap item WAJIB punya URL asli yang bisa dibuka.
 - Target 10-20 item bila tersedia.
 
@@ -69,7 +74,8 @@ Keluarkan HANYA JSON valid tanpa penjelasan lain, tanpa code fence, mengikuti be
       "snippet": "string",
       "summary": "string (Bahasa Indonesia)",
       "sentiment": "positive|negative|neutral",
-      "sentiment_score": 0
+      "sentiment_score": 0,
+      "breaking": false
     }
   ]
 }`;
@@ -101,6 +107,7 @@ function parseItems(text: string): NewsItem[] {
           : "neutral",
         sentiment_score:
           typeof it.sentiment_score === "number" ? it.sentiment_score : 0,
+        breaking: !!it.breaking,
       }));
   } catch {
     return [];
@@ -155,6 +162,8 @@ function merge(...lists: NewsItem[][]): NewsItem[] {
       out.push(it);
     }
   }
+  // Breaking di paling atas.
+  out.sort((a, b) => Number(b.breaking) - Number(a.breaking));
   return out;
 }
 

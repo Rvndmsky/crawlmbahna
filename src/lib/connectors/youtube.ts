@@ -37,6 +37,7 @@ export async function searchYouTube(query: string): Promise<NewsItem[]> {
           summary: s.description || "",
           sentiment: "neutral",
           sentiment_score: 0,
+          breaking: false,
         };
       });
   } catch (e) {

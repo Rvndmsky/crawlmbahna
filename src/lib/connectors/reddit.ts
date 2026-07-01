@@ -69,6 +69,7 @@ export async function searchReddit(query: string): Promise<NewsItem[]> {
           summary: (d.selftext || d.title || "").slice(0, 300),
           sentiment: "neutral",
           sentiment_score: 0,
+          breaking: false,
         };
       });
   } catch (e) {

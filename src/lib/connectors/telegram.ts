@@ -67,6 +67,7 @@ export async function searchTelegram(query: string): Promise<NewsItem[]> {
         summary: text.slice(0, 300),
         sentiment: "neutral",
         sentiment_score: 0,
+        breaking: false,
       });
     }
 
