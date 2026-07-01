@@ -514,6 +514,7 @@ button { font-family: inherit; }
 .trend .heat-num { margin-left: auto; }
 .title { font-size: 16px; font-weight: 700; line-height: 1.35; }
 .summary { margin: 8px 0; line-height: 1.55; color: var(--text); opacity: 0.92; }
+.summary.prose { white-space: pre-line; line-height: 1.65; }
 .sources { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 13px; }
 
 /* ============ ALERT (ancaman) ============ */

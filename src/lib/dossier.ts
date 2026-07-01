@@ -1,32 +1,26 @@
 import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 
-export type Actor = { nama: string; peran: string; afiliasi: string };
-export type ChronoItem = { waktu: string; peristiwa: string };
 export type RelatedSource = { title: string; url: string; source: string };
 
 export type Dossier = {
-  image: string; // URL foto representatif (og:image/thumbnail)
+  image: string;
   headline: string;
-  ringkasan: string;
-  skorAlasan: string; // kenapa isu ini panas / kenapa skor suhu setinggi itu
   kredibilitas: string; // kredibel | perlu_verifikasi | terindikasi_hoaks
-  verifikasi: string; // alasan penilaian kredibilitas / hasil cek fakta
+  verifikasi: string;
   status: string; // berkembang | stabil | mereda
   urgency: number; // 0-3
   kategori: string;
   sentiment: "positive" | "negative" | "neutral";
   threat: string; // none | makar | separatisme | terorisme | radikalisme | disintegrasi
   threatLevel: number; // 0-3
-  aktor: Actor[];
-  organisasi: string[];
-  lokasi: string[];
-  kronologi: ChronoItem[];
-  faktaKunci: string[];
-  reaksiPublik: string;
-  implikasi: string[];
-  rekomendasiPantau: string[];
-  sumberTerkait: RelatedSource[];
+  skorAlasan: string; // kenapa skor intensitas segitu (opsional)
+  kronologiFakta: string; // narasi 5W+1H (kronologi + fakta kunci digabung)
+  analisa: string; // judgement, forecasting, problem solving
+  dampak: string; // dampak utk pemerintahan & Indonesia
+  upaya: string; // yang telah / bisa dilakukan
+  saranTindakan: string[]; // yang harus dilakukan
+  sumberTerkait: RelatedSource[]; // OSINT berita terkait
 };
 
 export type DossierResult = {
@@ -41,48 +35,39 @@ const CACHE_MS = 24 * 60 * 60 * 1000;
 
 const SYSTEM = `Kamu analis intelijen untuk tim monitoring badan intelijen negara Indonesia.
 Diberikan satu berita (judul + URL). Ambil isi dan konteksnya dari web, lalu susun BERKAS
-(dossier) monitoring yang berguna untuk tim intel — fokus politik/pemerintahan/keamanan Indonesia.
+(dossier) analisis intelijen. Fokus politik/pemerintahan/keamanan Indonesia. Bahasa Indonesia,
+faktual, netral, hanya dari sumber kredibel.
 
-Isi berkas (Bahasa Indonesia, faktual, netral, hanya dari sumber kredibel):
-- image: URL foto/gambar representatif dari berita (og:image atau thumbnail artikel). Kosongkan bila tak ada.
-- headline: judul ringkas
-- ringkasan: 2-3 kalimat situasi
-- kredibilitas: nilai keaslian berita -> "kredibel" | "perlu_verifikasi" | "terindikasi_hoaks".
-  Dasar penilaian: apakah dikonfirmasi sumber resmi/otoritas, konsisten di banyak media kredibel,
-  ada bantahan/klarifikasi, atau ada catatan cek fakta (Kominfo, Mafindo/TurnBackHoax, AFP, dll),
-  serta ciri hoaks (sumber anonim, klaim tanpa bukti, foto/tanggal manipulatif, judul provokatif).
-- verifikasi: 1-2 kalimat alasan penilaian kredibilitas di atas (sebut dasar/temuannya).
-- skor_alasan: jelaskan KENAPA isu ini panas/penting. Bila konteks memberi skor suhu (heat 0-100),
-  jelaskan spesifik alasan skor setinggi/serendah itu: faktor pendorong, volume & intensitas pemberitaan,
-  jumlah aktor terlibat, potensi eskalasi.
-- status: "berkembang" | "stabil" | "mereda"
-- urgency: 0-3 (tingkat perhatian tim intel)
-- kategori: bidang isu
-- sentiment: positive|negative|neutral (nada pemberitaan)
-- threat: none|makar|separatisme|terorisme|radikalisme|disintegrasi (ancaman kedaulatan; none bila bukan).
-  Kelompok terkait -> separatisme: OPM/TPNPB/KKB Papua/ULMWP/GAM/RMS; terorisme/radikalisme: JI/JAD/NII/MIT/Khilafatul Muslimin/eks-HTI/ISIS.
-- threat_level: 0-3
-- aktor: tokoh/pihak terlibat [{nama, peran, afiliasi}]
-- organisasi: lembaga/organisasi terkait
-- lokasi: tempat relevan
-- kronologi: urutan peristiwa [{waktu, peristiwa}]
-- fakta_kunci: poin-poin fakta penting
-- reaksi_publik: ringkasan respons publik/media sosial
-- implikasi: potensi dampak politik/keamanan
-- rekomendasi_pantau: hal yang perlu dipantau/tindak lanjut tim intel
-- sumber_terkait: [{title, url, source}] 3-6 link berita relevan (URL asli bisa dibuka, fokus 7 hari terakhir)
+Isi berkas:
+- image: URL foto/gambar representatif berita (og:image/thumbnail). Kosongkan bila tak ada.
+- headline: judul ringkas.
+- kredibilitas: "kredibel" | "perlu_verifikasi" | "terindikasi_hoaks" (dasar: konfirmasi sumber resmi,
+  konsistensi lintas media, cek fakta Kominfo/Mafindo/TurnBackHoax, ciri hoaks).
+- verifikasi: 1-2 kalimat alasan penilaian kredibilitas.
+- status: "berkembang" | "stabil" | "mereda". urgency: 0-3. kategori: bidang isu.
+- sentiment: positive|negative|neutral. threat: none|makar|separatisme|terorisme|radikalisme|disintegrasi
+  (kelompok: OPM/TPNPB/KKB/GAM/RMS=separatisme; JI/JAD/NII/MIT/Khilafatul Muslimin/ISIS=terorisme). threat_level: 0-3.
+- skor_alasan: kenapa isu ini penting/panas (boleh singkat).
+- kronologi_fakta: NARASI KRONOLOGIS berformat 5W+1H (Siapa, Apa, Kapan, Di mana, Mengapa, Bagaimana),
+  MENGGABUNGKAN urutan peristiwa + fakta-fakta kunci menjadi 1-3 paragraf yang mengalir (bukan poin-poin).
+  Contoh gaya: "Pada 1 Januari 2025, pemerintah menerapkan PPN 12% untuk barang mewah sesuai UU HPP,
+  sementara barang pokok tetap 11%. Untuk meredam dampak, pemerintah meluncurkan 15 insentif. Presiden
+  Prabowo juga menandatangani PP No. 47/2024 yang menghapus piutang macet UMKM, disambut positif berbagai pihak."
+- analisa: analisis intelijen — PENILAIAN (judgement), PRAKIRAAN (forecasting), dan PROBLEM SOLVING.
+- dampak: dampak konkret terhadap PEMERINTAHAN dan INDONESIA (politik, keamanan, ekonomi, sosial).
+- upaya: upaya yang TELAH atau BISA dilakukan (mis. menjaga citra pemerintah, peran lembaga seperti BIN).
+- saran_tindakan: array tindakan yang HARUS dilakukan (mis. koordinasi dengan kementerian/lembaga terkait,
+  pemantauan lanjutan, langkah mitigasi).
+- sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source}. Sertakan beragam media pendukung.
 
 Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
 {
-  "image":"", "headline":"", "ringkasan":"", "skor_alasan":"",
+  "image":"", "headline":"",
   "kredibilitas":"perlu_verifikasi", "verifikasi":"",
-  "status":"berkembang", "urgency":0, "kategori":"",
-  "sentiment":"neutral", "threat":"none", "threat_level":0,
-  "aktor":[{"nama":"","peran":"","afiliasi":""}],
-  "organisasi":[""], "lokasi":[""],
-  "kronologi":[{"waktu":"","peristiwa":""}],
-  "fakta_kunci":[""], "reaksi_publik":"",
-  "implikasi":[""], "rekomendasi_pantau":[""],
+  "status":"berkembang", "urgency":0, "kategori":"", "sentiment":"neutral",
+  "threat":"none", "threat_level":0, "skor_alasan":"",
+  "kronologi_fakta":"", "analisa":"", "dampak":"", "upaya":"",
+  "saran_tindakan":[""],
   "sumber_terkait":[{"title":"","url":"","source":""}]
 }`;
 
@@ -97,8 +82,6 @@ function parse(text: string): Dossier {
   return {
     image: str(p.image),
     headline: str(p.headline),
-    ringkasan: str(p.ringkasan),
-    skorAlasan: str(p.skor_alasan),
     kredibilitas: ["kredibel", "perlu_verifikasi", "terindikasi_hoaks"].includes(
       p.kredibilitas
     )
@@ -111,21 +94,12 @@ function parse(text: string): Dossier {
     sentiment: sentOf(p.sentiment),
     threat: str(p.threat || "none"),
     threatLevel: clamp3(p.threat_level),
-    aktor: arr(p.aktor).map((a: any) => ({
-      nama: str(a?.nama),
-      peran: str(a?.peran),
-      afiliasi: str(a?.afiliasi),
-    })),
-    organisasi: arr(p.organisasi).map(str).filter(Boolean),
-    lokasi: arr(p.lokasi).map(str).filter(Boolean),
-    kronologi: arr(p.kronologi).map((k: any) => ({
-      waktu: str(k?.waktu),
-      peristiwa: str(k?.peristiwa),
-    })),
-    faktaKunci: arr(p.fakta_kunci).map(str).filter(Boolean),
-    reaksiPublik: str(p.reaksi_publik),
-    implikasi: arr(p.implikasi).map(str).filter(Boolean),
-    rekomendasiPantau: arr(p.rekomendasi_pantau).map(str).filter(Boolean),
+    skorAlasan: str(p.skor_alasan),
+    kronologiFakta: str(p.kronologi_fakta),
+    analisa: str(p.analisa),
+    dampak: str(p.dampak),
+    upaya: str(p.upaya),
+    saranTindakan: arr(p.saran_tindakan).map(str).filter(Boolean),
     sumberTerkait: arr(p.sumber_terkait)
       .filter((s: any) => s?.url)
       .map((s: any) => ({
@@ -149,11 +123,11 @@ export async function getDossier(
 
   const text = await runWeb(
     SYSTEM,
-    `Susun dossier monitoring intel.\nSubjek: "${title}"\n` +
+    `Susun dossier analisis intel.\nSubjek: "${title}"\n` +
       (url ? `URL berita: ${url}\n` : "") +
       (opts.context ? `Konteks: ${opts.context}\n` : "") +
       `Ambil isi/konteks dari web lalu keluarkan JSON.`,
-    7000
+    8000
   );
   const dossier = parse(text);
   const result: DossierResult = {

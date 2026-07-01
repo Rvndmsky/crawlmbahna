@@ -5,14 +5,10 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import ThemeToggle from "../../theme-toggle";
 import { parseDetailSlug, titleCase } from "@/lib/slug";
 
-type Actor = { nama: string; peran: string; afiliasi: string };
-type ChronoItem = { waktu: string; peristiwa: string };
 type RelatedSource = { title: string; url: string; source: string };
 type Dossier = {
   image: string;
   headline: string;
-  ringkasan: string;
-  skorAlasan: string;
   kredibilitas: string;
   verifikasi: string;
   status: string;
@@ -21,14 +17,12 @@ type Dossier = {
   sentiment: "positive" | "negative" | "neutral";
   threat: string;
   threatLevel: number;
-  aktor: Actor[];
-  organisasi: string[];
-  lokasi: string[];
-  kronologi: ChronoItem[];
-  faktaKunci: string[];
-  reaksiPublik: string;
-  implikasi: string[];
-  rekomendasiPantau: string[];
+  skorAlasan: string;
+  kronologiFakta: string;
+  analisa: string;
+  dampak: string;
+  upaya: string;
+  saranTindakan: string[];
   sumberTerkait: RelatedSource[];
 };
 type DossierResult = {
@@ -54,19 +48,6 @@ function fmtTime(ms: number) {
     return "";
   }
 }
-function Chips({ items }: { items: string[] }) {
-  if (!items?.length) return <span className="muted">—</span>;
-  return (
-    <div className="chips">
-      {items.map((x, i) => (
-        <span className="chip" key={i}>
-          {x}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 function Detail() {
   const params = useParams();
   const search = useSearchParams();
@@ -188,22 +169,6 @@ function Detail() {
               {data?.cached && <span className="badge-cache">cache</span>}
             </div>
 
-            {d.ringkasan && (
-              <div className="panel">
-                <div className="panel-title">Ringkasan Situasi</div>
-                <div className="summary">{d.ringkasan}</div>
-              </div>
-            )}
-
-            {d.skorAlasan && (
-              <div className="panel panel-score">
-                <div className="panel-title">
-                  Analisis Skor Intensitas{heat ? ` — 🔥 ${heat}/100` : ""}
-                </div>
-                <div className="summary">{d.skorAlasan}</div>
-              </div>
-            )}
-
             <div className={`panel panel-kred kred-${d.kredibilitas}`}>
               <div className="panel-title">
                 Validasi Kredibilitas —{" "}
@@ -214,91 +179,48 @@ function Detail() {
               </div>
             </div>
 
-            <div className="dossier-grid">
+            {d.kronologiFakta && (
               <div className="panel">
-                <div className="panel-title">Aktor / Tokoh</div>
-                {d.aktor.length ? (
-                  <ul className="actor-list">
-                    {d.aktor.map((a, i) => (
-                      <li key={i}>
-                        <b>{a.nama}</b>
-                        {a.peran ? ` — ${a.peran}` : ""}
-                        {a.afiliasi ? <span className="muted"> ({a.afiliasi})</span> : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <span className="muted">—</span>
-                )}
-              </div>
-              <div className="panel">
-                <div className="panel-title">Organisasi / Lembaga</div>
-                <Chips items={d.organisasi} />
-                <div className="panel-title" style={{ marginTop: 16 }}>
-                  Lokasi
-                </div>
-                <Chips items={d.lokasi} />
-              </div>
-            </div>
-
-            {d.kronologi.length > 0 && (
-              <div className="panel">
-                <div className="panel-title">Kronologi</div>
-                <ul className="chrono">
-                  {d.kronologi.map((k, i) => (
-                    <li key={i}>
-                      <span className="chrono-time">{k.waktu || "—"}</span>
-                      <span>{k.peristiwa}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="panel-title">🕵️ Kronologi &amp; Fakta (5W+1H)</div>
+                <div className="summary prose">{d.kronologiFakta}</div>
               </div>
             )}
 
-            {d.faktaKunci.length > 0 && (
+            {d.analisa && (
               <div className="panel">
-                <div className="panel-title">Fakta Kunci</div>
+                <div className="panel-title">🧠 Analisa (Penilaian · Prakiraan · Solusi)</div>
+                <div className="summary prose">{d.analisa}</div>
+              </div>
+            )}
+
+            {d.dampak && (
+              <div className="panel">
+                <div className="panel-title">💥 Dampak (Pemerintahan &amp; Indonesia)</div>
+                <div className="summary prose">{d.dampak}</div>
+              </div>
+            )}
+
+            {d.upaya && (
+              <div className="panel">
+                <div className="panel-title">🛠️ Upaya (Telah / Bisa Dilakukan)</div>
+                <div className="summary prose">{d.upaya}</div>
+              </div>
+            )}
+
+            {d.saranTindakan.length > 0 && (
+              <div className="panel panel-rec">
+                <div className="panel-title">✅ Saran Tindakan</div>
                 <ul className="bullets">
-                  {d.faktaKunci.map((f, i) => (
-                    <li key={i}>{f}</li>
+                  {d.saranTindakan.map((x, i) => (
+                    <li key={i}>{x}</li>
                   ))}
                 </ul>
               </div>
             )}
-
-            {d.reaksiPublik && (
-              <div className="panel">
-                <div className="panel-title">Reaksi Publik</div>
-                <div className="summary">{d.reaksiPublik}</div>
-              </div>
-            )}
-
-            <div className="dossier-grid">
-              {d.implikasi.length > 0 && (
-                <div className="panel">
-                  <div className="panel-title">Implikasi</div>
-                  <ul className="bullets">
-                    {d.implikasi.map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {d.rekomendasiPantau.length > 0 && (
-                <div className="panel panel-rec">
-                  <div className="panel-title">Rekomendasi Pantau</div>
-                  <ul className="bullets">
-                    {d.rekomendasiPantau.map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
 
             {d.sumberTerkait.length > 0 && (
               <div className="panel">
-                <div className="panel-title">Sumber Terkait</div>
+                <div className="panel-title">🔗 Berita Terkait (OSINT)</div>
                 <div className="sources">
                   {d.sumberTerkait.map((s, i) => (
                     <a key={i} href={s.url} target="_blank" rel="noreferrer">
