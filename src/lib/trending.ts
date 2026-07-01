@@ -52,7 +52,8 @@ const CACHE_MS = 60 * 60 * 1000; // segar 1 jam; berita baru muncul tiap jam / g
 const CACHE_KEY = "intel";
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  // Tanggal WIB (UTC+7) supaya "hari ini" sesuai waktu Indonesia.
+  return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 const SYSTEM = `Kamu analis intelijen untuk badan intelijen negara Indonesia.
