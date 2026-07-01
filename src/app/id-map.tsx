@@ -90,6 +90,11 @@ export default function IndonesiaMap({
       layerRef.current = L.layerGroup().addTo(map);
       render(L);
 
+      // Container kadang belum final ukurannya saat init -> paksa recalculate.
+      setTimeout(() => map.invalidateSize(), 60);
+      setTimeout(() => map.invalidateSize(), 400);
+      window.addEventListener("resize", onResize);
+
       // Ganti tile otomatis saat tema berubah (dark <-> light).
       obs = new MutationObserver(() => applyTiles(L));
       obs.observe(document.documentElement, {
@@ -97,9 +102,13 @@ export default function IndonesiaMap({
         attributeFilter: ["data-theme"],
       });
     })();
+    function onResize() {
+      mapRef.current?.invalidateSize();
+    }
     return () => {
       cancelled = true;
       if (obs) obs.disconnect();
+      window.removeEventListener("resize", onResize);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;

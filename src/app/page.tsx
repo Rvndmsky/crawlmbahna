@@ -228,6 +228,26 @@ export default function IntelDashboard() {
     };
   }, [data]);
 
+  // Titik peta (stabil — hanya berubah saat data berubah, bukan tiap tick).
+  const mapPoints = useMemo(() => {
+    if (!data) return [];
+    return data.cities
+      .slice(0, 8)
+      .map((c) => {
+        const co = resolveCoord(c.kota, c.provinsi, c.lat, c.lon);
+        if (!co) return null;
+        return {
+          name: c.kota,
+          heat: c.heat,
+          sentiment: c.sentiment,
+          headline: c.headline,
+          lat: co[0],
+          lon: co[1],
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }, [data]);
+
   // Rotasi breaking news (slideshow) tiap 4 detik.
   const breakingLen = stats?.breaking.length || 0;
   useEffect(() => {
@@ -408,24 +428,7 @@ export default function IntelDashboard() {
             {/* Peta sebaran isu */}
             <div className="panel">
               <div className="panel-title">🗺️ Peta Sebaran Isu (Kota/Kabupaten)</div>
-              <IndonesiaMap
-                points={data.cities
-                  .slice(0, 8)
-                  .map((c) => {
-                    const co = resolveCoord(c.kota, c.provinsi, c.lat, c.lon);
-                    if (!co) return null;
-                    return {
-                      name: c.kota,
-                      heat: c.heat,
-                      sentiment: c.sentiment,
-                      headline: c.headline,
-                      lat: co[0],
-                      lon: co[1],
-                    };
-                  })
-                  .filter((x): x is NonNullable<typeof x> => x !== null)}
-                onSelect={(pt) => openCity(pt.name, pt.heat)}
-              />
+              <IndonesiaMap points={mapPoints} onSelect={(pt) => openCity(pt.name, pt.heat)} />
             </div>
 
             {/* Kartu kota/kabupaten */}
