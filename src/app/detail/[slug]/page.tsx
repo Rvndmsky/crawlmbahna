@@ -145,7 +145,7 @@ function Detail() {
         <div className="dossier-src-line">
           Subjek pantauan{date ? ` · ${date.slice(6, 8)}-${date.slice(4, 6)}-${date.slice(0, 4)}` : ""}
         </div>
-        <h1 className="dossier-title">{title}</h1>
+        <h1 className="dossier-title">{data?.dossier?.headline || title}</h1>
 
         {loading && (
           <div className="state">
