@@ -28,10 +28,29 @@ export default function IndonesiaMap({
   const elRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const layerRef = useRef<any>(null);
+  const tileRef = useRef<any>(null);
   const onSelRef = useRef(onSelect);
   onSelRef.current = onSelect;
   const pointsRef = useRef(points);
   pointsRef.current = points;
+
+  function isDark() {
+    return document.documentElement.getAttribute("data-theme") !== "light";
+  }
+  function applyTiles(L: any) {
+    const map = mapRef.current;
+    if (!map) return;
+    if (tileRef.current) map.removeLayer(tileRef.current);
+    const url = isDark()
+      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    tileRef.current = L.tileLayer(url, {
+      subdomains: "abcd",
+      maxZoom: 12,
+      minZoom: 3,
+      attribution: "&copy; OpenStreetMap &copy; CARTO",
+    }).addTo(map);
+  }
 
   function render(L: any) {
     const lg = layerRef.current;
@@ -58,30 +77,29 @@ export default function IndonesiaMap({
 
   useEffect(() => {
     let cancelled = false;
+    let obs: MutationObserver | null = null;
     (async () => {
       const L = (await import("leaflet")).default;
       if (cancelled || !elRef.current || mapRef.current) return;
-      const dark =
-        document.documentElement.getAttribute("data-theme") !== "light";
       const map = L.map(elRef.current, {
         scrollWheelZoom: false,
         attributionControl: true,
       }).setView([-2.3, 118], 4);
-      const url = dark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-      L.tileLayer(url, {
-        subdomains: "abcd",
-        maxZoom: 12,
-        minZoom: 3,
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
-      }).addTo(map);
       mapRef.current = map;
+      applyTiles(L);
       layerRef.current = L.layerGroup().addTo(map);
       render(L);
+
+      // Ganti tile otomatis saat tema berubah (dark <-> light).
+      obs = new MutationObserver(() => applyTiles(L));
+      obs.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
     })();
     return () => {
       cancelled = true;
+      if (obs) obs.disconnect();
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
