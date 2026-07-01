@@ -18,6 +18,8 @@
   --maxw: 1120px;
   --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
   --header-bg: rgba(11, 14, 20, 0.82);
+  --map-land: rgba(120, 150, 200, 0.16);
+  --map-stroke: rgba(130, 165, 220, 0.45);
 }
 
 /* Light mode */
@@ -36,6 +38,8 @@ html[data-theme="light"] {
   --neg: #d63b32;
   --neu: #5c6675;
   --header-bg: rgba(243, 245, 249, 0.85);
+  --map-land: rgba(70, 110, 170, 0.20);
+  --map-stroke: rgba(60, 100, 160, 0.5);
 }
 
 * { box-sizing: border-box; }
@@ -373,13 +377,25 @@ button { font-family: inherit; }
 .idmap {
   position: relative;
   width: 100%;
-  aspect-ratio: 47 / 20;
+  aspect-ratio: 47 / 17;
   background:
-    radial-gradient(120% 90% at 50% 40%, rgba(79,140,255,0.06), transparent 70%),
+    radial-gradient(120% 90% at 50% 40%, rgba(79,140,255,0.05), transparent 70%),
     var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+}
+.idmap-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.idmap-land {
+  fill: var(--map-land);
+  stroke: var(--map-stroke);
+  stroke-width: 0.4;
+  stroke-linejoin: round;
 }
 .idmap-region {
   position: absolute;

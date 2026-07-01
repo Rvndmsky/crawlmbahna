@@ -48,6 +48,41 @@ const COORDS: { name: string; lat: number; lon: number }[] = [
   { name: "papua", lat: -4.3, lon: 138.4 },
 ];
 
+// Outline pulau (rough) sebagai deret titik [lat, lon] -> diproyeksikan sama
+// seperti marker, jadi titik provinsi jatuh di pulaunya.
+const ISLANDS: [number, number][][] = [
+  // Sumatera
+  [
+    [5.6, 95.3], [3.2, 96.2], [0.5, 99.5], [-1.2, 100.2], [-3.5, 102.2],
+    [-5.9, 104.9], [-5.4, 105.9], [-3.6, 104.6], [-1.0, 102.2], [1.5, 100.5],
+    [3.8, 98.4], [5.6, 96.6],
+  ],
+  // Jawa
+  [
+    [-5.9, 105.9], [-6.1, 107.6], [-6.9, 110.6], [-7.8, 113.9], [-8.4, 114.4],
+    [-8.0, 112.0], [-7.4, 109.2], [-6.7, 106.6], [-6.2, 105.8],
+  ],
+  // Kalimantan
+  [
+    [4.2, 117.6], [2.0, 109.3], [-1.0, 108.8], [-3.2, 110.2], [-4.2, 114.6],
+    [-3.0, 116.6], [0.0, 117.6], [2.6, 118.7],
+  ],
+  // Sulawesi
+  [
+    [1.6, 120.8], [1.1, 125.1], [-0.4, 123.2], [-2.5, 122.2], [-5.7, 120.5],
+    [-3.6, 119.2], [-1.4, 119.7], [0.2, 120.0],
+  ],
+  // Papua
+  [
+    [-0.8, 131.0], [-0.9, 134.2], [-2.6, 138.2], [-4.6, 141.0], [-8.4, 140.6],
+    [-7.4, 137.8], [-4.2, 134.5], [-2.0, 132.0],
+  ],
+  // Halmahera (Maluku Utara)
+  [
+    [1.2, 127.4], [0.3, 128.6], [-0.6, 127.8], [1.0, 127.2],
+  ],
+];
+
 const REGIONS = [
   { label: "SUMATERA", x: 13, y: 30 },
   { label: "JAWA", x: 30, y: 84 },
@@ -81,8 +116,36 @@ export default function IndonesiaMap({
   provinces: Prov[];
   onSelect: (p: Prov) => void;
 }) {
+  const polygons = ISLANDS.map((pts) =>
+    pts
+      .map(([lat, lon]) => {
+        const { x, y } = project(lat, lon);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ")
+  );
+  // Bali & Nusa Tenggara: rantai pulau kecil
+  const smallIsles: [number, number][] = [
+    [-8.4, 115.1], [-8.6, 117.4], [-8.7, 120.0], [-8.6, 122.5], [-8.5, 124.0],
+  ];
+
   return (
     <div className="idmap">
+      <svg
+        className="idmap-svg"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        {polygons.map((pts, i) => (
+          <polygon key={i} points={pts} className="idmap-land" />
+        ))}
+        {smallIsles.map(([lat, lon], i) => {
+          const { x, y } = project(lat, lon);
+          return <ellipse key={`s${i}`} cx={x} cy={y} rx="1.6" ry="1" className="idmap-land" />;
+        })}
+      </svg>
+
       {REGIONS.map((r) => (
         <span
           key={r.label}
