@@ -93,9 +93,10 @@ Kembalikan DUA bagian:
      * Pengesahan/revisi UU atau UUD, perubahan aturan/regulasi penting, keputusan MK.
      * Dinamika parlemen (DPR/MPR/DPD): voting, sidang paripurna, interpelasi, hak angket.
      * Pernyataan kontroversial/ngawur pejabat/tokoh publik yang memicu gejolak.
-     * Ancaman kedaulatan/keamanan serius, atau info yang BARU terungkap & belum ramai (early signal, ~24 jam).
-     Tandai MINIMAL 5 topik (idealnya 5-7) yang PALING mendesak/terbaru sebagai breaking:true; sisanya false.
-     Pastikan selalu ada minimal 5 breaking hari ini.
+     * Ancaman kedaulatan/keamanan serius, atau info yang BARU terungkap & belum ramai.
+     WAJIB: breaking:true HANYA untuk berita yang TERBIT HARI INI (tanggal yang diberikan, pukul 00:00-23:59
+     waktu Indonesia). Berita kemarin atau sebelumnya => breaking:false walau penting. Cek tanggal terbit sumber.
+     Tandai MINIMAL 5 topik yang PALING mendesak & TERBIT HARI INI sebagai breaking:true; sisanya false.
    - 2-4 "sources" (judul + URL asli + sumber + platform + tanggal).
    - Sertakan isu bermuatan ancaman kedaulatan bila ada hari ini, walau heat-nya belum tinggi.
 
@@ -198,8 +199,10 @@ export async function getTrending(
 
   const text = await runWeb(
     SYSTEM,
-    `Tanggal ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia hari ini: ` +
-      `10 topik nasional dan berita 6 provinsi. Sertakan sumber asli. ` +
+    `Tanggal HARI INI: ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
+      `10 topik nasional dan berita 6 provinsi. Sertakan sumber asli + tanggal terbit. ` +
+      `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +
+      `berita hari lain breaking:false. ` +
       `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`,
     12000
   );
