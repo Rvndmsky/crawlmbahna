@@ -133,6 +133,7 @@ export default function IntelDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [elapsed, setElapsed] = useState(0);
+  const [bidx, setBidx] = useState(0);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -235,6 +236,14 @@ export default function IntelDashboard() {
     };
   }, [data]);
 
+  // Rotasi breaking news (slideshow) tiap 4 detik.
+  const breakingLen = stats?.breaking.length || 0;
+  useEffect(() => {
+    if (breakingLen <= 1) return;
+    const iv = setInterval(() => setBidx((i) => (i + 1) % breakingLen), 4000);
+    return () => clearInterval(iv);
+  }, [breakingLen]);
+
   return (
     <div className="intel">
       <header className="intel-top">
@@ -296,28 +305,32 @@ export default function IntelDashboard() {
 
         {data && stats && !loading && (
           <>
-            {stats.breaking.length > 0 && (
-              <div className="breaking">
-                <span className="breaking-tag">
-                  <span className="live-dot" /> BREAKING
-                </span>
-                <div className="breaking-items">
-                  {stats.breaking.map((t, i) => (
-                    <span
-                      className="breaking-item"
-                      key={i}
-                      onClick={() => openTopic(t)}
-                    >
-                      {t.threat !== "none" && "🚨 "}
-                      {t.topic}
-                      {i < stats.breaking.length - 1 && (
-                        <span className="breaking-sep">•</span>
-                      )}
+            {stats.breaking.length > 0 &&
+              (() => {
+                const cur = stats.breaking[bidx % stats.breaking.length];
+                return (
+                  <div className="breaking">
+                    <span className="breaking-tag">
+                      <span className="live-dot" /> BREAKING
                     </span>
-                  ))}
-                </div>
-              </div>
-            )}
+                    <div className="breaking-slider">
+                      <span
+                        className="breaking-slide"
+                        key={bidx}
+                        onClick={() => openTopic(cur)}
+                      >
+                        {cur.threat !== "none" && "🚨 "}
+                        {cur.topic}
+                      </span>
+                    </div>
+                    {stats.breaking.length > 1 && (
+                      <span className="breaking-count">
+                        {(bidx % stats.breaking.length) + 1}/{stats.breaking.length}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
             <div className="meta">
               Snapshot {data.date}
