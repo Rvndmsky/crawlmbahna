@@ -2,6 +2,7 @@ import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 
 export type RelatedSource = { title: string; url: string; source: string };
+export type Lokasi = { nama: string; lat: number; lon: number };
 
 export type Dossier = {
   image: string;
@@ -20,6 +21,7 @@ export type Dossier = {
   dampak: string; // dampak utk pemerintahan & Indonesia
   upaya: string; // yang telah / bisa dilakukan
   saranTindakan: string[]; // yang harus dilakukan
+  lokasi: Lokasi[]; // tempat kejadian + koordinat (link ke maps)
   sumberTerkait: RelatedSource[]; // OSINT berita terkait
 };
 
@@ -58,6 +60,9 @@ Isi berkas:
 - upaya: upaya yang TELAH atau BISA dilakukan (mis. menjaga citra pemerintah, peran lembaga seperti BIN).
 - saran_tindakan: array tindakan yang HARUS dilakukan (mis. koordinasi dengan kementerian/lembaga terkait,
   pemantauan lanjutan, langkah mitigasi).
+- lokasi: daftar TEMPAT KEJADIAN / lokasi relevan yang disebut berita, tiap item {nama, lat, lon} koordinat
+  desimal. Contoh {"nama":"Hotel Grand Tebu, Kota Bandung","lat":-6.9129,"lon":107.6289}. Ambil dari isi
+  berita; berikan koordinat seakurat mungkin. Kosongkan array bila berita tak menyebut lokasi spesifik.
 - sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source}. Sertakan beragam media pendukung.
 
 Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
@@ -68,6 +73,7 @@ Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
   "threat":"none", "threat_level":0, "skor_alasan":"",
   "kronologi_fakta":"", "analisa":"", "dampak":"", "upaya":"",
   "saran_tindakan":[""],
+  "lokasi":[{"nama":"","lat":0,"lon":0}],
   "sumber_terkait":[{"title":"","url":"","source":""}]
 }`;
 
@@ -100,6 +106,16 @@ function parse(text: string): Dossier {
     dampak: str(p.dampak),
     upaya: str(p.upaya),
     saranTindakan: arr(p.saran_tindakan).map(str).filter(Boolean),
+    lokasi: arr(p.lokasi)
+      .map((l: any) => ({
+        nama: str(l?.nama),
+        lat: Number(l?.lat),
+        lon: Number(l?.lon),
+      }))
+      .filter(
+        (l: Lokasi) =>
+          l.nama && Number.isFinite(l.lat) && Number.isFinite(l.lon)
+      ),
     sumberTerkait: arr(p.sumber_terkait)
       .filter((s: any) => s?.url)
       .map((s: any) => ({

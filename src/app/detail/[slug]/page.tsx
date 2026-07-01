@@ -6,6 +6,7 @@ import ThemeToggle from "../../theme-toggle";
 import { parseDetailSlug, titleCase } from "@/lib/slug";
 
 type RelatedSource = { title: string; url: string; source: string };
+type Lokasi = { nama: string; lat: number; lon: number };
 type Dossier = {
   image: string;
   headline: string;
@@ -23,6 +24,7 @@ type Dossier = {
   dampak: string;
   upaya: string;
   saranTindakan: string[];
+  lokasi: Lokasi[];
   sumberTerkait: RelatedSource[];
 };
 type DossierResult = {
@@ -35,6 +37,10 @@ type DossierResult = {
 };
 
 const URG = ["Rendah", "Perlu dicatat", "Serius", "Kritis"];
+const gmaps = (lat: number, lon: number) =>
+  `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`;
+const gmapsEmbed = (lat: number, lon: number) =>
+  `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
 const KRED: Record<string, { label: string; cls: string }> = {
   kredibel: { label: "✓ Kredibel", cls: "positive" },
   perlu_verifikasi: { label: "⚠ Perlu Verifikasi", cls: "neutral" },
@@ -183,6 +189,36 @@ function Detail() {
               <div className="panel">
                 <div className="panel-title">🕵️ Kronologi &amp; Fakta (5W+1H)</div>
                 <div className="summary prose">{d.kronologiFakta}</div>
+              </div>
+            )}
+
+            {d.lokasi.length > 0 && (
+              <div className="panel">
+                <div className="panel-title">📍 Lokasi Terkait</div>
+                <div className="loc-list">
+                  {d.lokasi.map((l, i) => (
+                    <a
+                      key={i}
+                      className="loc-chip"
+                      href={gmaps(l.lat, l.lon)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      📍 {l.nama}{" "}
+                      <span className="muted">
+                        ({l.lat.toFixed(5)}, {l.lon.toFixed(5)})
+                      </span>{" "}
+                      ↗
+                    </a>
+                  ))}
+                </div>
+                <iframe
+                  className="loc-map"
+                  title="peta lokasi"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={gmapsEmbed(d.lokasi[0].lat, d.lokasi[0].lon)}
+                />
               </div>
             )}
 
