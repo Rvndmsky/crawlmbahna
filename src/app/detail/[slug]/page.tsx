@@ -74,7 +74,9 @@ function Detail() {
   const slug = String(params?.slug || "");
   const { subject, date } = parseDetailSlug(slug);
   const heat = search.get("h") || "";
-  const title = titleCase(subject);
+  const srcUrl = search.get("u") || "";
+  const providedTitle = search.get("t") || "";
+  const title = providedTitle || titleCase(subject);
 
   const [data, setData] = useState<DossierResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -94,7 +96,8 @@ function Detail() {
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 180000);
     try {
-      const p = new URLSearchParams({ title: subject, subject });
+      const p = new URLSearchParams({ title: providedTitle || subject, subject });
+      if (srcUrl) p.set("url", srcUrl); // baca artikel spesifik ini
       if (heat) p.set("heat", heat);
       if (fresh) p.set("fresh", "1");
       const res = await fetch(`/api/dossier?${p.toString()}`, {

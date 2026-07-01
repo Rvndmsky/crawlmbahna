@@ -25,8 +25,10 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
+  // Konteks "perluas cakupan" hanya saat TANPA url spesifik (mis. klik peta/kota).
+  // Bila ada url, dossier fokus ke artikel itu.
   const context =
-    heat && subject
+    heat && subject && !url
       ? `"${subject}" dinilai SKOR SUHU POLITIK ${heat}/100 hari ini. ` +
         `Di "skor_alasan": jelaskan TOPIK/ISU APA SAJA (sebutkan beberapa isu spesifik + tokoh/lembaga terlibat) ` +
         `yang membuat suhu setinggi itu, plus volume & intensitas pemberitaan. ` +

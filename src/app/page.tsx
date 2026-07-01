@@ -146,16 +146,22 @@ export default function IntelDashboard() {
     router.replace("/login");
   }
 
-  function goDetail(subject: string, heat: number) {
+  function goDetail(subject: string, heat: number, url?: string, title?: string) {
     const dateCompact = (data?.date || "").replace(/-/g, "");
-    const slug = makeDetailSlug(subject, dateCompact);
-    router.push(`/detail/${slug}${heat ? `?h=${heat}` : ""}`);
+    const slug = makeDetailSlug(title || subject, dateCompact);
+    const p = new URLSearchParams();
+    if (heat) p.set("h", String(heat));
+    if (url) p.set("u", url);
+    if (title) p.set("t", title);
+    const qs = p.toString();
+    router.push(`/detail/${slug}${qs ? `?${qs}` : ""}`);
   }
   function openTopic(t: TrendTopic) {
-    goDetail(t.topic, t.heat);
+    // Anchor ke artikel sumber utama supaya dossier sesuai berita ini.
+    goDetail(t.topic, t.heat, t.sources?.[0]?.url || "", t.topic);
   }
-  function openCity(name: string, heat: number) {
-    goDetail(name, heat);
+  function openCity(name: string, heat: number, url?: string, title?: string) {
+    goDetail(name, heat, url, title);
   }
 
   async function load(fresh = false) {
@@ -435,7 +441,11 @@ export default function IntelDashboard() {
             <div className="section-title">📍 Berita per Kota / Kabupaten</div>
             <div className="prov-grid">
               {data.cities.slice(0, 8).map((c, i) => (
-                <div className="prov-card clickable" key={i} onClick={() => openCity(c.kota, c.heat)}>
+                <div
+                  className="prov-card clickable"
+                  key={i}
+                  onClick={() => openCity(c.kota, c.heat, c.url, c.headline)}
+                >
                   <div className="prov-head">
                     <b>{c.kota}</b>
                     <span className={`sent ${c.sentiment}`}>{c.sentiment}</span>

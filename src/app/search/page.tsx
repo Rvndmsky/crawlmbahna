@@ -96,7 +96,10 @@ function Results() {
 
   function openDossier(it: NewsItem) {
     const slug = makeDetailSlug(it.title, todayYYYYMMDD());
-    router.push(`/detail/${slug}`);
+    const p = new URLSearchParams();
+    if (it.url) p.set("u", it.url);
+    p.set("t", it.title);
+    router.push(`/detail/${slug}?${p.toString()}`);
   }
 
   return (
