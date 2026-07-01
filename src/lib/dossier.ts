@@ -3,6 +3,7 @@ import { getCache, setCache } from "./cache";
 
 export type RelatedSource = { title: string; url: string; source: string };
 export type Lokasi = { nama: string; lat: number; lon: number };
+export type Actor = { nama: string; peran: string; afiliasi: string };
 
 export type Dossier = {
   image: string;
@@ -17,9 +18,17 @@ export type Dossier = {
   threatLevel: number; // 0-3
   skorAlasan: string; // kenapa skor intensitas segitu (opsional)
   kronologiFakta: string; // narasi 5W+1H (kronologi + fakta kunci digabung)
-  analisa: string; // judgement, forecasting, problem solving
+  aktor: Actor[]; // tokoh/pihak terlibat
+  organisasi: string[]; // lembaga/organisasi terkait
+  penilaian: string; // judgement
+  prakiraan: string; // forecasting
+  solusi: string; // problem solving
   dampak: string; // dampak utk pemerintahan & Indonesia
-  upaya: string; // yang telah / bisa dilakukan
+  reaksiPublik: string; // respons publik/media sosial
+  upayaTelah: string; // upaya yang telah dilakukan
+  upayaBisa: string; // upaya yang bisa dilakukan
+  implikasi: string[]; // potensi konsekuensi lanjutan
+  rekomendasiPantau: string[]; // hal yang perlu dipantau
   saranTindakan: string[]; // yang harus dilakukan
   lokasi: Lokasi[]; // tempat kejadian + koordinat (link ke maps)
   sumberTerkait: RelatedSource[]; // OSINT berita terkait
@@ -55,14 +64,24 @@ Isi berkas:
   Contoh gaya: "Pada 1 Januari 2025, pemerintah menerapkan PPN 12% untuk barang mewah sesuai UU HPP,
   sementara barang pokok tetap 11%. Untuk meredam dampak, pemerintah meluncurkan 15 insentif. Presiden
   Prabowo juga menandatangani PP No. 47/2024 yang menghapus piutang macet UMKM, disambut positif berbagai pihak."
-- analisa: analisis intelijen — PENILAIAN (judgement), PRAKIRAAN (forecasting), dan PROBLEM SOLVING.
+- aktor: tokoh/pihak yang terlibat [{nama, peran, afiliasi}].
+- organisasi: lembaga/organisasi terkait (array string).
+- penilaian: PENILAIAN intelijen (judgement) atas situasi.
+- prakiraan: PRAKIRAAN (forecasting) — kemungkinan perkembangan ke depan.
+- solusi: PROBLEM SOLVING — pendekatan penyelesaian.
 - dampak: dampak konkret terhadap PEMERINTAHAN dan INDONESIA (politik, keamanan, ekonomi, sosial).
-- upaya: upaya yang TELAH atau BISA dilakukan (mis. menjaga citra pemerintah, peran lembaga seperti BIN).
+- reaksi_publik: ringkasan respons publik / media sosial.
+- upaya_telah: upaya yang SUDAH dilakukan pihak terkait.
+- upaya_bisa: upaya yang BISA/SEHARUSNYA dilakukan (mis. menjaga citra pemerintah, peran lembaga seperti BIN).
+- implikasi: array potensi konsekuensi lanjutan.
+- rekomendasi_pantau: array hal yang perlu dipantau / tindak lanjut tim intel.
 - saran_tindakan: array tindakan yang HARUS dilakukan (mis. koordinasi dengan kementerian/lembaga terkait,
   pemantauan lanjutan, langkah mitigasi).
-- lokasi: daftar TEMPAT KEJADIAN / lokasi relevan yang disebut berita, tiap item {nama, lat, lon} koordinat
-  desimal. Contoh {"nama":"Hotel Grand Tebu, Kota Bandung","lat":-6.9129,"lon":107.6289}. Ambil dari isi
-  berita; berikan koordinat seakurat mungkin. Kosongkan array bila berita tak menyebut lokasi spesifik.
+- lokasi: daftar TEMPAT yang disebut berita. Item PERTAMA WAJIB = TEMPAT KEJADIAN PERKARA utama sesuai
+  JUDUL berita (mis. berita kebakaran -> lokasi yang terbakar; berita bentrok -> lokasi bentrok). Sisanya
+  lokasi pendukung. Tiap item {nama, lat, lon}. "nama" harus LENGKAP & bisa dicari di peta (nama tempat +
+  kelurahan/kota, mis. "PT Raw Botanical Nusantara, Ngaliyan, Kota Semarang"). Koordinat seakurat mungkin
+  (boleh 0 bila ragu — peta pakai nama). Kosongkan array bila tak ada lokasi spesifik.
 - sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source}. Sertakan beragam media pendukung.
 
 Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
@@ -71,8 +90,11 @@ Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
   "kredibilitas":"perlu_verifikasi", "verifikasi":"",
   "status":"berkembang", "urgency":0, "kategori":"", "sentiment":"neutral",
   "threat":"none", "threat_level":0, "skor_alasan":"",
-  "kronologi_fakta":"", "analisa":"", "dampak":"", "upaya":"",
-  "saran_tindakan":[""],
+  "kronologi_fakta":"",
+  "aktor":[{"nama":"","peran":"","afiliasi":""}], "organisasi":[""],
+  "penilaian":"", "prakiraan":"", "solusi":"",
+  "dampak":"", "reaksi_publik":"", "upaya_telah":"", "upaya_bisa":"",
+  "implikasi":[""], "rekomendasi_pantau":[""], "saran_tindakan":[""],
   "lokasi":[{"nama":"","lat":0,"lon":0}],
   "sumber_terkait":[{"title":"","url":"","source":""}]
 }`;
@@ -102,9 +124,21 @@ function parse(text: string): Dossier {
     threatLevel: clamp3(p.threat_level),
     skorAlasan: str(p.skor_alasan),
     kronologiFakta: str(p.kronologi_fakta),
-    analisa: str(p.analisa),
+    aktor: arr(p.aktor).map((a: any) => ({
+      nama: str(a?.nama),
+      peran: str(a?.peran),
+      afiliasi: str(a?.afiliasi),
+    })).filter((a: Actor) => a.nama),
+    organisasi: arr(p.organisasi).map(str).filter(Boolean),
+    penilaian: str(p.penilaian),
+    prakiraan: str(p.prakiraan),
+    solusi: str(p.solusi),
     dampak: str(p.dampak),
-    upaya: str(p.upaya),
+    reaksiPublik: str(p.reaksi_publik),
+    upayaTelah: str(p.upaya_telah),
+    upayaBisa: str(p.upaya_bisa),
+    implikasi: arr(p.implikasi).map(str).filter(Boolean),
+    rekomendasiPantau: arr(p.rekomendasi_pantau).map(str).filter(Boolean),
     saranTindakan: arr(p.saran_tindakan).map(str).filter(Boolean),
     lokasi: arr(p.lokasi)
       .map((l: any) => ({

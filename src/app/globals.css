@@ -515,6 +515,18 @@ button { font-family: inherit; }
 .title { font-size: 16px; font-weight: 700; line-height: 1.35; }
 .summary { margin: 8px 0; line-height: 1.55; color: var(--text); opacity: 0.92; }
 .summary.prose { white-space: pre-line; line-height: 1.65; }
+.labeled { margin-bottom: 16px; }
+.labeled:last-child { margin-bottom: 0; }
+.labeled > b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--accent-2);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.labeled .summary { margin: 0; }
 
 .loc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .loc-chip {
@@ -527,6 +539,7 @@ button { font-family: inherit; }
   color: var(--text);
 }
 .loc-chip:hover { border-color: var(--accent); color: var(--accent-2); text-decoration: none; }
+.loc-chip.loc-primary { border-color: var(--neg); background: rgba(242,104,96,0.08); font-weight: 600; }
 .loc-map {
   width: 100%;
   height: 320px;

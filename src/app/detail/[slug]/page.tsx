@@ -7,6 +7,7 @@ import { parseDetailSlug, titleCase } from "@/lib/slug";
 
 type RelatedSource = { title: string; url: string; source: string };
 type Lokasi = { nama: string; lat: number; lon: number };
+type Actor = { nama: string; peran: string; afiliasi: string };
 type Dossier = {
   image: string;
   headline: string;
@@ -20,9 +21,17 @@ type Dossier = {
   threatLevel: number;
   skorAlasan: string;
   kronologiFakta: string;
-  analisa: string;
+  aktor: Actor[];
+  organisasi: string[];
+  penilaian: string;
+  prakiraan: string;
+  solusi: string;
   dampak: string;
-  upaya: string;
+  reaksiPublik: string;
+  upayaTelah: string;
+  upayaBisa: string;
+  implikasi: string[];
+  rekomendasiPantau: string[];
   saranTindakan: string[];
   lokasi: Lokasi[];
   sumberTerkait: RelatedSource[];
@@ -37,10 +46,11 @@ type DossierResult = {
 };
 
 const URG = ["Rendah", "Perlu dicatat", "Serius", "Kritis"];
-const gmaps = (lat: number, lon: number) =>
-  `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`;
-const gmapsEmbed = (lat: number, lon: number) =>
-  `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+// Pakai NAMA tempat (Google yang geocode) — lebih akurat daripada koordinat model.
+const gmaps = (q: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+const gmapsEmbed = (q: string) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
 const KRED: Record<string, { label: string; cls: string }> = {
   kredibel: { label: "✓ Kredibel", cls: "positive" },
   perlu_verifikasi: { label: "⚠ Perlu Verifikasi", cls: "neutral" },
@@ -54,6 +64,19 @@ function fmtTime(ms: number) {
     return "";
   }
 }
+function Chips({ items }: { items: string[] }) {
+  if (!items?.length) return <span className="muted">—</span>;
+  return (
+    <div className="chips">
+      {items.map((x, i) => (
+        <span className="chip" key={i}>
+          {x}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Detail() {
   const params = useParams();
   const search = useSearchParams();
@@ -192,23 +215,45 @@ function Detail() {
               </div>
             )}
 
+            {(d.aktor.length > 0 || d.organisasi.length > 0) && (
+              <div className="dossier-grid">
+                <div className="panel">
+                  <div className="panel-title">👤 Aktor / Tokoh</div>
+                  {d.aktor.length ? (
+                    <ul className="actor-list">
+                      {d.aktor.map((a, i) => (
+                        <li key={i}>
+                          <b>{a.nama}</b>
+                          {a.peran ? ` — ${a.peran}` : ""}
+                          {a.afiliasi ? <span className="muted"> ({a.afiliasi})</span> : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </div>
+                <div className="panel">
+                  <div className="panel-title">🏛️ Organisasi / Lembaga</div>
+                  <Chips items={d.organisasi} />
+                </div>
+              </div>
+            )}
+
             {d.lokasi.length > 0 && (
               <div className="panel">
-                <div className="panel-title">📍 Lokasi Terkait</div>
+                <div className="panel-title">📍 Lokasi Terkait (TKP di peta)</div>
                 <div className="loc-list">
                   {d.lokasi.map((l, i) => (
                     <a
                       key={i}
-                      className="loc-chip"
-                      href={gmaps(l.lat, l.lon)}
+                      className={`loc-chip${i === 0 ? " loc-primary" : ""}`}
+                      href={gmaps(l.nama)}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      📍 {l.nama}{" "}
-                      <span className="muted">
-                        ({l.lat.toFixed(5)}, {l.lon.toFixed(5)})
-                      </span>{" "}
-                      ↗
+                      {i === 0 ? "🎯 " : "📍 "}
+                      {l.nama} ↗
                     </a>
                   ))}
                 </div>
@@ -217,15 +262,32 @@ function Detail() {
                   title="peta lokasi"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  src={gmapsEmbed(d.lokasi[0].lat, d.lokasi[0].lon)}
+                  src={gmapsEmbed(d.lokasi[0].nama)}
                 />
               </div>
             )}
 
-            {d.analisa && (
+            {(d.penilaian || d.prakiraan || d.solusi) && (
               <div className="panel">
-                <div className="panel-title">🧠 Analisa (Penilaian · Prakiraan · Solusi)</div>
-                <div className="summary prose">{d.analisa}</div>
+                <div className="panel-title">🧠 Analisa</div>
+                {d.penilaian && (
+                  <div className="labeled">
+                    <b>PENILAIAN</b>
+                    <div className="summary prose">{d.penilaian}</div>
+                  </div>
+                )}
+                {d.prakiraan && (
+                  <div className="labeled">
+                    <b>PRAKIRAAN</b>
+                    <div className="summary prose">{d.prakiraan}</div>
+                  </div>
+                )}
+                {d.solusi && (
+                  <div className="labeled">
+                    <b>SOLUSI</b>
+                    <div className="summary prose">{d.solusi}</div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -236,10 +298,53 @@ function Detail() {
               </div>
             )}
 
-            {d.upaya && (
+            {d.reaksiPublik && (
               <div className="panel">
-                <div className="panel-title">🛠️ Upaya (Telah / Bisa Dilakukan)</div>
-                <div className="summary prose">{d.upaya}</div>
+                <div className="panel-title">📣 Reaksi Publik</div>
+                <div className="summary prose">{d.reaksiPublik}</div>
+              </div>
+            )}
+
+            {(d.upayaTelah || d.upayaBisa) && (
+              <div className="panel">
+                <div className="panel-title">🛠️ Upaya</div>
+                {d.upayaTelah && (
+                  <div className="labeled">
+                    <b>UPAYA YANG TELAH DILAKUKAN</b>
+                    <div className="summary prose">{d.upayaTelah}</div>
+                  </div>
+                )}
+                {d.upayaBisa && (
+                  <div className="labeled">
+                    <b>UPAYA YANG BISA DILAKUKAN</b>
+                    <div className="summary prose">{d.upayaBisa}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(d.implikasi.length > 0 || d.rekomendasiPantau.length > 0) && (
+              <div className="dossier-grid">
+                {d.implikasi.length > 0 && (
+                  <div className="panel">
+                    <div className="panel-title">🔮 Implikasi</div>
+                    <ul className="bullets">
+                      {d.implikasi.map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {d.rekomendasiPantau.length > 0 && (
+                  <div className="panel">
+                    <div className="panel-title">👁️ Rekomendasi Pantau</div>
+                    <ul className="bullets">
+                      {d.rekomendasiPantau.map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
