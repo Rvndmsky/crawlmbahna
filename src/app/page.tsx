@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ThemeToggle from "./theme-toggle";
 import IndonesiaMap from "./id-map";
 import { makeDetailSlug } from "@/lib/slug";
+import { resolveCoord } from "@/lib/geo";
 
 type Sent = "positive" | "negative" | "neutral";
 type TrendSource = {
@@ -408,14 +409,21 @@ export default function IntelDashboard() {
             <div className="panel">
               <div className="panel-title">🗺️ Peta Sebaran Isu (Kota/Kabupaten)</div>
               <IndonesiaMap
-                points={data.cities.map((c) => ({
-                  name: c.kota,
-                  heat: c.heat,
-                  sentiment: c.sentiment,
-                  headline: c.headline,
-                  lat: c.lat,
-                  lon: c.lon,
-                }))}
+                points={data.cities
+                  .slice(0, 8)
+                  .map((c) => {
+                    const co = resolveCoord(c.kota, c.provinsi, c.lat, c.lon);
+                    if (!co) return null;
+                    return {
+                      name: c.kota,
+                      heat: c.heat,
+                      sentiment: c.sentiment,
+                      headline: c.headline,
+                      lat: co[0],
+                      lon: co[1],
+                    };
+                  })
+                  .filter((x): x is NonNullable<typeof x> => x !== null)}
                 onSelect={(pt) => openCity(pt.name, pt.heat)}
               />
             </div>
@@ -423,7 +431,7 @@ export default function IntelDashboard() {
             {/* Kartu kota/kabupaten */}
             <div className="section-title">📍 Berita per Kota / Kabupaten</div>
             <div className="prov-grid">
-              {data.cities.map((c, i) => (
+              {data.cities.slice(0, 8).map((c, i) => (
                 <div className="prov-card clickable" key={i} onClick={() => openCity(c.kota, c.heat)}>
                   <div className="prov-head">
                     <b>{c.kota}</b>

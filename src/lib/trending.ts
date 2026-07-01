@@ -104,10 +104,11 @@ Kembalikan DUA bagian:
    - 2-4 "sources" (judul + URL asli + sumber + platform + tanggal).
    - Sertakan isu bermuatan ancaman kedaulatan bila ada hari ini, walau heat-nya belum tinggi.
 
-2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN hari ini (8-10 kota/kabupaten
-   yang PALING ada dinamika hari ini; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
+2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN (TEPAT 8 kota/kabupaten,
+   tidak kurang tidak lebih; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
    Kota Semarang, Makassar, Medan, Jayapura, Banda Aceh, dll — spesifik kota/kabupaten, BUKAN provinsi):
-   - Tiap kota/kabupaten: 1 headline politik/pemerintahan lokal paling penting hari ini.
+   - RENTANG WAKTU: berita yang terbit dalam 3 HARI TERAKHIR (hari ini sampai H-3). Buang yang lebih lama.
+   - Tiap kota/kabupaten: 1 headline politik/pemerintahan lokal paling penting & terbaru.
    - "kota" (nama kota/kabupaten), "provinsi" (induknya), "heat" 0-100, "sentiment",
      ringkasan singkat, URL + sumber + platform.
    - "lat" & "lon": KOORDINAT kota/kabupaten tsb (desimal, mis. Jakarta lat -6.2 lon 106.8).
@@ -207,7 +208,7 @@ export async function getTrending(
   const text = await runWeb(
     SYSTEM,
     `Tanggal HARI INI: ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
-      `10 topik nasional dan berita 8-10 kota/kabupaten (dengan lat/lon). Sertakan sumber asli + tanggal terbit. ` +
+      `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon, berita 3 hari terakhir). Sertakan sumber asli + tanggal terbit. ` +
       `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +
       `berita hari lain breaking:false. ` +
       `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`,
