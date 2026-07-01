@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./theme-toggle";
+import { makeDetailSlug } from "@/lib/slug";
 
 type Sent = "positive" | "negative" | "neutral";
 type TrendSource = {
@@ -140,30 +141,16 @@ export default function IntelDashboard() {
     router.replace("/login");
   }
 
-  function goDetail(
-    url: string,
-    title: string,
-    source: string,
-    platform: string,
-    heat: number,
-    subject: string
-  ) {
-    const p = new URLSearchParams({
-      title,
-      source: source || "",
-      platform: platform || "web",
-      heat: String(heat),
-      subject,
-    });
-    if (url) p.set("url", url);
-    router.push(`/detail?${p.toString()}`);
+  function goDetail(subject: string, heat: number) {
+    const dateCompact = (data?.date || "").replace(/-/g, "");
+    const slug = makeDetailSlug(subject, dateCompact);
+    router.push(`/detail/${slug}${heat ? `?h=${heat}` : ""}`);
   }
   function openTopic(t: TrendTopic) {
-    const s = t.sources?.[0];
-    goDetail(s?.url || "", t.topic, s?.source || "", s?.platform || "web", t.heat, t.topic);
+    goDetail(t.topic, t.heat);
   }
   function openProvince(p: ProvinceItem) {
-    goDetail(p.url, p.headline || p.province, p.source, p.platform, p.heat, p.province);
+    goDetail(p.province, p.heat);
   }
 
   async function load(fresh = false) {

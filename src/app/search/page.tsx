@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ThemeToggle from "../theme-toggle";
+import { makeDetailSlug, todayYYYYMMDD } from "@/lib/slug";
 
 type NewsItem = {
   title: string;
@@ -93,13 +94,8 @@ function Results() {
   }
 
   function openDossier(it: NewsItem) {
-    const p = new URLSearchParams({
-      url: it.url,
-      title: it.title,
-      source: it.source,
-      platform: it.platform,
-    });
-    router.push(`/detail?${p.toString()}`);
+    const slug = makeDetailSlug(it.title, todayYYYYMMDD());
+    router.push(`/detail/${slug}`);
   }
 
   return (

@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import ThemeToggle from "../../theme-toggle";
+import { parseDetailSlug, titleCase } from "@/lib/slug";
 
 type Actor = { nama: string; peran: string; afiliasi: string };
 type ChronoItem = { waktu: string; peristiwa: string };
@@ -46,6 +47,13 @@ const KRED: Record<string, { label: string; cls: string }> = {
   terindikasi_hoaks: { label: "✕ Terindikasi Hoaks", cls: "negative" },
 };
 
+function fmtTime(ms: number) {
+  try {
+    return new Date(ms).toLocaleString("id-ID");
+  } catch {
+    return "";
+  }
+}
 function Chips({ items }: { items: string[] }) {
   if (!items?.length) return <span className="muted">—</span>;
   return (
@@ -60,14 +68,13 @@ function Chips({ items }: { items: string[] }) {
 }
 
 function Detail() {
-  const params = useSearchParams();
+  const params = useParams();
+  const search = useSearchParams();
   const router = useRouter();
-  const url = params.get("url") || "";
-  const title = params.get("title") || "";
-  const source = params.get("source") || "";
-  const platform = params.get("platform") || "web";
-  const heat = params.get("heat") || "";
-  const subject = params.get("subject") || "";
+  const slug = String(params?.slug || "");
+  const { subject, date } = parseDetailSlug(slug);
+  const heat = search.get("h") || "";
+  const title = titleCase(subject);
 
   const [data, setData] = useState<DossierResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,9 +94,8 @@ function Detail() {
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 180000);
     try {
-      const p = new URLSearchParams({ url, title });
+      const p = new URLSearchParams({ title: subject, subject });
       if (heat) p.set("heat", heat);
-      if (subject) p.set("subject", subject);
       if (fresh) p.set("fresh", "1");
       const res = await fetch(`/api/dossier?${p.toString()}`, {
         signal: ctrl.signal,
@@ -115,9 +121,9 @@ function Detail() {
   }
 
   useEffect(() => {
-    if (url || title) load();
+    if (subject) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, subject]);
+  }, [slug]);
 
   const d = data?.dossier;
 
@@ -137,15 +143,7 @@ function Detail() {
 
       <div className="wrap" style={{ maxWidth: 900 }}>
         <div className="dossier-src-line">
-          <span className="platform">{platform}</span> {source}
-          {url && (
-            <>
-              {" · "}
-              <a href={url} target="_blank" rel="noreferrer">
-                sumber asli ↗
-              </a>
-            </>
-          )}
+          Subjek pantauan{date ? ` · ${date.slice(6, 8)}-${date.slice(4, 6)}-${date.slice(0, 4)}` : ""}
         </div>
         <h1 className="dossier-title">{title}</h1>
 
@@ -171,7 +169,6 @@ function Detail() {
               />
             )}
 
-            {/* Baris status */}
             <div className="dossier-flags">
               <span className={`sent ${(KRED[d.kredibilitas] || KRED.perlu_verifikasi).cls}`}>
                 {(KRED[d.kredibilitas] || KRED.perlu_verifikasi).label}
