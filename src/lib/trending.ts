@@ -94,7 +94,8 @@ Kembalikan DUA bagian:
      * Dinamika parlemen (DPR/MPR/DPD): voting, sidang paripurna, interpelasi, hak angket.
      * Pernyataan kontroversial/ngawur pejabat/tokoh publik yang memicu gejolak.
      * Ancaman kedaulatan/keamanan serius, atau info yang BARU terungkap & belum ramai (early signal, ~24 jam).
-     Selain itu false. Jangan berlebihan menandai breaking.
+     Tandai MINIMAL 5 topik (idealnya 5-7) yang PALING mendesak/terbaru sebagai breaking:true; sisanya false.
+     Pastikan selalu ada minimal 5 breaking hari ini.
    - 2-4 "sources" (judul + URL asli + sumber + platform + tanggal).
    - Sertakan isu bermuatan ancaman kedaulatan bila ada hari ini, walau heat-nya belum tinggi.
 
