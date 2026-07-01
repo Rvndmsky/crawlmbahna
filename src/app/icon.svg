@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2130"/>
+      <stop offset="1" stop-color="#0b0e14"/>
+    </linearGradient>
+  </defs>
+  <!-- perisai -->
+  <path d="M16 2 L28 6 V15 C28 23 22.5 28 16 30 C9.5 28 4 23 4 15 V6 Z"
+        fill="url(#g)" stroke="#4f8cff" stroke-width="1.6"/>
+  <!-- mata (intel / all-seeing) -->
+  <path d="M8.5 15 C11 11 21 11 23.5 15 C21 19 11 19 8.5 15 Z"
+        fill="none" stroke="#7aa8ff" stroke-width="1.4"/>
+  <circle cx="16" cy="15" r="3" fill="#4f8cff"/>
+  <circle cx="16" cy="15" r="1.1" fill="#0b0e14"/>
+  <!-- sapuan radar -->
+  <line x1="16" y1="15" x2="16" y2="7.5" stroke="#4f8cff" stroke-width="1" opacity="0.5"/>
+</svg>
