@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./theme-toggle";
+import IndonesiaMap from "./id-map";
 import { makeDetailSlug } from "@/lib/slug";
 
 type Sent = "positive" | "negative" | "neutral";
@@ -149,7 +150,7 @@ export default function IntelDashboard() {
   function openTopic(t: TrendTopic) {
     goDetail(t.topic, t.heat);
   }
-  function openProvince(p: ProvinceItem) {
+  function openProvince(p: { province: string; heat: number }) {
     goDetail(p.province, p.heat);
   }
 
@@ -400,8 +401,14 @@ export default function IntelDashboard() {
               </div>
             </div>
 
+            {/* Peta sebaran isu */}
+            <div className="panel">
+              <div className="panel-title">🗺️ Peta Sebaran Isu Provinsi</div>
+              <IndonesiaMap provinces={data.provinces} onSelect={openProvince} />
+            </div>
+
             {/* Kartu provinsi */}
-            <div className="section-title">🗺️ Berita per Provinsi</div>
+            <div className="section-title">📍 Berita per Provinsi</div>
             <div className="prov-grid">
               {data.provinces.map((p, i) => (
                 <div className="prov-card clickable" key={i} onClick={() => openProvince(p)}>

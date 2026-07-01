@@ -369,6 +369,56 @@ button { font-family: inherit; }
 .heatbar { height: 6px; background: var(--bg-2); border-radius: 4px; margin: 9px 0; overflow: hidden; }
 .heatbar-fill { height: 100%; background: linear-gradient(90deg, #ff9838, var(--neg)); }
 
+/* ============ PETA INDONESIA ============ */
+.idmap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 47 / 20;
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(79,140,255,0.06), transparent 70%),
+    var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.idmap-region {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: var(--muted);
+  opacity: 0.28;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.idmap-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s;
+}
+.idmap-dot:hover { transform: translate(-50%, -50%) scale(1.25); z-index: 5; }
+.idmap-label {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px var(--bg);
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .idmap-label { display: none; }
+  .idmap-region { font-size: 8px; letter-spacing: 1px; }
+}
+
 /* ============ PROVINCE GRID ============ */
 .prov-grid {
   display: grid;
