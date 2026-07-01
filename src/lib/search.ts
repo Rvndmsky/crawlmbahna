@@ -57,7 +57,8 @@ Aturan:
 - "breaking": true untuk item MENDESAK / baru pecah yang TERBIT HARI INI — mis. OTT/penangkapan korupsi,
   penetapan tersangka pejabat, teror/bom, insiden keamanan, pengesahan/revisi UU, keputusan MK,
   dinamika parlemen (voting/paripurna/hak angket), pernyataan kontroversial pejabat, atau ancaman kedaulatan.
-  JUGA breaking:true bila JUDUL/sumber berita memang memuat label "BREAKING" atau "BREAKING NEWS".
+  JUGA breaking:true bila JUDUL/sumber berita memuat label PERSIS frasa "BREAKING NEWS"
+  (frasa lengkap saja; jangan pakai kata "breaking" sendiri karena bisa berarti lain, mis. "record-breaking").
   Selain itu false. Jangan berlebihan.
 - Setiap item WAJIB punya URL asli yang bisa dibuka.
 - Target 10-20 item bila tersedia.
