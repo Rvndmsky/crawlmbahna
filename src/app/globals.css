@@ -373,7 +373,28 @@ button { font-family: inherit; }
 .heatbar { height: 6px; background: var(--bg-2); border-radius: 4px; margin: 9px 0; overflow: hidden; }
 .heatbar-fill { height: 100%; background: linear-gradient(90deg, #ff9838, var(--neg)); }
 
-/* ============ PETA INDONESIA ============ */
+/* ============ PETA LEAFLET ============ */
+.idmap-leaflet {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 460px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.leaflet-container { background: var(--bg-2); font: inherit; }
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.4);
+  color: #ccc;
+  font-size: 10px;
+}
+.leaflet-container a { color: var(--accent-2); }
+@media (max-width: 640px) {
+  .idmap-leaflet { height: 340px; }
+}
+
+/* ============ PETA INDONESIA (lama, tak dipakai) ============ */
 .idmap {
   position: relative;
   width: 100%;

@@ -29,8 +29,9 @@ export type TrendTopic = {
   sources: TrendSource[];
 };
 
-export type ProvinceItem = {
-  province: string;
+export type CityItem = {
+  kota: string; // kota/kabupaten
+  provinsi: string;
   headline: string;
   summary: string;
   heat: number; // 0-100
@@ -38,6 +39,8 @@ export type ProvinceItem = {
   url: string;
   source: string;
   platform: string;
+  lat: number;
+  lon: number;
 };
 
 export type TrendingResult = {
@@ -45,7 +48,7 @@ export type TrendingResult = {
   generatedAt: number;
   cached: boolean;
   topics: TrendTopic[];
-  provinces: ProvinceItem[];
+  cities: CityItem[];
 };
 
 const CACHE_MS = 60 * 60 * 1000; // segar 1 jam; berita baru muncul tiap jam / ganti hari
@@ -101,11 +104,13 @@ Kembalikan DUA bagian:
    - 2-4 "sources" (judul + URL asli + sumber + platform + tanggal).
    - Sertakan isu bermuatan ancaman kedaulatan bila ada hari ini, walau heat-nya belum tinggi.
 
-2) "provinces" — berita politik/pemerintahan menonjol PER PROVINSI hari ini (6 provinsi
-   yang PALING ada dinamika hari ini; pilih dari: DKI Jakarta, Jawa Barat, Jawa Tengah,
-   Jawa Timur, Papua, Aceh, Sumatera Utara, Sulawesi Selatan, dll):
-   - Tiap provinsi: 1 headline politik/pemerintahan lokal paling penting hari ini.
-   - "heat" 0-100, "sentiment", ringkasan singkat, plus URL + sumber + platform.
+2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN hari ini (8-10 kota/kabupaten
+   yang PALING ada dinamika hari ini; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
+   Kota Semarang, Makassar, Medan, Jayapura, Banda Aceh, dll — spesifik kota/kabupaten, BUKAN provinsi):
+   - Tiap kota/kabupaten: 1 headline politik/pemerintahan lokal paling penting hari ini.
+   - "kota" (nama kota/kabupaten), "provinsi" (induknya), "heat" 0-100, "sentiment",
+     ringkasan singkat, URL + sumber + platform.
+   - "lat" & "lon": KOORDINAT kota/kabupaten tsb (desimal, mis. Jakarta lat -6.2 lon 106.8).
 
 Batasan: ABAIKAN hiburan/olahraga/teknologi konsumen kecuali berkaitan langsung dengan
 kebijakan/pejabat/pemerintah.
@@ -117,9 +122,9 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, bentuk:
       "threat":"none", "threat_level":0, "breaking":false,
       "sources":[{"title":"","url":"","source":"","platform":"news","published":""}] }
   ],
-  "provinces": [
-    { "province":"DKI Jakarta", "headline":"", "summary":"", "heat":0, "sentiment":"neutral",
-      "url":"", "source":"", "platform":"news" }
+  "cities": [
+    { "kota":"Kota Bandung", "provinsi":"Jawa Barat", "headline":"", "summary":"", "heat":0,
+      "sentiment":"neutral", "url":"", "source":"", "platform":"news", "lat":-6.9, "lon":107.6 }
   ]
 }`;
 
@@ -138,7 +143,7 @@ const threatOf = (t: any): ThreatType =>
   THREATS.includes(t) ? t : "none";
 const threatLvl = (n: any) => Math.max(0, Math.min(3, Math.round(Number(n) || 0)));
 
-function parse(text: string): { topics: TrendTopic[]; provinces: ProvinceItem[] } {
+function parse(text: string): { topics: TrendTopic[]; cities: CityItem[] } {
   const parsed = extractJson(text) || {};
 
   const topics: TrendTopic[] = (Array.isArray(parsed.topics) ? parsed.topics : [])
@@ -164,12 +169,11 @@ function parse(text: string): { topics: TrendTopic[]; provinces: ProvinceItem[] 
     }))
     .sort((a: TrendTopic, b: TrendTopic) => b.heat - a.heat);
 
-  const provinces: ProvinceItem[] = (
-    Array.isArray(parsed.provinces) ? parsed.provinces : []
-  )
-    .filter((p: any) => p && p.province)
+  const cities: CityItem[] = (Array.isArray(parsed.cities) ? parsed.cities : [])
+    .filter((p: any) => p && p.kota)
     .map((p: any) => ({
-      province: String(p.province || ""),
+      kota: String(p.kota || ""),
+      provinsi: String(p.provinsi || ""),
       headline: String(p.headline || ""),
       summary: String(p.summary || ""),
       heat: heatOf(p.heat),
@@ -177,10 +181,12 @@ function parse(text: string): { topics: TrendTopic[]; provinces: ProvinceItem[] 
       url: String(p.url || ""),
       source: String(p.source || ""),
       platform: String(p.platform || "web"),
+      lat: Number(p.lat),
+      lon: Number(p.lon),
     }))
-    .sort((a: ProvinceItem, b: ProvinceItem) => b.heat - a.heat);
+    .sort((a: CityItem, b: CityItem) => b.heat - a.heat);
 
-  return { topics, provinces };
+  return { topics, cities };
 }
 
 export async function getTrending(
@@ -201,19 +207,19 @@ export async function getTrending(
   const text = await runWeb(
     SYSTEM,
     `Tanggal HARI INI: ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
-      `10 topik nasional dan berita 6 provinsi. Sertakan sumber asli + tanggal terbit. ` +
+      `10 topik nasional dan berita 8-10 kota/kabupaten (dengan lat/lon). Sertakan sumber asli + tanggal terbit. ` +
       `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +
       `berita hari lain breaking:false. ` +
       `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`,
     12000
   );
-  const { topics, provinces } = parse(text);
+  const { topics, cities } = parse(text);
   const result: TrendingResult = {
     date: today(),
     generatedAt: Date.now(),
     cached: false,
     topics,
-    provinces,
+    cities,
   };
   // Hanya cache kalau ada isinya.
   if (topics.length > 0) setCache<TrendingResult>(CACHE_KEY, "intel", result);

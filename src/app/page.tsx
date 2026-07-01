@@ -25,8 +25,9 @@ type TrendTopic = {
   breaking: boolean;
   sources: TrendSource[];
 };
-type ProvinceItem = {
-  province: string;
+type CityItem = {
+  kota: string;
+  provinsi: string;
   headline: string;
   summary: string;
   heat: number;
@@ -34,13 +35,15 @@ type ProvinceItem = {
   url: string;
   source: string;
   platform: string;
+  lat: number;
+  lon: number;
 };
 type Intel = {
   date: string;
   generatedAt: number;
   cached: boolean;
   topics: TrendTopic[];
-  provinces: ProvinceItem[];
+  cities: CityItem[];
   error?: string;
 };
 
@@ -150,8 +153,8 @@ export default function IntelDashboard() {
   function openTopic(t: TrendTopic) {
     goDetail(t.topic, t.heat);
   }
-  function openProvince(p: { province: string; heat: number }) {
-    goDetail(p.province, p.heat);
+  function openCity(name: string, heat: number) {
+    goDetail(name, heat);
   }
 
   async function load(fresh = false) {
@@ -333,8 +336,8 @@ export default function IntelDashboard() {
                 <div className="stat-lbl">Isu nasional terpantau</div>
               </div>
               <div className="stat">
-                <div className="stat-num">{data.provinces.length}</div>
-                <div className="stat-lbl">Provinsi terpantau</div>
+                <div className="stat-num">{data.cities.length}</div>
+                <div className="stat-lbl">Kota/Kab terpantau</div>
               </div>
               <div className="stat">
                 <div className="stat-num" style={{ color: SENT_COLORS[stats.dominant] }}>
@@ -403,25 +406,38 @@ export default function IntelDashboard() {
 
             {/* Peta sebaran isu */}
             <div className="panel">
-              <div className="panel-title">🗺️ Peta Sebaran Isu Provinsi</div>
-              <IndonesiaMap provinces={data.provinces} onSelect={openProvince} />
+              <div className="panel-title">🗺️ Peta Sebaran Isu (Kota/Kabupaten)</div>
+              <IndonesiaMap
+                points={data.cities.map((c) => ({
+                  name: c.kota,
+                  heat: c.heat,
+                  sentiment: c.sentiment,
+                  headline: c.headline,
+                  lat: c.lat,
+                  lon: c.lon,
+                }))}
+                onSelect={(pt) => openCity(pt.name, pt.heat)}
+              />
             </div>
 
-            {/* Kartu provinsi */}
-            <div className="section-title">📍 Berita per Provinsi</div>
+            {/* Kartu kota/kabupaten */}
+            <div className="section-title">📍 Berita per Kota / Kabupaten</div>
             <div className="prov-grid">
-              {data.provinces.map((p, i) => (
-                <div className="prov-card clickable" key={i} onClick={() => openProvince(p)}>
+              {data.cities.map((c, i) => (
+                <div className="prov-card clickable" key={i} onClick={() => openCity(c.kota, c.heat)}>
                   <div className="prov-head">
-                    <b>{p.province}</b>
-                    <span className={`sent ${p.sentiment}`}>{p.sentiment}</span>
+                    <b>{c.kota}</b>
+                    <span className={`sent ${c.sentiment}`}>{c.sentiment}</span>
                   </div>
-                  <div className="prov-headline">{p.headline}</div>
+                  <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+                    {c.provinsi}
+                  </div>
+                  <div className="prov-headline">{c.headline}</div>
                   <div className="heatbar">
-                    <div className="heatbar-fill" style={{ width: `${p.heat}%` }} />
+                    <div className="heatbar-fill" style={{ width: `${c.heat}%` }} />
                   </div>
                   <div className="prov-src">
-                    [{p.platform}] {p.source} · 🔥 {p.heat} · 📑 dossier
+                    [{c.platform}] {c.source} · 🔥 {c.heat} · 📑 dossier
                   </div>
                 </div>
               ))}
