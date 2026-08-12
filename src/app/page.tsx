@@ -273,6 +273,13 @@ export default function IntelDashboard() {
         </div>
         <div style={{ flex: 1 }} />
         <ThemeToggle />
+        <button
+          className="refresh"
+          title="pantau individu (threads/ig/x)"
+          onClick={() => router.push("/gettargetmbahna")}
+        >
+          🎯
+        </button>
         <button className="refresh" onClick={() => load(true)} disabled={loading}>
           ↻
         </button>

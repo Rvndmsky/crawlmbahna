@@ -42,6 +42,35 @@ konektor terpisah:
 Tiap konektor tinggal mengembalikan `NewsItem[]` (lihat `src/lib/search.ts`) lalu
 digabung ke hasil web search.
 
+## Halaman `/gettargetmbahna` — pantau individu di sosmed
+
+Info kedua dari website ini (terpisah dari mesin berita `/search`): pemantauan
+**perorangan** — tokoh publik / influencer — di media sosial.
+
+- Cakupan tahap ini **hanya 3 platform**: **Threads, Instagram, X (Twitter)**.
+  (TikTok/FB/YouTube/Telegram sengaja belum dipakai.)
+- **Daftar nama target** dikelola dari halaman itu (tambah satu-satu atau tempel
+  banyak nama sekaligus). Disimpan di `data/targets.json`; di Vercel pakai ENV
+  `TARGET_NAMES="Nama A, Nama B"`.
+- **Validitas sumber**: yang diutamakan akun **resmi milik orangnya** + akun
+  terverifikasi/media. Akun parodi/impersonasi tidak masuk daftar postingan —
+  dipisah ke blok "Akun Mengatasnamakan Target". Filter "hanya akun
+  asli/terverifikasi" aktif secara default.
+- **Interaksi**: post asli, **reply**, dan quote ikut disisir (khas Threads/X),
+  lengkap dengan `reply_to` — jadi kelihatan dia berbalasan dengan siapa.
+- **Gerakan/mobilisasi**: postingan yang menyerukan atau membahas demo, aksi
+  massa, seruan turun ke jalan, petisi, boikot, mogok, penggalangan, kampanye
+  politik dirangkum di blok "Gerakan & Mobilisasi Terkait" (jenis, tanggal,
+  lokasi, penggerak, peran target, skala, status, sumber).
+- Klik kartu postingan → dossier intel (sama seperti halaman berita).
+
+API: `GET /api/target?name=...&days=14&fresh=1`,
+`GET|POST|DELETE /api/targets` (kelola daftar nama).
+
+Batas privasi yang dipaksakan di prompt: hanya konten publik; tidak memuat
+alamat rumah, NIK, nomor telepon, email pribadi, data keluarga/anak, data
+medis/keuangan; nama yang jelas bukan figur publik tidak dipantau.
+
 ## Struktur
 ```
 src/

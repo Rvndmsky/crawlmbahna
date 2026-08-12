@@ -121,6 +121,14 @@ function Results() {
             ↻
           </button>
         </form>
+        <button
+          type="button"
+          className="refresh"
+          title="pantau individu (threads/ig/x)"
+          onClick={() => router.push("/gettargetmbahna")}
+        >
+          🎯
+        </button>
         <button type="button" className="refresh" title="dashboard" onClick={() => router.push("/")}>
           🔥
         </button>
