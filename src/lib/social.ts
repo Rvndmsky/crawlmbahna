@@ -57,7 +57,7 @@ export type MovementType =
   | "kampanye_politik";
 
 export type SocialPost = {
-  platform: string; // threads|instagram|x (web = berita yang mengutip post)
+  platform: string; // threads|instagram|x (hanya post sosmed asli)
   account: string; // nama/handle akun pengunggah
   accountUrl: string;
   url: string; // URL post asli
@@ -100,12 +100,16 @@ export type ImpersonatorAccount = {
   reason: string;
 };
 
+export type AccountStatus = "aktif" | "nonaktif" | "tidak_diketahui";
+
 export type TargetAccount = {
   platform: string;
-  handle: string;
-  url: string;
+  handle: string; // username, mis. @nama
+  url: string; // URL profil
   verified: boolean;
   followers: string; // teks apa adanya, mis. "1,2 jt"
+  status: AccountStatus; // aktif = masih posting dalam ~90 hari
+  lastPost: string; // tanggal aktivitas terakhir yang terlihat
 };
 
 export type TargetProfile = {
@@ -115,6 +119,8 @@ export type TargetProfile = {
   org: string; // instansi/organisasi/partai tempat dia bernaung
   domisili: string; // kota/daerah aktivitas publik (level kota, bukan alamat)
   bio: string; // profil publik singkat orangnya
+  photo: string; // URL foto profil publik (dari akun resmi/situs resmi)
+  photoSource: string; // dari mana foto itu diambil
   accounts: TargetAccount[]; // akun resmi milik orang ini
 };
 
@@ -147,8 +153,15 @@ Tugasmu: memetakan JEJAK & INTERAKSI orang itu serta percakapan publik tentang d
 
 PLATFORM (TAHAP INI HANYA 3, jangan keluar dari ini):
 1. THREADS  2. INSTAGRAM (post/reels publik)  3. X / TWITTER
-Boleh pakai portal berita HANYA bila beritanya mengutip/membahas postingan di 3 platform itu
-(tandai platform "web"). Jangan ambil TikTok, Facebook, YouTube, Telegram, Reddit, forum.
+Jangan ambil TikTok, Facebook, YouTube, Telegram, Reddit, forum.
+
+DILARANG KERAS untuk bagian "posts": mengambil ARTIKEL PORTAL BERITA.
+Isi "posts" WAJIB berupa POSTINGAN MEDIA SOSIAL ASLI dengan URL langsung ke post-nya
+(threads.net/..., instagram.com/p/... atau /reel/..., x.com/.../status/...).
+URL ke detik.com, kompas.com, tribunnews, cnnindonesia, blog, atau situs berita apa pun
+= TOLAK, jangan dimasukkan. Banyak portal memuat klaim palsu/hoaks — sumbernya harus
+postingan aslinya, bukan tulisan orang tentang postingan itu. Portal berita boleh dipakai
+diam-diam untuk MENEMUKAN post aslinya, tapi yang dilaporkan tetap URL post media sosialnya.
 
 VALIDITAS SUMBER — PALING PENTING:
 - UTAMAKAN akun ASLI: akun RESMI milik orang itu sendiri (centang/diakui publik & media),
@@ -193,8 +206,18 @@ KELUARAN 5 bagian:
 
 1) "profile" — identitas publik ORANG-nya: "name" (ejaan resmi), "aka" (panggilan/ejaan lain
    yang dipakai warganet), "role" (peran/jabatan publik saat ini), "org", "domisili" (kota saja,
-   JANGAN alamat), "bio" (2-3 kalimat: siapa dia, kiprahnya, kenapa jadi sorotan), dan
-   "accounts" = akun RESMI miliknya di threads/instagram/x (platform, handle, url, verified, followers).
+   JANGAN alamat), "bio" (2-3 kalimat: siapa dia, kiprahnya, kenapa jadi sorotan).
+   - "photo": URL FOTO PROFIL/potret resmi orang ini yang publik & bisa dibuka langsung
+     (file gambar .jpg/.jpeg/.png/.webp). Sumber yang boleh: foto profil akun RESMI-nya,
+     situs resmi instansi/partainya, atau Wikimedia Commons. JANGAN pakai foto dari akun
+     palsu/parodi, JANGAN halaman HTML (harus URL gambarnya langsung), JANGAN mengarang URL.
+     Kalau tidak yakin fotonya benar orang ini, kosongkan.
+   - "photo_source": asal foto (mis. "akun Instagram resmi @x" / "Wikimedia Commons").
+   - "accounts" = akun RESMI miliknya di threads/instagram/x. Tiap akun isi:
+     "platform", "handle" (username), "url" (URL profil), "verified" (centang platform),
+     "followers" (jumlah pengikut apa adanya, mis. "1,2 jt" — kosongkan bila tak terlihat),
+     "status": aktif (masih memposting dalam ~90 hari terakhir) | nonaktif (lama vakum/ditutup)
+     | tidak_diketahui, dan "last_post" (tanggal aktivitas terakhir yang terlihat).
 
 2) "impersonators" — akun yang MENGATASNAMAKAN dia (parodi/impersonasi/fanbase yang mengaku dia):
    platform, handle, url, "reason". Kosongkan bila tidak ada.
@@ -204,8 +227,10 @@ KELUARAN 5 bagian:
 
 4) "movements" — 0-6 gerakan/aksi kolektif terkait dia (lihat aturan GERAKAN di atas).
 
-5) "posts" — 12-25 item paling relevan & terbaru (campur post asli, reply, quote):
-   - "platform": threads|instagram|x|web. "account", "account_url", "url", "published" (ISO 8601).
+5) "posts" — 12-25 POSTINGAN MEDIA SOSIAL paling relevan & terbaru (campur post asli, reply, quote).
+   BUKAN artikel berita — lihat larangan di atas.
+   - "platform": threads|instagram|x saja. "account", "account_url",
+     "url" (URL post media sosial asli), "published" (ISO 8601).
    - "account_type", "verified", "by_target", "post_type", "reply_to" (lihat aturan di atas).
    - "content" kutipan singkat isi post (maks ~300 karakter, apa adanya).
    - "summary" ringkasan Bahasa Indonesia 1 kalimat.
@@ -221,7 +246,9 @@ EFISIENSI: batasi pencarian web seperlunya (maksimal ~8 kali).
 Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
 {
   "profile": { "name":"", "aka":[""], "role":"", "org":"", "domisili":"", "bio":"",
-    "accounts":[{"platform":"instagram","handle":"@x","url":"","verified":false,"followers":""}] },
+    "photo":"", "photo_source":"",
+    "accounts":[{"platform":"instagram","handle":"@x","url":"","verified":false,
+      "followers":"","status":"aktif","last_post":""}] },
   "impersonators": [{ "platform":"x", "handle":"@x_parody", "url":"", "reason":"" }],
   "issues": [{ "topic":"", "summary":"", "heat":0, "sentiment":"neutral" }],
   "movements": [{ "jenis":"demo", "topic":"", "summary":"", "tanggal":"", "lokasi":"",
@@ -233,9 +260,26 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
     "engagement":0, "stance":"netral", "flag":"none" }]
 }`;
 
-// Tahap ini hanya 3 platform sosial; "web" dipakai untuk berita yang mengutip post.
+// Tahap ini hanya 3 platform sosial. Artikel portal berita TIDAK diterima.
 export const PLATFORMS = ["threads", "instagram", "x"];
-const ALL_PLATFORMS = [...PLATFORMS, "web"];
+
+// Host resmi tiap platform — dipakai memastikan URL post benar-benar sosmed,
+// bukan tulisan portal berita tentang postingan itu.
+const HOST_OK: Record<string, RegExp> = {
+  threads: /(^|\.)threads\.(net|com)$/i,
+  instagram: /(^|\.)instagram\.com$/i,
+  x: /(^|\.)(x|twitter)\.com$/i,
+};
+
+function socialHost(url: string, platform: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    const re = HOST_OK[platform];
+    return re ? re.test(host) : false;
+  } catch {
+    return false;
+  }
+}
 
 const ACCOUNT_TYPES: AccountType[] = [
   "resmi",
@@ -280,11 +324,29 @@ const sentOf = (s: any): "positive" | "negative" | "neutral" =>
 const num0100 = (n: any) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
 const score = (n: any) => Math.max(-1, Math.min(1, Number(n) || 0));
 const platformOf = (p: any) => {
-  const v = String(p || "web").toLowerCase();
+  const v = String(p || "").toLowerCase();
   if (v === "twitter" || v === "x.com") return "x";
   if (v === "ig") return "instagram";
-  return ALL_PLATFORMS.includes(v) ? v : "web";
+  return PLATFORMS.includes(v) ? v : "";
 };
+
+// Tebak platform dari URL bila model salah/lupa isi field platform.
+function platformFromUrl(url: string): string {
+  for (const p of PLATFORMS) if (socialHost(url, p)) return p;
+  return "";
+}
+
+const statusOf = (s: any): AccountStatus =>
+  ["aktif", "nonaktif", "tidak_diketahui"].includes(s) ? s : "tidak_diketahui";
+
+// Foto profil harus URL gambar langsung (bukan halaman HTML).
+function photoOf(u: any): string {
+  const url = String(u || "").trim();
+  if (!/^https?:\/\//i.test(url)) return "";
+  return /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url) || /(fbcdn|cdninstagram|twimg|wikimedia)/i.test(url)
+    ? url
+    : "";
+}
 const stanceOf = (s: any): Stance =>
   ["pro", "kontra", "netral"].includes(s) ? s : "netral";
 const flagOf = (f: any): PostFlag => (FLAGS.includes(f) ? f : "none");
@@ -309,27 +371,38 @@ function parse(
     org: String(p.org || ""),
     domisili: String(p.domisili || ""),
     bio: String(p.bio || ""),
+    photo: photoOf(p.photo),
+    photoSource: String(p.photo_source || p.photoSource || ""),
     accounts: (Array.isArray(p.accounts) ? p.accounts : [])
       .filter((a: any) => a && (a.handle || a.url))
-      .map((a: any) => ({
-        platform: platformOf(a.platform),
-        handle: String(a.handle || ""),
-        url: String(a.url || ""),
-        verified: !!a.verified,
-        followers: String(a.followers || ""),
-      })),
+      .map((a: any) => {
+        const url = String(a.url || "");
+        return {
+          platform: platformOf(a.platform) || platformFromUrl(url),
+          handle: String(a.handle || ""),
+          url,
+          verified: !!a.verified,
+          followers: String(a.followers || ""),
+          status: statusOf(a.status),
+          lastPost: String(a.last_post || a.lastPost || ""),
+        };
+      })
+      .filter((a: TargetAccount) => a.platform),
   };
 
   const impersonators: ImpersonatorAccount[] = (
     Array.isArray(parsed.impersonators) ? parsed.impersonators : []
   )
     .filter((a: any) => a && (a.handle || a.url))
-    .map((a: any) => ({
-      platform: platformOf(a.platform),
-      handle: String(a.handle || ""),
-      url: String(a.url || ""),
-      reason: String(a.reason || ""),
-    }));
+    .map((a: any) => {
+      const url = String(a.url || "");
+      return {
+        platform: platformOf(a.platform) || platformFromUrl(url) || "sosmed",
+        handle: String(a.handle || ""),
+        url,
+        reason: String(a.reason || ""),
+      };
+    });
 
   const issues: TargetIssue[] = (Array.isArray(parsed.issues) ? parsed.issues : [])
     .filter((i: any) => i && i.topic)
@@ -364,11 +437,12 @@ function parse(
     .filter((s: any) => s && s.url)
     .map((s: any): SocialPost => {
       const accountType = acctOf(s.account_type || s.accountType);
+      const url = String(s.url || "");
       return {
-        platform: platformOf(s.platform),
+        platform: platformOf(s.platform) || platformFromUrl(url),
         account: String(s.account || ""),
         accountUrl: String(s.account_url || s.accountUrl || ""),
-        url: String(s.url || ""),
+        url,
         published: String(s.published || ""),
         content: String(s.content || "").slice(0, 400),
         summary: String(s.summary || ""),
@@ -386,8 +460,14 @@ function parse(
         movement: moveOf(s.movement),
       };
     })
-    // Akun palsu tidak boleh nyasar ke daftar post (sumber tidak sahih).
-    .filter((s: SocialPost) => s.accountType !== "palsu");
+    // Akun palsu tidak boleh nyasar ke daftar post (sumber tidak sahih), dan
+    // URL wajib post sosmed asli — artikel portal berita dibuang di sini.
+    .filter(
+      (s: SocialPost) =>
+        s.accountType !== "palsu" &&
+        PLATFORMS.includes(s.platform) &&
+        socialHost(s.url, s.platform)
+    );
 
   return { profile, issues, movements, impersonators, posts: rank(posts) };
 }
@@ -436,6 +516,8 @@ export async function crawlTarget(
         org: "",
         domisili: "",
         bio: "",
+        photo: "",
+        photoSource: "",
         accounts: [],
       },
       issues: [],
@@ -464,7 +546,10 @@ export async function crawlTarget(
     `Tandai postingan yang menyerukan/membahas gerakan (demo, aksi massa, petisi, boikot, ` +
     `penggalangan) dan rangkum di "movements". ` +
     `Utamakan akun RESMI milik orang ini dan akun terverifikasi/media; akun palsu/parodi taruh ` +
-    `di "impersonators", jangan di "posts". Urut dari terbaru, sertakan URL post asli. ` +
+    `di "impersonators", jangan di "posts". Urut dari terbaru. ` +
+    `"posts" WAJIB berisi URL postingan sosmed asli (threads.net/…, instagram.com/p|reel/…, ` +
+    `x.com/…/status/…) — JANGAN artikel portal berita, banyak yang memuat klaim palsu. ` +
+    `Lengkapi juga foto profil resmi ("photo") serta status & jumlah followers tiap akun. ` +
     `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`;
 
   const text = await runWeb(SYSTEM, prompt, 12000);

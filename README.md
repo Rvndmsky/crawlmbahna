@@ -56,6 +56,13 @@ Info kedua dari website ini (terpisah dari mesin berita `/search`): pemantauan
   terverifikasi/media. Akun parodi/impersonasi tidak masuk daftar postingan —
   dipisah ke blok "Akun Mengatasnamakan Target". Filter "hanya akun
   asli/terverifikasi" aktif secara default.
+- **Kartu profil**: foto profil publik (dari akun resmi/situs resmi/Wikimedia;
+  jatuh ke inisial kalau gagal dimuat) + tabel akun sosmed — Platform,
+  Username/URL, Status (aktif/non-aktif), Followers, Aktivitas terakhir.
+- **Bukan artikel berita**: isi "Postingan & Interaksi" wajib URL postingan
+  aslinya (`threads.net/…`, `instagram.com/p|reel/…`, `x.com/…/status/…`).
+  Item yang URL-nya mengarah ke portal berita ditolak di parser — portal sering
+  memuat klaim palsu, jadi yang dipakai postingan sumbernya langsung.
 - **Interaksi**: post asli, **reply**, dan quote ikut disisir (khas Threads/X),
   lengkap dengan `reply_to` — jadi kelihatan dia berbalasan dengan siapa.
 - **Gerakan/mobilisasi**: postingan yang menyerukan atau membahas demo, aksi

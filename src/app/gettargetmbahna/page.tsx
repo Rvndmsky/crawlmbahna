@@ -47,12 +47,16 @@ type TargetResult = {
     org: string;
     domisili: string;
     bio: string;
+    photo: string;
+    photoSource: string;
     accounts: {
       platform: string;
       handle: string;
       url: string;
       verified: boolean;
       followers: string;
+      status: "aktif" | "nonaktif" | "tidak_diketahui";
+      lastPost: string;
     }[];
   };
   issues: { topic: string; summary: string; heat: number; sentiment: Sent }[];
@@ -116,6 +120,7 @@ function TargetView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [photoErr, setPhotoErr] = useState(false); // foto gagal dimuat -> inisial
 
   // Filter tampilan hasil.
   const [fPlat, setFPlat] = useState<string>("all");
@@ -179,6 +184,7 @@ function TargetView() {
     setError(null);
     setData(null);
     setElapsed(0);
+    setPhotoErr(false);
     const started = Date.now();
     const timer = setInterval(
       () => setElapsed(Math.round((Date.now() - started) / 1000)),
@@ -431,7 +437,17 @@ function TargetView() {
             {/* Profil orang */}
             <div className="panel profile-card">
               <div className="profile-head">
-                <div className="avatar">{(data.profile.name || "?").charAt(0)}</div>
+                {data.profile.photo && !photoErr ? (
+                  <img
+                    className="avatar-img"
+                    src={data.profile.photo}
+                    alt={data.profile.name}
+                    referrerPolicy="no-referrer"
+                    onError={() => setPhotoErr(true)}
+                  />
+                ) : (
+                  <div className="avatar">{(data.profile.name || "?").charAt(0)}</div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="profile-name">{data.profile.name}</div>
                   <div className="muted" style={{ fontSize: 13 }}>
@@ -455,22 +471,53 @@ function TargetView() {
                   {data.profile.bio}
                 </div>
               )}
+              {data.profile.photo && !photoErr && data.profile.photoSource && (
+                <div className="hint" style={{ marginTop: 6 }}>
+                  📷 foto: {data.profile.photoSource}
+                </div>
+              )}
+
               {data.profile.accounts.length > 0 && (
-                <div className="acct-list">
-                  {data.profile.accounts.map((a, i) => (
-                    <a
-                      key={i}
-                      className="acct"
-                      href={a.url || "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <span className="plat-badge">{PLAT_ICON[a.platform] || a.platform}</span>
-                      <b>{a.handle}</b>
-                      {a.verified && <span className="ver">✔ verified</span>}
-                      {a.followers && <span className="muted">· {a.followers}</span>}
-                    </a>
-                  ))}
+                <div className="acct-table-wrap">
+                  <table className="acct-table">
+                    <thead>
+                      <tr>
+                        <th>Platform</th>
+                        <th>Username / URL</th>
+                        <th>Status</th>
+                        <th>Followers</th>
+                        <th>Aktivitas terakhir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.profile.accounts.map((a, i) => (
+                        <tr key={i}>
+                          <td>
+                            <span className="plat-badge">
+                              {PLAT_ICON[a.platform] || a.platform}
+                            </span>
+                          </td>
+                          <td>
+                            <a href={a.url || "#"} target="_blank" rel="noreferrer">
+                              {a.handle || a.url}
+                            </a>
+                            {a.verified && <span className="ver"> ✔</span>}
+                          </td>
+                          <td>
+                            <span className={`acct-status ${a.status}`}>
+                              {a.status === "aktif"
+                                ? "aktif"
+                                : a.status === "nonaktif"
+                                ? "non-aktif"
+                                : "tidak diketahui"}
+                            </span>
+                          </td>
+                          <td className="mono">{a.followers || "—"}</td>
+                          <td className="mono">{a.lastPost || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
