@@ -440,7 +440,8 @@ function TargetView() {
                 {data.profile.photo && !photoErr ? (
                   <img
                     className="avatar-img"
-                    src={data.profile.photo}
+                    // Lewat proxy server: CDN sosmed sering menolak hotlink browser.
+                    src={`/api/photo?u=${encodeURIComponent(data.profile.photo)}`}
                     alt={data.profile.name}
                     referrerPolicy="no-referrer"
                     onError={() => setPhotoErr(true)}
@@ -674,6 +675,15 @@ function TargetView() {
                 hanya akun asli/terverifikasi ({stats?.trusted || 0})
               </label>
             </div>
+
+            {stats && PLATFORMS.some((p) => !stats.plat[p]) && (
+              <div className="hint" style={{ marginTop: -6, marginBottom: 12 }}>
+                Sebaran: {PLATFORMS.map((p) => `${p} ${stats.plat[p] || 0}`).join(" · ")}.
+                Platform bernilai 0 = tidak ada permalink post publik yang ketemu di
+                rentang {data.days} hari ini (post Instagram/Threads memang lebih jarang
+                terindeks daripada X). Coba perpanjang rentang atau tekan ↻.
+              </div>
+            )}
 
             {shown.length === 0 && (
               <div className="state">

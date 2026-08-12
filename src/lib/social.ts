@@ -146,7 +146,8 @@ export type TargetResult = {
 const CACHE_MS =
   (Number(process.env.TARGET_CACHE_MINUTES) || 60) * 60 * 1000;
 
-const SYSTEM = `Kamu analis OSINT media sosial untuk pemantauan SOSOK PERORANGAN (individu) di Indonesia.
+// Aturan yang dipakai semua pass (profil & per-platform).
+const RULES = `Kamu analis OSINT media sosial untuk pemantauan SOSOK PERORANGAN (individu) di Indonesia.
 Target selalu SATU ORANG — tokoh publik/pejabat/influencer/figur dengan jejak publik.
 BUKAN organisasi, BUKAN partai, BUKAN topik. Kalau namanya mirip nama lembaga, tetap ambil ORANG-nya.
 Tugasmu: memetakan JEJAK & INTERAKSI orang itu serta percakapan publik tentang dia.
@@ -200,9 +201,12 @@ BATASAN WAJIB (jangan dilanggar):
   kembalikan posts kosong dan tulis di profile.bio: "bukan figur publik — tidak dipantau".
 - Netral & faktual. Klaim belum terverifikasi tulis sebagai "klaim/dugaan (belum terverifikasi)".
 - Jangan mengarang akun, URL, angka, atau kutipan. Tidak ketemu -> kosongkan / list kosong.
-- Setiap post WAJIB punya URL asli yang bisa dibuka.
+- Setiap post WAJIB punya URL asli yang bisa dibuka.`;
 
-KELUARAN 5 bagian:
+// ---------- Pass 1: profil, akun, impersonator, isu, gerakan ----------
+const SYSTEM_PROFILE = `${RULES}
+
+KELUARAN 4 bagian (JANGAN keluarkan "posts" di pass ini):
 
 1) "profile" — identitas publik ORANG-nya: "name" (ejaan resmi), "aka" (panggilan/ejaan lain
    yang dipakai warganet), "role" (peran/jabatan publik saat ini), "org", "domisili" (kota saja,
@@ -227,21 +231,7 @@ KELUARAN 5 bagian:
 
 4) "movements" — 0-6 gerakan/aksi kolektif terkait dia (lihat aturan GERAKAN di atas).
 
-5) "posts" — 12-25 POSTINGAN MEDIA SOSIAL paling relevan & terbaru (campur post asli, reply, quote).
-   BUKAN artikel berita — lihat larangan di atas.
-   - "platform": threads|instagram|x saja. "account", "account_url",
-     "url" (URL post media sosial asli), "published" (ISO 8601).
-   - "account_type", "verified", "by_target", "post_type", "reply_to" (lihat aturan di atas).
-   - "content" kutipan singkat isi post (maks ~300 karakter, apa adanya).
-   - "summary" ringkasan Bahasa Indonesia 1 kalimat.
-   - "sentiment" positive|negative|neutral + "sentiment_score" -1..1 (nada TERHADAP orang ini).
-   - "engagement" 0-100 (estimasi keramaian like/komentar/share; 0 bila tak diketahui).
-   - "stance": pro | kontra | netral. "movement": jenis gerakan di post ini (none bila tak ada).
-   - "flag": none | hoaks | ujaran_kebencian | provokasi | ancaman | kampanye_terorganisir | doxing.
-     Selain "none" HANYA bila terindikasi kuat ("kampanye_terorganisir" = pola posting seragam/serentak).
-   - Sebar ke tiga platform; jangan semua dari satu platform. Urut dari terbaru.
-
-EFISIENSI: batasi pencarian web seperlunya (maksimal ~8 kali).
+EFISIENSI: batasi pencarian web seperlunya (maksimal ~6 kali).
 
 Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
 {
@@ -252,8 +242,55 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
   "impersonators": [{ "platform":"x", "handle":"@x_parody", "url":"", "reason":"" }],
   "issues": [{ "topic":"", "summary":"", "heat":0, "sentiment":"neutral" }],
   "movements": [{ "jenis":"demo", "topic":"", "summary":"", "tanggal":"", "lokasi":"",
-    "penggerak":"", "peran_target":"disebut", "skala":"", "status":"rencana", "urls":[""] }],
-  "posts": [{ "platform":"threads", "account":"", "account_url":"", "url":"", "published":"",
+    "penggerak":"", "peran_target":"disebut", "skala":"", "status":"rencana", "urls":[""] }]
+}`;
+
+// ---------- Pass 2-4: postingan, SATU platform per pass ----------
+// Dipisah supaya Instagram & Threads tidak kalah jatah pencarian oleh X
+// (post X jauh lebih banyak terindeks mesin pencari).
+const PLATFORM_HINT: Record<string, string> = {
+  threads:
+    `THREADS (threads.com / threads.net). Bentuk URL post: https://www.threads.com/@user/post/XXXX ` +
+    `(domain lama threads.net juga sah). Cara mencari: pakai operator site:threads.com dan ` +
+    `site:threads.net digabung nama target & kata kunci isunya, juga cari lewat handle akun resminya. ` +
+    `Threads penuh balasan — ambil reply, bukan cuma post utama.`,
+  instagram:
+    `INSTAGRAM. Bentuk URL post: https://www.instagram.com/p/XXXX/ atau /reel/XXXX/ ` +
+    `(URL profil saja TIDAK dihitung sebagai post). Cara mencari: operator site:instagram.com ` +
+    `dengan nama target/handle-nya, plus caption khas isunya. Sertakan reels bila relevan.`,
+  x:
+    `X / TWITTER. Bentuk URL post: https://x.com/user/status/XXXX (twitter.com juga sah). ` +
+    `Cara mencari: operator site:x.com / site:twitter.com dengan nama target & isunya. ` +
+    `Ambil campuran post asli, reply, dan quote.`,
+};
+
+const systemPosts = (platform: string) => `${RULES}
+
+PASS INI KHUSUS SATU PLATFORM: ${platform.toUpperCase()}.
+${PLATFORM_HINT[platform] || ""}
+
+Cari SEKUAT MUNGKIN di platform ini saja. JANGAN mengembalikan post dari platform lain —
+kalau di platform ini benar-benar tidak ada, kembalikan "posts": [] (jangan diganti platform lain,
+jangan mengarang URL). Usahakan 6-12 item bila memang tersedia.
+
+Keluarkan HANYA "posts": 6-12 POSTINGAN ${platform.toUpperCase()} paling relevan & terbaru
+(campur post asli, reply, quote). BUKAN artikel berita — lihat larangan di atas.
+   - "platform": "${platform}". "account", "account_url",
+     "url" (URL post asli di ${platform}), "published" (ISO 8601).
+   - "account_type", "verified", "by_target", "post_type", "reply_to" (lihat aturan di atas).
+   - "content" kutipan singkat isi post (maks ~300 karakter, apa adanya).
+   - "summary" ringkasan Bahasa Indonesia 1 kalimat.
+   - "sentiment" positive|negative|neutral + "sentiment_score" -1..1 (nada TERHADAP orang ini).
+   - "engagement" 0-100 (estimasi keramaian like/komentar/share; 0 bila tak diketahui).
+   - "stance": pro | kontra | netral. "movement": jenis gerakan di post ini (none bila tak ada).
+   - "flag": none | hoaks | ujaran_kebencian | provokasi | ancaman | kampanye_terorganisir | doxing.
+     Selain "none" HANYA bila terindikasi kuat. Urut dari terbaru.
+
+EFISIENSI: maksimal ~6 kali pencarian web.
+
+Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
+{
+  "posts": [{ "platform":"${platform}", "account":"", "account_url":"", "url":"", "published":"",
     "account_type":"terverifikasi", "verified":true, "by_target":false,
     "post_type":"reply", "reply_to":"", "movement":"none",
     "content":"", "summary":"", "sentiment":"neutral", "sentiment_score":0,
@@ -339,13 +376,41 @@ function platformFromUrl(url: string): string {
 const statusOf = (s: any): AccountStatus =>
   ["aktif", "nonaktif", "tidak_diketahui"].includes(s) ? s : "tidak_diketahui";
 
-// Foto profil harus URL gambar langsung (bukan halaman HTML).
+// Terima URL http(s) apa pun; yang memastikan itu benar-benar gambar adalah
+// proxy /api/photo (cek content-type). Halaman HTML yang jelas bukan gambar
+// disaring di sini supaya tidak buang-buang request.
 function photoOf(u: any): string {
   const url = String(u || "").trim();
   if (!/^https?:\/\//i.test(url)) return "";
-  return /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url) || /(fbcdn|cdninstagram|twimg|wikimedia)/i.test(url)
-    ? url
-    : "";
+  if (/\.(html?|php|aspx)(\?|$)/i.test(url)) return "";
+  return url;
+}
+
+// Cadangan foto: REST Wikipedia (tanpa API key). Dipakai kalau model tidak
+// memberi foto atau fotonya ditolak — tokoh publik biasanya punya artikel.
+async function wikiPhoto(
+  name: string
+): Promise<{ photo: string; source: string }> {
+  const langs = ["id", "en"];
+  for (const lang of langs) {
+    try {
+      const res = await fetch(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+          name
+        )}`,
+        { headers: { "User-Agent": "mbahna-osint/1.0" } }
+      );
+      if (!res.ok) continue;
+      const json: any = await res.json();
+      const img = json?.originalimage?.source || json?.thumbnail?.source || "";
+      if (img) {
+        return { photo: String(img), source: `Wikipedia (${lang})` };
+      }
+    } catch {
+      /* lanjut ke bahasa berikutnya */
+    }
+  }
+  return { photo: "", source: "" };
 }
 const stanceOf = (s: any): Stance =>
   ["pro", "kontra", "netral"].includes(s) ? s : "netral";
@@ -538,28 +603,59 @@ export async function crawlTarget(
   const now = new Date();
   const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   const iso = (d: Date) => d.toISOString().slice(0, 10);
-  const prompt =
+  const periode =
     `NAMA TARGET (individu/perorangan): "${n}".\n` +
-    `Hari ini: ${iso(now)}. Rentang pantau: ${iso(since)} s/d ${iso(now)} (${days} hari terakhir).\n` +
-    `Sisir HANYA Threads, Instagram, dan X/Twitter yang publik. Ambil post asli DAN balasan (reply) ` +
-    `serta kutipan (quote) — termasuk interaksi orang ini dengan akun lain. ` +
-    `Tandai postingan yang menyerukan/membahas gerakan (demo, aksi massa, petisi, boikot, ` +
-    `penggalangan) dan rangkum di "movements". ` +
-    `Utamakan akun RESMI milik orang ini dan akun terverifikasi/media; akun palsu/parodi taruh ` +
-    `di "impersonators", jangan di "posts". Urut dari terbaru. ` +
-    `"posts" WAJIB berisi URL postingan sosmed asli (threads.net/…, instagram.com/p|reel/…, ` +
-    `x.com/…/status/…) — JANGAN artikel portal berita, banyak yang memuat klaim palsu. ` +
-    `Lengkapi juga foto profil resmi ("photo") serta status & jumlah followers tiap akun. ` +
+    `Hari ini: ${iso(now)}. Rentang pantau: ${iso(since)} s/d ${iso(now)} (${days} hari terakhir).\n`;
+
+  const profilePrompt =
+    periode +
+    `Petakan profil publik ORANG ini: identitas, foto profil resmi ("photo"), akun resmi di ` +
+    `Threads/Instagram/X lengkap dengan status aktif-nonaktif, jumlah followers, dan tanggal ` +
+    `aktivitas terakhir. Daftar juga akun palsu/parodi yang mengatasnamakan dia di "impersonators", ` +
+    `isu yang menyeret namanya, serta gerakan (demo/aksi massa/petisi/boikot/penggalangan) yang ` +
+    `terkait dia. JANGAN keluarkan "posts" di pass ini. ` +
     `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`;
 
-  const text = await runWeb(SYSTEM, prompt, 12000);
-  const parsedResult = parse(text, n);
+  const postPrompt = (p: string) =>
+    periode +
+    `Sisir HANYA ${p.toUpperCase()}. Ambil post asli DAN balasan (reply) serta kutipan (quote) — ` +
+    `termasuk interaksi orang ini dengan akun lain. Utamakan akun RESMI miliknya dan akun ` +
+    `terverifikasi/media. URL wajib permalink post di ${p} — JANGAN artikel portal berita, ` +
+    `JANGAN platform lain. Tidak ada hasil di ${p} -> kembalikan "posts": []. ` +
+    `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`;
+
+  // Empat pass paralel: 1 profil + 1 per platform. Tanpa pemisahan ini, satu
+  // pass gabungan cenderung habis di X karena post X paling banyak terindeks.
+  const [profileRes, ...platformRes] = await Promise.allSettled([
+    runWeb(SYSTEM_PROFILE, profilePrompt, 6000),
+    ...PLATFORMS.map((p) => runWeb(systemPosts(p), postPrompt(p), 6000)),
+  ]);
+
+  const base = parse(
+    profileRes.status === "fulfilled" ? profileRes.value : "",
+    n
+  );
+  const perPlatform = platformRes.map((r, i) =>
+    parse(r.status === "fulfilled" ? r.value : "", n).posts.filter(
+      (s) => s.platform === PLATFORMS[i]
+    )
+  );
+
+  // Foto kosong -> coba Wikipedia sebelum menyerah ke avatar inisial.
+  let profile = base.profile;
+  if (!profile.photo) {
+    const w = await wikiPhoto(profile.name || n);
+    if (w.photo) profile = { ...profile, photo: w.photo, photoSource: w.source };
+  }
+
   const result: TargetResult = {
     name: n,
     days,
     generatedAt: Date.now(),
     cached: false,
-    ...parsedResult,
+    ...base,
+    profile,
+    posts: rank([...base.posts, ...perPlatform.flat()]),
   };
   if (result.posts.length > 0) setCache<TargetResult>(key, n, result);
   return result;
