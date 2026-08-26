@@ -1,6 +1,7 @@
 import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 import { normName } from "./targets";
+import { getFbPosts, type FbRawPost } from "./fbstore";
 
 // Mesin pemantauan MEDIA SOSIAL per ORANG (individu) — terpisah dari /search
 // yang fokus berita. Cakupan tahap ini SENGAJA dibatasi 3 platform tempat
@@ -297,8 +298,13 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
     "engagement":0, "stance":"netral", "flag":"none" }]
 }`;
 
-// Tahap ini hanya 3 platform sosial. Artikel portal berita TIDAK diterima.
-export const PLATFORMS = ["threads", "instagram", "x"];
+// Platform yang disisir MODEL lewat web search.
+export const MODEL_PLATFORMS = ["threads", "instagram", "x"];
+
+// Facebook tidak ikut pass model (hasil pencarian publiknya nyaris tidak
+// terindeks). Datanya datang dari worker Chromium — lihat worker/fb-worker.mjs
+// dan /api/fb/ingest.
+export const PLATFORMS = [...MODEL_PLATFORMS, "facebook"];
 
 // Host resmi tiap platform — dipakai memastikan URL post benar-benar sosmed,
 // bukan tulisan portal berita tentang postingan itu.
@@ -306,6 +312,7 @@ const HOST_OK: Record<string, RegExp> = {
   threads: /(^|\.)threads\.(net|com)$/i,
   instagram: /(^|\.)instagram\.com$/i,
   x: /(^|\.)(x|twitter)\.com$/i,
+  facebook: /(^|\.)(facebook|fb)\.com$/i,
 };
 
 function socialHost(url: string, platform: string): boolean {
@@ -541,6 +548,66 @@ function urlKey(u: string): string {
   return u.replace(/^https?:\/\//, "").replace(/\/+$/, "").toLowerCase();
 }
 
+// ---------- Facebook: hasil worker Chromium ----------
+// Post FB tidak lewat model, jadi analisanya seperlunya & jujur: sentimen
+// dibiarkan netral (bukan hasil analisa), gerakan dideteksi dari kata kunci.
+const MOVE_WORDS: [RegExp, MovementType][] = [
+  [/\b(demo|unjuk rasa|turun ke jalan|long march)\b/i, "demo"],
+  [/\b(aksi massa|aksi damai|aksi solidaritas)\b/i, "aksi_massa"],
+  [/\b(ajak|seruan|serukan|mari|ayo)\b.{0,40}\b(aksi|demo|kumpul)\b/i, "seruan_massa"],
+  [/\b(petisi|change\.org)\b/i, "petisi"],
+  [/\b(boikot)\b/i, "boikot"],
+  [/\b(mogok)\b/i, "mogok"],
+  [/\b(galang dana|penggalangan|donasi|patungan)\b/i, "penggalangan"],
+  [/\b(kampanye|kampanyekan|coblos|menang(kan)?)\b/i, "kampanye_politik"],
+];
+
+function detectMovement(text: string): MovementType {
+  for (const [re, kind] of MOVE_WORDS) if (re.test(text)) return kind;
+  return "none";
+}
+
+// "1,2 rb reaksi - 340 komentar" -> angka terbesar, dipetakan ke skala 0-100.
+function engagementFrom(text: string): number {
+  const nums = (text.match(/[\d.,]+\s*(rb|jt|k|m)?/gi) || []).map((raw) => {
+    const m = raw.trim().toLowerCase();
+    const n = Number(m.replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", "."));
+    if (Number.isNaN(n)) return 0;
+    if (/rb|k/.test(m)) return n * 1000;
+    if (/jt|m/.test(m)) return n * 1000000;
+    return n;
+  });
+  const top = Math.max(0, ...nums);
+  if (!top) return 0;
+  // skala logaritmik: 10 -> ~25, 1.000 -> ~50, 100.000 -> ~75
+  return Math.max(1, Math.min(100, Math.round((Math.log10(top) / 6) * 100)));
+}
+
+function fbToPost(p: FbRawPost): SocialPost {
+  const text = `${p.content} ${p.account}`;
+  return {
+    platform: "facebook",
+    account: p.account,
+    accountUrl: p.accountUrl,
+    url: p.url,
+    published: p.published,
+    content: p.content,
+    // Tidak diringkas model; tandai asalnya supaya tidak dikira analisa.
+    summary: "Diambil worker Facebook (Page/grup publik) — belum diringkas model.",
+    sentiment: "neutral",
+    sentiment_score: 0,
+    engagement: engagementFrom(p.engagementText),
+    stance: "netral",
+    flag: "none",
+    accountType: "publik",
+    verified: false,
+    byTarget: false,
+    postType: "post",
+    replyTo: "",
+    movement: detectMovement(text),
+  };
+}
+
 // Urutan tampil: pernyataan langsung target > akun tepercaya > ber-flag/gerakan
 // > engagement tertinggi. Duplikat URL dibuang.
 function rank(list: SocialPost[]): SocialPost[] {
@@ -592,11 +659,19 @@ export async function crawlTarget(
     };
   }
 
+  // Facebook: hasil worker Chromium yang masuk lewat /api/fb/ingest. Dibaca di
+  // luar cache model supaya kiriman worker terbaru langsung kelihatan.
+  const fb = getFbPosts(n).map(fbToPost);
+
   const key = `target:${normName(n)}:${days}`;
   if (!opts.fresh) {
     const cached = getCache<TargetResult>(key, CACHE_MS);
     if (cached && cached.data.posts.length > 0) {
-      return { ...cached.data, cached: true };
+      return {
+        ...cached.data,
+        cached: true,
+        posts: rank([...cached.data.posts, ...fb]),
+      };
     }
   }
 
@@ -628,7 +703,7 @@ export async function crawlTarget(
   // pass gabungan cenderung habis di X karena post X paling banyak terindeks.
   const [profileRes, ...platformRes] = await Promise.allSettled([
     runWeb(SYSTEM_PROFILE, profilePrompt, 6000),
-    ...PLATFORMS.map((p) => runWeb(systemPosts(p), postPrompt(p), 6000)),
+    ...MODEL_PLATFORMS.map((p) => runWeb(systemPosts(p), postPrompt(p), 6000)),
   ]);
 
   const base = parse(
@@ -637,7 +712,7 @@ export async function crawlTarget(
   );
   const perPlatform = platformRes.map((r, i) =>
     parse(r.status === "fulfilled" ? r.value : "", n).posts.filter(
-      (s) => s.platform === PLATFORMS[i]
+      (s) => s.platform === MODEL_PLATFORMS[i]
     )
   );
 
@@ -657,6 +732,8 @@ export async function crawlTarget(
     profile,
     posts: rank([...base.posts, ...perPlatform.flat()]),
   };
+  // Yang di-cache hanya hasil model; post Facebook digabung saat dibaca supaya
+  // kiriman worker berikutnya tidak tertahan cache.
   if (result.posts.length > 0) setCache<TargetResult>(key, n, result);
-  return result;
+  return { ...result, posts: rank([...result.posts, ...fb]) };
 }

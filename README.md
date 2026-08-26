@@ -71,6 +71,25 @@ Info kedua dari website ini (terpisah dari mesin berita `/search`): pemantauan
   lokasi, penggerak, peran target, skala, status, sumber).
 - Klik kartu postingan → dossier intel (sama seperti halaman berita).
 
+### Facebook lewat worker Chromium (opsional)
+
+Facebook tidak ikut disisir model — hasil pencarian publiknya nyaris tidak
+terindeks. Datanya datang dari worker terpisah di `worker/`:
+
+```
+[PC/VPS] worker Chromium  --POST /api/fb/ingest-->  [website]  -->  /gettargetmbahna
+```
+
+- Login manual sekali (`npm run login` di folder `worker/`) — sandi tidak
+  disimpan skrip, hanya cookie sesi di `worker/fb-profile/`.
+- Cakupan: Page publik, grup publik, hasil pencarian publik. Postingan
+  teman-saja dan grup tertutup tidak diambil.
+- Endpoint ingest dijaga ENV `FB_WORKER_TOKEN`; tanpa ENV itu endpoint tertutup.
+- Post FB masuk apa adanya (belum diringkas model), status akun `publik`, jadi
+  tersembunyi kalau filter "hanya akun asli/terverifikasi" menyala.
+- Peringatan: otomasi akun melanggar ToS Facebook, akun bisa kena ban. Pakai
+  akun sekunder. Detail: `worker/README.md`.
+
 API: `GET /api/target?name=...&days=14&fresh=1`,
 `GET|POST|DELETE /api/targets` (kelola daftar nama).
 

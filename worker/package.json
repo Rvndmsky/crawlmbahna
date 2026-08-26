@@ -1,0 +1,16 @@
+{
+  "name": "mbahna-fb-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker crawl Facebook (Page & grup publik) pakai Chromium headless. Jalan di PC/VPS, bukan di Vercel.",
+  "scripts": {
+    "login": "node fb-worker.mjs --login",
+    "check": "node fb-worker.mjs --check",
+    "crawl": "node fb-worker.mjs",
+    "watch": "node fb-worker.mjs --loop"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}

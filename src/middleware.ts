@@ -12,6 +12,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Worker Facebook mengirim tanpa cookie sesi — route-nya menjaga diri sendiri
+  // dengan header x-worker-token (POST) / validateToken (GET).
+  if (pathname === "/api/fb/ingest") {
+    return NextResponse.next();
+  }
+
   const hasSession = !!req.cookies.get(COOKIE)?.value;
   if (!hasSession) {
     if (pathname.startsWith("/api")) {

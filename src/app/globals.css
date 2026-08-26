@@ -1020,3 +1020,24 @@ button { font-family: inherit; }
 @media (max-width: 760px) {
   .avatar-img { width: 56px; height: 56px; }
 }
+
+/* panel worker Facebook di halaman Setup */
+.fb-stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin: 14px 0 4px;
+}
+.fb-stat-row .stat-num { font-size: 26px; }
+pre.cmd {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+}

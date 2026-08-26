@@ -84,11 +84,12 @@ type TargetResult = {
 
 type Target = { name: string; note: string; addedAt: number };
 
-const PLATFORMS = ["threads", "instagram", "x"];
+const PLATFORMS = ["threads", "instagram", "x", "facebook"];
 const PLAT_ICON: Record<string, string> = {
   threads: "@",
   instagram: "IG",
   x: "X",
+  facebook: "FB",
   web: "web",
 };
 const TRUSTED: AccountType[] = ["resmi", "terverifikasi", "media"];
@@ -675,6 +676,17 @@ function TargetView() {
                 hanya akun asli/terverifikasi ({stats?.trusted || 0})
               </label>
             </div>
+
+            {onlyTrusted &&
+              data.posts.some(
+                (p) => p.platform === "facebook" && !TRUSTED.includes(p.accountType)
+              ) && (
+                <div className="hint" style={{ marginTop: -6, marginBottom: 12 }}>
+                  Post Facebook dari worker berstatus akun <b>publik</b> (kepemilikan
+                  belum diverifikasi), jadi tersembunyi oleh filter "hanya akun
+                  asli/terverifikasi". Matikan centang itu untuk melihatnya.
+                </div>
+              )}
 
             {stats && PLATFORMS.some((p) => !stats.plat[p]) && (
               <div className="hint" style={{ marginTop: -6, marginBottom: 12 }}>

@@ -44,6 +44,13 @@ export default function SettingsPage() {
   const [hasKey, setHasKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Status worker Facebook (worker/fb-worker.mjs -> POST /api/fb/ingest)
+  const [fb, setFb] = useState<{
+    queries: number;
+    posts: number;
+    lastCollectedAt: number;
+    workerConfigured: boolean;
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -62,6 +69,11 @@ export default function SettingsPage() {
         setKeyMasked(s.keyMasked || "");
         setHasKey(!!s.hasKey);
       })
+      .catch(() => {});
+
+    fetch("/api/fb/ingest")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j && setFb(j))
       .catch(() => {});
   }, []);
 
@@ -174,6 +186,63 @@ export default function SettingsPage() {
         <button className="save-btn" onClick={save}>
           Simpan
         </button>
+
+        <div className="section-title" style={{ marginTop: 34 }}>
+          📘 Worker Facebook (crawl isu demo)
+        </div>
+        <div className="panel">
+          <div className="hint" style={{ marginTop: 0 }}>
+            Facebook tidak bisa disisir langsung dari website ini (Vercel tidak bisa
+            menjalankan browser). Yang menyisir adalah worker Chromium di
+            komputer/VPS-mu, lalu hasilnya dikirim ke sini. Cakupan:{" "}
+            <b>Page &amp; grup publik</b> saja.
+          </div>
+
+          <div className="fb-stat-row">
+            <div>
+              <div className="stat-num">{fb ? fb.posts : "—"}</div>
+              <div className="stat-lbl">post FB tersimpan</div>
+            </div>
+            <div>
+              <div className="stat-num">{fb ? fb.queries : "—"}</div>
+              <div className="stat-lbl">kueri terpantau</div>
+            </div>
+            <div>
+              <div className="stat-num" style={{ fontSize: 15 }}>
+                {fb?.lastCollectedAt
+                  ? new Date(fb.lastCollectedAt).toLocaleString("id-ID")
+                  : "belum ada"}
+              </div>
+              <div className="stat-lbl">kiriman terakhir</div>
+            </div>
+          </div>
+
+          {fb && !fb.workerConfigured && (
+            <div className="hint">
+              ⚠ <code>FB_WORKER_TOKEN</code> belum di-set di server, jadi endpoint{" "}
+              <code>/api/fb/ingest</code> tertutup. Set ENV itu (nilai sama dipakai di
+              worker) supaya worker bisa mengirim hasil.
+            </div>
+          )}
+
+          <div className="hint">
+            Cara pakai (sekali saja):
+            <pre className="cmd">{`cd worker
+npm install
+npx playwright install chromium
+npm run login      # login manual, sandi kamu sendiri
+npm run crawl      # sisir sekali
+npm run watch      # sisir terus tiap jam`}</pre>
+            ENV worker: <code>APP_URL</code>, <code>FB_WORKER_TOKEN</code>,{" "}
+            <code>FB_KEYWORDS</code> (default: demo, unjuk rasa, aksi massa).
+          </div>
+
+          <div className="hint">
+            ⚠ Otomasi akun melanggar ToS Facebook — akun bisa kena checkpoint/ban.
+            Pakai akun sekunder. Worker hanya menyisir konten publik; postingan
+            teman-saja dan grup tertutup tidak diambil.
+          </div>
+        </div>
 
         <div className="hint" style={{ marginTop: 20 }}>
           ⚠ Key disimpan lokal di <code>data/settings.json</code> pada mesin ini
