@@ -73,6 +73,18 @@ Contoh sekali jalan tanpa daftar target:
 node fb-worker.mjs --q "demo BBM Jakarta" --q "aksi buruh Bekasi"
 ```
 
+## Isi penuh + komentar
+
+Hasil pencarian Facebook cuma memuat cuplikan. Supaya dapat isi utuh dan
+komentar, worker membuka sebagian post satu per satu:
+
+- `FB_DETAIL_PER_QUERY` (default 5) — berapa post per kueri yang dibuka.
+- `FB_COMMENTS_PER_POST` (default 8) — komentar teratas yang diambil, diurutkan
+  dari like terbanyak (itu yang biasanya memicu isu).
+- `FB_FETCH_COMMENTS=false` — matikan kalau mau cepat; hanya cuplikan pencarian.
+
+Judul tidak ada di Facebook, jadi diturunkan dari kalimat pertama isi post.
+
 ## Batas yang dipaksakan
 
 - Hanya **Page publik, grup publik, dan hasil pencarian publik**. Postingan

@@ -42,6 +42,11 @@ const CFG = {
   delayMs: Number(process.env.FB_DELAY_MS) || 4000,
   perQuery: Number(process.env.FB_PER_QUERY) || 12,
   maxQueries: Number(process.env.FB_MAX_QUERIES) || 12,
+  // Buka tiap post untuk ambil isi penuh + komentar teratas. Ini bagian paling
+  // lambat (satu kunjungan halaman per post), jadi jumlahnya dibatasi.
+  withComments: process.env.FB_FETCH_COMMENTS !== "false",
+  detailPerQuery: Number(process.env.FB_DETAIL_PER_QUERY) || 5,
+  commentsPerPost: Number(process.env.FB_COMMENTS_PER_POST) || 8,
   loopMinutes: Number(process.env.FB_LOOP_MINUTES) || 60,
   keywords: (process.env.FB_KEYWORDS || "demo,unjuk rasa,aksi massa")
     .split(",")
@@ -268,6 +273,103 @@ async function scrapeSearch(page, query) {
   }, CFG.perQuery);
 }
 
+// Buka satu post: ambil isi penuh + komentar teratas (yang paling banyak like
+// biasanya yang memicu isu). Facebook mengurutkan "paling relevan" secara
+// bawaan; di sini komentar diurutkan ulang berdasarkan jumlah like.
+async function scrapePostDetail(page, url) {
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await sleep(jitter(3500));
+  // Turun sedikit supaya komentar termuat.
+  for (let i = 0; i < 2; i++) {
+    await page.mouse.wheel(0, 1400);
+    await sleep(jitter(2000));
+  }
+
+  return await page.evaluate((maxComments) => {
+    const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+
+    // "1,2 rb" / "3.4K" -> angka
+    const toNum = (s) => {
+      const m = clean(s).toLowerCase().match(/([\d.,]+)\s*(rb|jt|k|m)?/);
+      if (!m) return 0;
+      const n = Number(m[1].replace(/\./g, "").replace(",", "."));
+      if (Number.isNaN(n)) return 0;
+      if (m[2] === "rb" || m[2] === "k") return Math.round(n * 1000);
+      if (m[2] === "jt" || m[2] === "m") return Math.round(n * 1000000);
+      return Math.round(n);
+    };
+
+    const arts = Array.from(document.querySelectorAll('div[role="article"]'));
+    const isComment = (el) =>
+      /^(comment by|komentar oleh)/i.test(el.getAttribute("aria-label") || "");
+
+    // Kartu post = article yang BUKAN komentar, dengan teks terpanjang.
+    let postEl = null;
+    let content = "";
+    for (const el of arts) {
+      if (isComment(el)) continue;
+      let longest = "";
+      for (const b of el.querySelectorAll('div[dir="auto"], div[data-ad-preview="message"]')) {
+        const t = clean(b.innerText);
+        if (t.length > longest.length) longest = t;
+      }
+      if (longest.length > content.length) {
+        content = longest;
+        postEl = el;
+      }
+    }
+    content = content.slice(0, 4000);
+
+    // Facebook tidak punya judul. Judul diturunkan dari baris/kalimat pertama.
+    const firstLine = content.split(/\n|(?<=[.!?])\s+/)[0] || content;
+    const title = clean(firstLine).slice(0, 120);
+
+    const comments = [];
+    for (const el of arts) {
+      if (!isComment(el)) continue;
+      if (comments.length >= maxComments * 3) break;
+
+      const label = el.getAttribute("aria-label") || "";
+      const author = clean(label.replace(/^(comment by|komentar oleh)\s*/i, "")).slice(0, 120);
+
+      let text = "";
+      for (const b of el.querySelectorAll('div[dir="auto"]')) {
+        const t = clean(b.innerText);
+        if (t.length > text.length) text = t;
+      }
+      if (!text) continue;
+
+      // Jumlah like komentar: aria-label yang memuat kata reaksi/suka.
+      let likes = 0;
+      for (const n of el.querySelectorAll("[aria-label]")) {
+        const l = n.getAttribute("aria-label") || "";
+        if (/reaksi|reaction|suka|like/i.test(l) && /\d/.test(l)) {
+          likes = Math.max(likes, toNum(l));
+        }
+      }
+      // Cadangan: angka telanjang di dekat tombol Balas.
+      if (!likes) {
+        for (const n of el.querySelectorAll("span")) {
+          const t = clean(n.innerText);
+          if (/^\d[\d.,]*\s*(rb|jt|k|m)?$/i.test(t)) likes = Math.max(likes, toNum(t));
+        }
+      }
+
+      const url =
+        (Array.from(el.querySelectorAll("a[href]")).find((a) =>
+          /comment_id=/.test(a.getAttribute("href") || "")
+        ) || {}).href || "";
+
+      comments.push({ author, text: text.slice(0, 600), likes, url });
+    }
+
+    // Paling banyak like di atas — itu yang biasanya memicu isu.
+    comments.sort((a, b) => b.likes - a.likes);
+
+    return { title, content, comments: comments.slice(0, maxComments) };
+  }, CFG.commentsPerPost);
+}
+
 // ---------- pengiriman ----------
 async function sendToApp(query, posts) {
   if (!posts.length) return;
@@ -336,6 +438,27 @@ async function cmdCrawl() {
       log('kueri: "' + q + '"');
       const posts = await scrapeSearch(page, q);
       log("  dapat " + posts.length + " post");
+
+      // Perdalam sebagian post: isi penuh + komentar teratas. Yang lain tetap
+      // dikirim apa adanya dari hasil pencarian.
+      if (CFG.withComments && posts.length) {
+        const deep = posts.slice(0, CFG.detailPerQuery);
+        for (const p of deep) {
+          try {
+            const d = await scrapePostDetail(page, p.url);
+            p.title = d.title;
+            if (d.content && d.content.length > (p.content || "").length) {
+              p.content = d.content;
+            }
+            p.comments = d.comments;
+            log("    + " + d.comments.length + " komentar: " + p.title.slice(0, 60));
+          } catch (e) {
+            log("    ! gagal buka post: " + e.message);
+          }
+          await sleep(jitter(CFG.delayMs));
+        }
+      }
+
       await sendToApp(q, posts);
     } catch (e) {
       log("  gagal: " + e.message);

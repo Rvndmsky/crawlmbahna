@@ -568,7 +568,7 @@ export function detectMovement(text: string): MovementType {
 }
 
 // "1,2 rb reaksi - 340 komentar" -> angka terbesar, dipetakan ke skala 0-100.
-function engagementFrom(text: string): number {
+export function engagementFrom(text: string): number {
   const nums = (text.match(/[\d.,]+\s*(rb|jt|k|m)?/gi) || []).map((raw) => {
     const m = raw.trim().toLowerCase();
     const n = Number(m.replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", "."));

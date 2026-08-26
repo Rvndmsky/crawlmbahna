@@ -9,16 +9,27 @@ import { makeDetailSlug, todayYYYYMMDD } from "@/lib/slug";
 // bukan per orang. Datanya dari worker Chromium (worker/fb-worker.mjs) yang
 // mengirim lewat /api/fb/ingest. Halaman ini tidak menyisir apa pun sendiri.
 
+type FbComment = {
+  author: string;
+  text: string;
+  likes: number;
+  url: string;
+  movement: string;
+  triggers: boolean; // banyak like atau menyerukan gerakan
+};
+
 type FbPost = {
-  platform: string;
   account: string;
   accountUrl: string;
   url: string;
   published: string;
+  title: string;
   content: string;
-  summary: string;
   engagement: number;
+  engagementText: string;
   movement: string;
+  comments: FbComment[];
+  hotComments: number;
 };
 
 type Entry = { query: string; collectedAt: number; posts: FbPost[] };
@@ -29,6 +40,8 @@ type Feed = {
     queries: number;
     posts: number;
     withMovement: number;
+    comments: number;
+    hotComments: number;
     byMovement: Record<string, number>;
     lastCollectedAt: number;
   };
@@ -93,7 +106,7 @@ export default function FacebookPage() {
   }, []);
 
   function openDossier(p: FbPost, query: string) {
-    const subject = (p.content || query).slice(0, 60);
+    const subject = (p.title || p.content || query).slice(0, 60);
     const slug = makeDetailSlug(subject, todayYYYYMMDD());
     const q = new URLSearchParams();
     if (p.url) q.set("u", p.url);
@@ -111,11 +124,10 @@ export default function FacebookPage() {
       for (const p of e.posts) {
         if (fMove === "gerakan" && p.movement === "none") continue;
         if (fMove !== "all" && fMove !== "gerakan" && p.movement !== fMove) continue;
-        if (
-          key &&
-          !`${p.content} ${p.account} ${e.query}`.toLowerCase().includes(key)
-        )
-          continue;
+        const haystack = `${p.title} ${p.content} ${p.account} ${e.query} ${p.comments
+          .map((c) => `${c.author} ${c.text}`)
+          .join(" ")}`.toLowerCase();
+        if (key && !haystack.includes(key)) continue;
         out.push({ ...p, query: e.query, collectedAt: e.collectedAt });
       }
     }
@@ -202,8 +214,13 @@ export default function FacebookPage() {
                 <div className="stat-lbl">📣 Bermuatan gerakan</div>
               </div>
               <div className="stat">
-                <div className="stat-num">{feed.stats.queries}</div>
-                <div className="stat-lbl">Kueri dipantau</div>
+                <div className="stat-num">{feed.stats.comments}</div>
+                <div className="stat-lbl">
+                  Komentar terkumpul
+                  {feed.stats.hotComments > 0 && (
+                    <> · <b>{feed.stats.hotComments}</b> memicu isu</>
+                  )}
+                </div>
               </div>
               <div className="stat">
                 <div className="stat-num" style={{ fontSize: 14 }}>
@@ -297,11 +314,7 @@ npm run watch      # sisir terus tiap jam`}</pre>
                 )}
 
                 {rows.map((p, i) => (
-                  <article
-                    className="card clickable"
-                    key={i}
-                    onClick={() => openDossier(p, p.query)}
-                  >
+                  <article className="card fb-card" key={i}>
                     <div className="head">
                       <span className="plat-badge">FB</span>
                       {p.movement !== "none" && (
@@ -314,14 +327,15 @@ npm run watch      # sisir terus tiap jam`}</pre>
                         <span className="heat-num">🔥 {p.engagement}</span>
                       )}
                     </div>
+
+                    {/* Judul: Facebook tak punya judul, ini kalimat pertama post */}
+                    <div className="title fb-title" onClick={() => openDossier(p, p.query)}>
+                      {p.title || "(tanpa teks)"}
+                    </div>
+
                     <div className="src">
                       {p.accountUrl ? (
-                        <a
-                          href={p.accountUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <a href={p.accountUrl} target="_blank" rel="noreferrer">
                           {p.account || "—"}
                         </a>
                       ) : (
@@ -330,15 +344,64 @@ npm run watch      # sisir terus tiap jam`}</pre>
                       {p.published ? ` · ${p.published}` : ""}
                       {p.collectedAt ? ` · disisir ${fmtTime(p.collectedAt)}` : ""}
                     </div>
-                    {p.content && <div className="snippet">“{p.content}”</div>}
+
+                    <div className="fb-url">
+                      <a href={p.url} target="_blank" rel="noreferrer">
+                        {p.url}
+                      </a>
+                    </div>
+
+                    {p.content && <div className="fb-body">{p.content}</div>}
+                    {p.engagementText && (
+                      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                        {p.engagementText}
+                      </div>
+                    )}
+
+                    {p.comments.length > 0 && (
+                      <div className="fb-comments">
+                        <div className="fb-comments-head">
+                          💬 Komentar teratas ({p.comments.length})
+                          {p.hotComments > 0 && (
+                            <span className="move-badge" style={{ marginLeft: 8 }}>
+                              {p.hotComments} memicu isu
+                            </span>
+                          )}
+                        </div>
+                        {p.comments.map((c, j) => (
+                          <div
+                            className={`fb-comment ${c.triggers ? "hot" : ""}`}
+                            key={j}
+                          >
+                            <div className="fb-comment-top">
+                              <b>{c.author || "—"}</b>
+                              <span className="fb-likes">👍 {c.likes}</span>
+                              {c.movement !== "none" && (
+                                <span className="move-badge">
+                                  📣 {MOVE_LABEL[c.movement] || c.movement}
+                                </span>
+                              )}
+                              {c.url && (
+                                <a href={c.url} target="_blank" rel="noreferrer">
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                            <div className="fb-comment-text">{c.text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="foot">
-                      <span className="dossier-link">📑 dossier →</span>
-                      <a
-                        href={p.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
+                      <span
+                        className="dossier-link"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => openDossier(p, p.query)}
                       >
+                        📑 dossier →
+                      </span>
+                      <a href={p.url} target="_blank" rel="noreferrer">
                         buka post ↗
                       </a>
                     </div>

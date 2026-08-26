@@ -8,13 +8,22 @@ import { normName } from "./targets";
 // data/fb-posts.json. Di Vercel filesystem read-only -> /tmp (ephemeral,
 // per-instance), jadi untuk produksi jangka panjang perlu KV/database.
 
+export type FbComment = {
+  author: string;
+  text: string;
+  likes: number; // jumlah like/reaksi komentar
+  url: string;
+};
+
 export type FbRawPost = {
   url: string;
   account: string;
   accountUrl: string;
   published: string; // teks apa adanya dari Facebook ("3 j", "12 Agustus")
+  title: string; // diturunkan dari kalimat pertama (Facebook tak punya judul)
   content: string;
   engagementText: string;
+  comments: FbComment[]; // komentar teratas, urut like terbanyak
 };
 
 export type FbEntry = {

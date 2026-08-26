@@ -27,13 +27,29 @@ function sanitize(p: any): FbRawPost | null {
   } catch {
     return null;
   }
+  const content = String(p?.content || "").slice(0, 4000);
   return {
     url,
     account: String(p?.account || "").slice(0, 160),
     accountUrl: String(p?.accountUrl || "").slice(0, 400),
     published: String(p?.published || "").slice(0, 80),
-    content: String(p?.content || "").slice(0, 800),
+    // Facebook tidak punya judul; kalau worker belum mengisinya, ambil kalimat
+    // pertama isi post.
+    title:
+      String(p?.title || "").slice(0, 160) ||
+      content.split(/\n|(?<=[.!?])\s+/)[0]?.slice(0, 120) ||
+      "",
+    content,
     engagementText: String(p?.engagementText || "").slice(0, 240),
+    comments: (Array.isArray(p?.comments) ? p.comments : [])
+      .slice(0, 15)
+      .map((c: any) => ({
+        author: String(c?.author || "").slice(0, 160),
+        text: String(c?.text || "").slice(0, 800),
+        likes: Math.max(0, Math.round(Number(c?.likes) || 0)),
+        url: String(c?.url || "").slice(0, 500),
+      }))
+      .filter((c: { text: string }) => c.text),
   };
 }
 
