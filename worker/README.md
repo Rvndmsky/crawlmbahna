@@ -58,6 +58,24 @@ worker berhenti dan menyuruh `npm run login`. Jangan pakai akun utama.
 jendela itu — skrip tidak pernah menyimpan sandi. Yang tersimpan hanya cookie
 sesi di folder `worker/fb-profile/` (sudah di-gitignore).
 
+## Jalan 24 jam di VPS
+
+Login manual butuh layar, sedangkan VPS tidak punya. Alurnya: login di PC,
+ekspor cookie-nya, pindahkan ke VPS.
+
+```bash
+# di PC
+npm run login
+npm run export-session          # menghasilkan fb-session.json
+scp fb-session.json root@IP-VPS:/opt/crawlmbahna/worker/
+
+# di VPS
+npm run import-session
+```
+
+`fb-session.json` setara akses akun — jangan dibagikan, hapus setelah dipakai
+(sudah di-gitignore). Panduan lengkap termasuk systemd: [DEPLOY-VPS.md](DEPLOY-VPS.md).
+
 ## Kueri disusun dari mana
 
 Urutan prioritas:

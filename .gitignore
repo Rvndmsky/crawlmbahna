@@ -9,3 +9,4 @@ data
 worker/node_modules
 worker/fb-profile
 worker/.env
+worker/fb-session.json

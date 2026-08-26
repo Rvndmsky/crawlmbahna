@@ -173,6 +173,48 @@ async function cmdLogin() {
   process.exitCode = 1;
 }
 
+// VPS tidak punya layar, jadi login manual tak bisa dilakukan di sana.
+// Alurnya: login di PC -> --export-session -> salin fb-session.json ke VPS ->
+// --import-session. Yang dipindah hanya cookie, bukan sandi.
+const SESSION_FILE = path.resolve(HERE, process.env.FB_SESSION_FILE || "fb-session.json");
+
+async function cmdExportSession() {
+  const ctx = await openContext({ headless: CFG.headless });
+  const cookies = await ctx.cookies("https://www.facebook.com");
+  await ctx.close();
+
+  if (!cookies.some((c) => c.name === "c_user")) {
+    log("sesi MATI — tidak ada yang bisa diekspor. Jalankan: npm run login");
+    process.exitCode = 1;
+    return;
+  }
+  fs.writeFileSync(SESSION_FILE, JSON.stringify(cookies, null, 2), "utf8");
+  log("sesi diekspor ke", SESSION_FILE, `(${cookies.length} cookie)`);
+  log("Salin berkas itu ke VPS, lalu jalankan di sana: npm run import-session");
+  log("PERINGATAN: berkas ini setara akses akun. Jangan dibagikan/di-commit.");
+}
+
+async function cmdImportSession() {
+  if (!fs.existsSync(SESSION_FILE)) {
+    log("berkas tidak ada:", SESSION_FILE);
+    log("Ekspor dulu di PC: npm run export-session");
+    process.exitCode = 1;
+    return;
+  }
+  const cookies = JSON.parse(fs.readFileSync(SESSION_FILE, "utf8"));
+  const ctx = await openContext({ headless: CFG.headless });
+  await ctx.addCookies(cookies);
+
+  const page = ctx.pages()[0] || (await ctx.newPage());
+  await page.goto("https://www.facebook.com/", { waitUntil: "domcontentloaded" });
+  await sleep(3000);
+
+  const ok = await isLoggedIn(ctx);
+  await ctx.close();
+  log(ok ? "sesi diimpor, login TERDETEKSI." : "impor gagal — cookie mungkin kedaluwarsa.");
+  process.exitCode = ok ? 0 : 1;
+}
+
 async function cmdCheck() {
   const ctx = await openContext({ headless: CFG.headless });
   const ok = await isLoggedIn(ctx);
@@ -474,6 +516,8 @@ async function cmdCrawl() {
 async function main() {
   if (has("--login")) return cmdLogin();
   if (has("--check")) return cmdCheck();
+  if (has("--export-session")) return cmdExportSession();
+  if (has("--import-session")) return cmdImportSession();
   if (has("--loop")) {
     for (;;) {
       await cmdCrawl();

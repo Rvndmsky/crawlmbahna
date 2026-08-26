@@ -7,6 +7,8 @@
   "scripts": {
     "login": "node fb-worker.mjs --login",
     "check": "node fb-worker.mjs --check",
+    "export-session": "node fb-worker.mjs --export-session",
+    "import-session": "node fb-worker.mjs --import-session",
     "crawl": "node fb-worker.mjs",
     "watch": "node fb-worker.mjs --loop"
   },
