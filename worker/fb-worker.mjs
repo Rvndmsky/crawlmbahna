@@ -32,6 +32,10 @@ const argVals = (f) =>
 const CFG = {
   appUrl: (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, ""),
   token: process.env.FB_WORKER_TOKEN || "",
+  // Cadangan login otomatis. Kosongkan kalau mau login manual saja (lebih aman:
+  // Facebook agresif menandai login skrip, dan 2FA tidak bisa dilewati di sini).
+  email: process.env.FB_EMAIL || "",
+  password: process.env.FB_PASSWORD || "",
   profileDir: path.resolve(HERE, process.env.FB_PROFILE_DIR || "fb-profile"),
   headless: has("--headful") ? false : process.env.FB_HEADLESS !== "false",
   maxScroll: Number(process.env.FB_MAX_SCROLL) || 4,
@@ -101,6 +105,44 @@ async function openContext({ headless }) {
 async function isLoggedIn(ctx) {
   const cookies = await ctx.cookies("https://www.facebook.com");
   return cookies.some((c) => c.name === "c_user" && c.value);
+}
+
+// Login otomatis dengan FB_EMAIL/FB_PASSWORD. Dipakai HANYA sebagai cadangan
+// saat sesi cookie mati. Kalau Facebook meminta 2FA atau checkpoint, skrip
+// berhenti dan menyuruh login manual — bukan mencoba menembusnya.
+async function tryAutoLogin(ctx) {
+  if (!CFG.email || !CFG.password) return false;
+
+  log("sesi mati — mencoba login otomatis (FB_EMAIL/FB_PASSWORD)");
+  const page = ctx.pages()[0] || (await ctx.newPage());
+  try {
+    await page.goto("https://www.facebook.com/login", {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
+    await page.fill("input[name=email]", CFG.email);
+    await page.fill("input[name=pass]", CFG.password);
+    await page.click("button[name=login]");
+
+    for (let i = 0; i < 20; i++) {
+      await sleep(3000);
+      if (await isLoggedIn(ctx)) {
+        log("login otomatis berhasil, sesi tersimpan.");
+        return true;
+      }
+      const url = page.url();
+      if (/checkpoint|two_step_verification|login\/device-based/i.test(url)) {
+        log("Facebook meminta verifikasi (checkpoint/2FA).");
+        log("Jalankan: npm run login  -> selesaikan verifikasi di jendela browser.");
+        return false;
+      }
+    }
+    log("login otomatis gagal (timeout). Coba: npm run login");
+    return false;
+  } catch (e) {
+    log("login otomatis error:", e.message);
+    return false;
+  }
 }
 
 async function cmdLogin() {
@@ -279,7 +321,7 @@ async function cmdCrawl() {
   }
 
   const ctx = await openContext({ headless: CFG.headless });
-  if (!(await isLoggedIn(ctx))) {
+  if (!(await isLoggedIn(ctx)) && !(await tryAutoLogin(ctx))) {
     log("sesi MATI. Jalankan dulu: npm run login");
     await ctx.close();
     process.exitCode = 1;

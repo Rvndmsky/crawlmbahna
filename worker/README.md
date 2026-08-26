@@ -44,6 +44,16 @@ npm run crawl    # sisir sekali
 npm run watch    # sisir terus tiap FB_LOOP_MINUTES (default 60 menit)
 ```
 
+### Dua cara login
+
+| Cara | Isi `.env` | Sifat |
+|---|---|---|
+| Manual (disarankan) | kosongkan `FB_EMAIL`/`FB_PASSWORD` | `npm run login` sekali, cookie sesi dipakai berbulan-bulan. Sandi tidak tersimpan. Aman dari deteksi. |
+| Otomatis | isi `FB_EMAIL` + `FB_PASSWORD` | Dipakai hanya saat sesi cookie mati. Sandi plaintext di disk. Sering kena checkpoint; 2FA tidak bisa dilewati. |
+
+Cara otomatis bukan pengganti cara manual: kalau Facebook meminta verifikasi,
+worker berhenti dan menyuruh `npm run login`. Jangan pakai akun utama.
+
 `npm run login` membuka Chromium biasa. Sandi dan 2FA kamu ketik sendiri di
 jendela itu — skrip tidak pernah menyimpan sandi. Yang tersimpan hanya cookie
 sesi di folder `worker/fb-profile/` (sudah di-gitignore).
