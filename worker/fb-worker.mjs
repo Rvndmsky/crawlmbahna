@@ -315,13 +315,37 @@ async function scrapeSearch(page, query) {
 
   return await page.evaluate((limit) => {
     const POST_RE =
-      /(\/posts\/|\/permalink\/|\/videos\/|story_fbid=|\/share\/p\/|\/groups\/[^/]+\/posts\/)/;
+      /(\/posts\/|\/permalink\/|\/videos\/|\/reel\/|story_fbid=|\/share\/p\/|\/photo\/?\?fbid=|\/groups\/[^/]+\/posts\/)/;
+    // Facebook memakai innerText yang kosong pada kartu ber-content-visibility,
+    // jadi teks dibaca lewat textContent.
     const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+
+    // Kartu hasil pencarian tidak memakai role="article" dan anak div[role=feed]
+    // hanyalah wadah kosong (virtualisasi). Penanda yang andal: tautan di dalam
+    // kartu selalu membawa parameter pelacak __cft__. Dari situ naik ke leluhur
+    // yang cukup tinggi -> itulah kartunya.
+    const cards = [];
+    const seenCard = new Set();
+    for (const a of document.querySelectorAll('a[href*="__cft__"]')) {
+      let el = a;
+      for (let i = 0; i < 14 && el; i++) {
+        const tinggi = el.getBoundingClientRect().height;
+        const tautan = el.querySelectorAll('a[href*="__cft__"]').length;
+        if (tinggi > 220 && tautan >= 2) {
+          if (!seenCard.has(el)) {
+            seenCard.add(el);
+            cards.push(el);
+          }
+          break;
+        }
+        el = el.parentElement;
+      }
+    }
 
     const out = [];
     const seen = new Set();
 
-    for (const art of document.querySelectorAll('div[role="article"]')) {
+    for (const art of cards.length ? cards : document.querySelectorAll('div[role="article"]')) {
       if (out.length >= limit) break;
 
       const anchors = Array.from(art.querySelectorAll("a[href]"));
@@ -333,9 +357,10 @@ async function scrapeSearch(page, query) {
       let url = permaEl.href;
       try {
         const u = new URL(url);
-        // buang parameter pelacak, sisakan yang menentukan identitas post
+        // buang parameter pelacak (__cft__, __tn__, ref, dll), sisakan yang
+        // menentukan identitas post
         const keep = new URLSearchParams();
-        for (const k of ["story_fbid", "id", "fbid"]) {
+        for (const k of ["story_fbid", "id", "fbid", "set", "post_id", "multi_permalinks"]) {
           const v = u.searchParams.get(k);
           if (v) keep.set(k, v);
         }
@@ -348,39 +373,67 @@ async function scrapeSearch(page, query) {
       if (seen.has(url)) continue;
       seen.add(url);
 
-      // penulis: anchor ke profil/page, bukan permalink post
-      const authorEl =
-        art.querySelector("h3 a[href], h2 a[href], strong a[href]") ||
-        anchors.find(
-          (a) =>
-            !POST_RE.test(a.getAttribute("href") || "") && clean(a.innerText)
-        );
-      const account = clean(authorEl && authorEl.innerText).slice(0, 120);
-      const accountUrl = (authorEl && authorEl.href) || "";
+      // penulis: anchor ke profil/halaman. Anchor pertama yang cocok sering
+      // membungkus foto profil (teksnya kosong), jadi cari yang BERTEKS dulu.
+      const PROFIL_RE =
+        /\/user\/\d+|profile\.php\?id=|^https?:\/\/(web|www)\.facebook\.com\/[A-Za-z0-9.]+(\?|\/?$)/;
+      let account = "";
+      let accountUrl = "";
+      for (const a of anchors) {
+        const href = a.getAttribute("href") || "";
+        if (!PROFIL_RE.test(href) || POST_RE.test(href)) continue;
+        if (!accountUrl) accountUrl = a.href;
+        const t = clean(a.textContent);
+        if (t) {
+          account = t.slice(0, 120);
+          accountUrl = a.href;
+          break;
+        }
+      }
+      if (!account) {
+        // cadangan: judul kartu, mis. "Cerita sopir Truk · Ikuti"
+        const kepala = art.querySelector("strong, h2, h3");
+        account = clean(kepala && kepala.textContent)
+          .replace(/\s*·\s*(Ikuti|Gabung|Follow|Join).*$/i, "")
+          .slice(0, 120);
+      }
 
       // waktu: Facebook menaruhnya di aria-label/title anchor permalink
       const published = clean(
         permaEl.getAttribute("aria-label") ||
           permaEl.getAttribute("title") ||
-          permaEl.innerText
+          permaEl.textContent
       ).slice(0, 60);
 
-      // isi: blok teks terpanjang di dalam kartu
-      let content = "";
-      const blocks = art.querySelectorAll(
-        'div[dir="auto"], div[data-ad-preview="message"]'
-      );
-      for (const b of blocks) {
-        const t = clean(b.innerText);
-        if (t.length > content.length) content = t;
+      // isi: teks kartu, dibersihkan dari label antarmuka. "Facebook" muncul
+      // berulang karena teks alt gambar, sering menempel tanpa spasi.
+      let content = clean(art.textContent)
+        .replace(/(Facebook)+/gi, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (account && content.startsWith(account)) {
+        content = content.slice(account.length).trim();
       }
-      content = content.slice(0, 600);
+      // buang label antarmuka: kepala kartu (nama grup/akun + tombol Ikuti /
+      // Gabung / "Dibagikan kepada ...") dan ekor tombol aksi.
+      content = content
+        .replace(/^.*?·\s*(Dibagikan kepada [^A-Z]{0,25})/i, "")
+        .replace(/\s*·\s*(Ikuti|Gabung|Follow|Join)\b/gi, " ")
+        .replace(/\b(Suka|Komentari|Bagikan|Kirim|Semua komentar|Lihat lainnya)\b.*$/i, "")
+        .replace(/m\.me\S*/gi, " ")
+        .replace(/^\s*(Grup publik|Publik|Anggota|Grup pribadi)\s*/i, "")
+        .replace(/^[\s·•|]+/, "")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+        .slice(0, 800);
 
-      // interaksi: aria-label yang memuat hitungan reaksi/komentar/bagikan
+      // interaksi: aria-label berisi hitungan reaksi/komentar/bagikan
       const engagementText = clean(
         Array.from(art.querySelectorAll("[aria-label]"))
           .map((e) => e.getAttribute("aria-label"))
-          .filter((l) => /reaksi|reaction|komentar|comment|bagikan|share/i.test(l || ""))
+          .filter((l) => /reaksi|reaction|komentar|comment|bagikan|share|suka|like/i.test(l || ""))
+          .filter((l) => /\d/.test(l))
+          .slice(0, 4)
           .join(" - ")
       ).slice(0, 200);
 
@@ -404,7 +457,16 @@ async function scrapePostDetail(page, url) {
   }
 
   return await page.evaluate((maxComments) => {
-    const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+    // textContent, bukan innerText: kartu Facebook memakai content-visibility
+    // sehingga innerText mengembalikan kosong.
+    const clean = (s) =>
+      (s || "").replace(/(Facebook)+/gi, " ").replace(/\s+/g, " ").trim();
+    // "Budiono 23 jam yang lalu" -> "Budiono"
+    const namaSaja = (s) =>
+      clean(s)
+        .replace(/\s*\d+\s*(detik|menit|jam|hari|minggu|bulan|tahun)\s*(yang lalu)?\s*$/i, "")
+        .replace(/\s*(kemarin|hari ini)\s*$/i, "")
+        .trim();
 
     // "1,2 rb" / "3.4K" -> angka
     const toNum = (s) => {
@@ -422,19 +484,20 @@ async function scrapePostDetail(page, url) {
       /^(comment by|komentar oleh)/i.test(el.getAttribute("aria-label") || "");
 
     // Kartu post = article yang BUKAN komentar, dengan teks terpanjang.
-    let postEl = null;
     let content = "";
     for (const el of arts) {
       if (isComment(el)) continue;
       let longest = "";
       for (const b of el.querySelectorAll('div[dir="auto"], div[data-ad-preview="message"]')) {
-        const t = clean(b.innerText);
+        const t = clean(b.textContent);
         if (t.length > longest.length) longest = t;
       }
-      if (longest.length > content.length) {
-        content = longest;
-        postEl = el;
-      }
+      if (longest.length > content.length) content = longest;
+    }
+    // Cadangan: kalau struktur article tidak ketemu, ambil teks utama halaman.
+    if (!content) {
+      const main = document.querySelector('div[role="main"]');
+      content = clean(main && main.textContent).slice(0, 4000);
     }
     content = content.slice(0, 4000);
 
@@ -448,11 +511,11 @@ async function scrapePostDetail(page, url) {
       if (comments.length >= maxComments * 3) break;
 
       const label = el.getAttribute("aria-label") || "";
-      const author = clean(label.replace(/^(comment by|komentar oleh)\s*/i, "")).slice(0, 120);
+      const author = namaSaja(label.replace(/^(comment by|komentar oleh)\s*/i, "")).slice(0, 120);
 
       let text = "";
       for (const b of el.querySelectorAll('div[dir="auto"]')) {
-        const t = clean(b.innerText);
+        const t = clean(b.textContent);
         if (t.length > text.length) text = t;
       }
       if (!text) continue;
@@ -468,7 +531,7 @@ async function scrapePostDetail(page, url) {
       // Cadangan: angka telanjang di dekat tombol Balas.
       if (!likes) {
         for (const n of el.querySelectorAll("span")) {
-          const t = clean(n.innerText);
+          const t = clean(n.textContent);
           if (/^\d[\d.,]*\s*(rb|jt|k|m)?$/i.test(t)) likes = Math.max(likes, toNum(t));
         }
       }
