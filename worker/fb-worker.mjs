@@ -48,6 +48,16 @@ const CFG = {
   detailPerQuery: Number(process.env.FB_DETAIL_PER_QUERY) || 5,
   commentsPerPost: Number(process.env.FB_COMMENTS_PER_POST) || 8,
   loopMinutes: Number(process.env.FB_LOOP_MINUTES) || 60,
+  // Tema pantauan Facebook: aksi jalanan & tekanan politik ke pemerintahan.
+  // Kueri tema ini dipakai apa adanya; kata kunci juga digabung dengan tiap
+  // nama target bila daftar target ada.
+  themes: (
+    process.env.FB_THEMES ||
+    "demo,unjuk rasa,demo indonesia,prabowo demo,prabowo lengser,demo mahasiswa,aksi massa"
+  )
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
   keywords: (process.env.FB_KEYWORDS || "demo,unjuk rasa,aksi massa")
     .split(",")
     .map((s) => s.trim())
@@ -84,12 +94,10 @@ function buildQueries() {
     .filter(Boolean);
   if (envQ.length) return envQ.slice(0, CFG.maxQueries);
 
-  const names = readTargets();
-  if (!names.length) return CFG.keywords.slice(0, CFG.maxQueries);
-
-  const out = [];
-  for (const n of names) {
-    out.push(n);
+  // Tema aksi/politik selalu disisir lebih dulu — itu fokus pemantauan di
+  // Facebook. Nama target hanya menambah, bukan menggeser.
+  const out = [...CFG.themes];
+  for (const n of readTargets()) {
     for (const k of CFG.keywords) out.push(n + " " + k);
   }
   return out.slice(0, CFG.maxQueries);
@@ -107,9 +115,67 @@ async function openContext({ headless }) {
   });
 }
 
-async function isLoggedIn(ctx) {
+// Cookie c_user saja TIDAK cukup: Facebook juga menyetelnya untuk "akun
+// tersimpan" (layar "Lanjutkan sebagai ..."), yang belum berupa sesi aktif —
+// halaman pencarian akan membalas 404. Cookie hanya dipakai saringan awal.
+async function hasCookie(ctx) {
   const cookies = await ctx.cookies("https://www.facebook.com");
   return cookies.some((c) => c.name === "c_user" && c.value);
+}
+
+// Layar pemilih profil punya tombol "Lanjutkan"/"Continue as". Kalau muncul,
+// klik supaya sesi benar-benar terbuka.
+async function clickContinue(page) {
+  for (const re of [/^lanjutkan/i, /^continue as/i, /^continue$/i]) {
+    try {
+      const btn = page.getByRole("button", { name: re }).first();
+      if (await btn.isVisible({ timeout: 1500 })) {
+        await btn.click();
+        await sleep(4000);
+        return true;
+      }
+    } catch {
+      /* pola ini tidak ada -> coba berikutnya */
+    }
+  }
+  return false;
+}
+
+// Uji sesungguhnya: buka halaman pencarian. Hanya sesi aktif yang dilayani;
+// akun tersimpan atau anonim mendapat 404.
+async function sessionActive(ctx) {
+  if (!(await hasCookie(ctx))) return false;
+  const page = ctx.pages()[0] || (await ctx.newPage());
+  const SEARCH = "https://www.facebook.com/search/posts?q=indonesia";
+  try {
+    const resp = await page.goto(SEARCH, {
+      waitUntil: "domcontentloaded",
+      timeout: 45000,
+    });
+    await sleep(3000);
+    if (resp && resp.status() === 404) {
+      // Mungkin tertahan layar pemilih profil — selesaikan lalu ulangi.
+      await page.goto("https://www.facebook.com/", {
+        waitUntil: "domcontentloaded",
+      });
+      await sleep(2500);
+      if (!(await clickContinue(page))) return false;
+      const retry = await page.goto(SEARCH, {
+        waitUntil: "domcontentloaded",
+        timeout: 45000,
+      });
+      await sleep(3000);
+      return !!retry && retry.status() !== 404;
+    }
+    return !!resp && resp.status() < 400;
+  } catch {
+    return false;
+  }
+}
+
+// Dipakai alur crawl.
+async function isLoggedIn(ctx) {
+  return await sessionActive(ctx);
 }
 
 // Login otomatis dengan FB_EMAIL/FB_PASSWORD. Dipakai HANYA sebagai cadangan
@@ -160,11 +226,17 @@ async function cmdLogin() {
   log("silakan login (sandi + 2FA milikmu sendiri). Menunggu...");
 
   for (let i = 0; i < 120; i++) {
-    if (await isLoggedIn(ctx)) {
-      log("sesi tersimpan di", CFG.profileDir);
-      await sleep(1500);
-      await ctx.close();
-      return;
+    if (await hasCookie(ctx)) {
+      // Cookie ada; pastikan sesinya benar-benar aktif — bukan sekadar layar
+      // "Lanjutkan sebagai ...". Ini yang menentukan crawl bisa jalan.
+      await clickContinue(page);
+      if (await sessionActive(ctx)) {
+        log("sesi AKTIF (pencarian bisa diakses), tersimpan di", CFG.profileDir);
+        await sleep(1500);
+        await ctx.close();
+        return;
+      }
+      log("  cookie ada tapi sesi belum aktif — lanjutkan langkahnya di jendela browser");
     }
     await sleep(5000);
   }
@@ -180,7 +252,11 @@ const SESSION_FILE = path.resolve(HERE, process.env.FB_SESSION_FILE || "fb-sessi
 
 async function cmdExportSession() {
   const ctx = await openContext({ headless: CFG.headless });
-  const cookies = await ctx.cookies("https://www.facebook.com");
+  // Ambil cookie dari SEMUA domain Facebook (termasuk .facebook.com dan
+  // messenger.com), bukan hanya www — sesi butuh datr/xs/sb sekaligus.
+  const cookies = (await ctx.cookies()).filter((c) =>
+    /facebook\.com|messenger\.com/i.test(c.domain || "")
+  );
   await ctx.close();
 
   if (!cookies.some((c) => c.name === "c_user")) {
