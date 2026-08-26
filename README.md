@@ -90,6 +90,11 @@ terindeks. Datanya datang dari worker terpisah di `worker/`:
 - Peringatan: otomasi akun melanggar ToS Facebook, akun bisa kena ban. Pakai
   akun sekunder. Detail: `worker/README.md`.
 
+Halaman `/facebook` menampilkan hasil worker itu berbasis **isu**, bukan per
+orang: statistik kiriman, filter jenis gerakan (demo/aksi massa/petisi/...),
+pilih kueri, cari teks, dan tiap post bisa dibuka jadi dossier. Kalau worker
+belum jalan, halaman itu menampilkan perintah untuk menjalankannya.
+
 API: `GET /api/target?name=...&days=14&fresh=1`,
 `GET|POST|DELETE /api/targets` (kelola daftar nama).
 

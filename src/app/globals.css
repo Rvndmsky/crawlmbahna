@@ -1041,3 +1041,17 @@ pre.cmd {
   line-height: 1.6;
   color: var(--text);
 }
+
+/* halaman /facebook */
+.fb-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  font-size: 13.5px;
+}
+.fb-search:focus { border-color: var(--accent); }

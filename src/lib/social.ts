@@ -562,7 +562,7 @@ const MOVE_WORDS: [RegExp, MovementType][] = [
   [/\b(kampanye|kampanyekan|coblos|menang(kan)?)\b/i, "kampanye_politik"],
 ];
 
-function detectMovement(text: string): MovementType {
+export function detectMovement(text: string): MovementType {
   for (const [re, kind] of MOVE_WORDS) if (re.test(text)) return kind;
   return "none";
 }
@@ -583,7 +583,7 @@ function engagementFrom(text: string): number {
   return Math.max(1, Math.min(100, Math.round((Math.log10(top) / 6) * 100)));
 }
 
-function fbToPost(p: FbRawPost): SocialPost {
+export function fbToPost(p: FbRawPost): SocialPost {
   const text = `${p.content} ${p.account}`;
   return {
     platform: "facebook",

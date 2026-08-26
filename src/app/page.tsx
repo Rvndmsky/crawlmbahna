@@ -280,6 +280,13 @@ export default function IntelDashboard() {
         >
           🎯
         </button>
+        <button
+          className="refresh"
+          title="pantau Facebook (isu & gerakan)"
+          onClick={() => router.push("/facebook")}
+        >
+          📘
+        </button>
         <button className="refresh" onClick={() => load(true)} disabled={loading}>
           ↻
         </button>

@@ -99,6 +99,11 @@ export function getFbPosts(name: string): FbRawPost[] {
   return out;
 }
 
+// Semua entri apa adanya, kiriman terbaru di depan. Dipakai halaman /facebook.
+export function listFbEntries(): FbEntry[] {
+  return load().sort((a, b) => (b.collectedAt || 0) - (a.collectedAt || 0));
+}
+
 // Ringkasan untuk halaman Setup: berapa kueri, berapa post, kapan terakhir.
 export function fbStats(): {
   queries: number;
