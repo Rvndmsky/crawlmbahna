@@ -661,7 +661,7 @@ export async function crawlTarget(
 
   // Facebook: hasil worker Chromium yang masuk lewat /api/fb/ingest. Dibaca di
   // luar cache model supaya kiriman worker terbaru langsung kelihatan.
-  const fb = getFbPosts(n).map(fbToPost);
+  const fb = (await getFbPosts(n)).map(fbToPost);
 
   const key = `target:${normName(n)}:${days}`;
   if (!opts.fresh) {

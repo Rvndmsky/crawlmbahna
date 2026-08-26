@@ -46,6 +46,7 @@ type Feed = {
     lastCollectedAt: number;
   };
   workerConfigured: boolean;
+  storage: "redis" | "file";
   error?: string;
 };
 
@@ -199,6 +200,16 @@ export default function FacebookPage() {
         )}
 
         {error && <div className="error">⚠ {error}</div>}
+
+        {feed && feed.storage === "file" && (
+          <div className="error">
+            ⚠ Penyimpanan masih berkas lokal. Kalau situs ini jalan di Vercel, data
+            kiriman worker <b>bisa hilang sewaktu-waktu</b> (filesystem serverless
+            ephemeral). Set <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+            <code>UPSTASH_REDIS_REST_TOKEN</code> di Environment Variables lalu
+            Redeploy.
+          </div>
+        )}
 
         {feed && (
           <>

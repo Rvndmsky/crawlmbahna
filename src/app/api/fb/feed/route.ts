@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listFbEntries, type FbComment } from "@/lib/fbstore";
+import { listFbEntries, usingRedis, type FbComment } from "@/lib/fbstore";
 import { detectMovement, engagementFrom } from "@/lib/social";
 import { validateToken, COOKIE } from "@/lib/auth";
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const entries = listFbEntries().map((e) => ({
+  const entries = (await listFbEntries()).map((e) => ({
     query: e.query,
     collectedAt: e.collectedAt,
     posts: e.posts.map((p) => {
@@ -73,5 +73,6 @@ export async function GET(req: NextRequest) {
       ),
     },
     workerConfigured: !!process.env.FB_WORKER_TOKEN,
+    storage: usingRedis ? "redis" : "file",
   });
 }

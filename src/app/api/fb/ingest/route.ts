@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       .map(sanitize)
       .filter((p: FbRawPost | null): p is FbRawPost => !!p);
 
-    const saved = saveFbEntry({
+    const saved = await saveFbEntry({
       query,
       collectedAt: Number(body?.collectedAt) || Date.now(),
       posts,
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   return NextResponse.json({
-    ...fbStats(),
+    ...(await fbStats()),
     workerConfigured: !!process.env.FB_WORKER_TOKEN,
   });
 }

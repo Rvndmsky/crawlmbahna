@@ -50,6 +50,7 @@ export default function SettingsPage() {
     posts: number;
     lastCollectedAt: number;
     workerConfigured: boolean;
+    storage: "redis" | "file";
   } | null>(null);
 
   useEffect(() => {
@@ -216,6 +217,20 @@ export default function SettingsPage() {
               <div className="stat-lbl">kiriman terakhir</div>
             </div>
           </div>
+
+          {fb && (
+            <div className="hint">
+              Penyimpanan:{" "}
+              <b>{fb.storage === "redis" ? "Upstash Redis (persisten)" : "berkas lokal"}</b>
+              {fb.storage === "file" && (
+                <>
+                  {" "}— di Vercel ini ephemeral, data bisa hilang. Set{" "}
+                  <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+                  <code>UPSTASH_REDIS_REST_TOKEN</code>, lalu Redeploy.
+                </>
+              )}
+            </div>
+          )}
 
           {fb && !fb.workerConfigured && (
             <div className="hint">
