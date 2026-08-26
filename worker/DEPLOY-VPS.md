@@ -18,6 +18,40 @@ Upstash Redis, lalu bisa dibuka dari mana saja lewat situs di Vercel.
 Penyedia yang lazim dipakai di Indonesia: Biznet Gio, IDCloudHost, Contabo,
 DigitalOcean, Hetzner. Paket 2 GB RAM biasanya Rp 50.000–120.000/bulan.
 
+## 0. Khusus Biznet Gio (NEO Virtual Compute)
+
+Di panel **portal.biznetgio.com** → NEO Virtual Compute → **Create Instance**:
+
+| Isian | Pilih |
+|---|---|
+| Region | Jakarta / Cikarang (mana saja) |
+| OS Image | **Ubuntu 22.04 LTS** atau 24.04 LTS |
+| Size | minimal **2 vCPU / 2 GB RAM** |
+| Storage | 20 GB (paket dasar sudah cukup) |
+| SSH Key | pilih key kalau punya; kalau tidak, catat password root yang diberikan |
+| Network | pastikan instance dapat **Public IP / Floating IP** |
+
+Setelah instance menyala, catat IP publiknya.
+
+**Firewall / Security Group**: worker hanya butuh koneksi KELUAR (ke Facebook,
+Vercel, Upstash). Tidak ada layanan yang perlu dibuka dari luar. Cukup izinkan
+**inbound TCP 22 (SSH)**, sisanya biarkan tertutup.
+
+**Masuk dari Windows** (PowerShell biasa, OpenSSH sudah bawaan Windows 11):
+
+```powershell
+ssh root@IP-PUBLIK-VPS
+```
+
+Kalau image Biznet memakai user non-root, biasanya `ubuntu`:
+
+```powershell
+ssh ubuntu@IP-PUBLIK-VPS
+sudo -i                      # naik ke root
+```
+
+Sisa langkah di bawah dijalankan sebagai root.
+
 ## 1. Siapkan VPS
 
 ```bash
