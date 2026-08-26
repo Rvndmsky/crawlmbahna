@@ -18,6 +18,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Pemeriksa sementara ENV (tidak membocorkan nilai). Hapus setelah beres.
+  if (pathname === "/api/debug/env") {
+    return NextResponse.next();
+  }
+
   const hasSession = !!req.cookies.get(COOKIE)?.value;
   if (!hasSession) {
     if (pathname.startsWith("/api")) {
