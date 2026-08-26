@@ -23,6 +23,8 @@ type FbPost = {
   accountUrl: string;
   url: string;
   published: string;
+  publishedAt: number;
+  shotId: string;
   title: string;
   content: string;
   engagement: number;
@@ -47,6 +49,7 @@ type Feed = {
   };
   workerConfigured: boolean;
   storage: "redis" | "file";
+  maxAgeDays: number;
   error?: string;
 };
 
@@ -189,7 +192,8 @@ export default function FacebookPage() {
         <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
           Halaman ini menampilkan hasil <b>worker Chromium</b> yang menyisir Page &amp;
           grup publik Facebook di komputer/VPS-mu. Website tidak menyisir sendiri —
-          kalau kosong, berarti worker belum jalan.
+          kalau kosong, berarti worker belum jalan. Hanya postingan{" "}
+          <b>maksimal {feed?.maxAgeDays ?? 3} hari terakhir</b> yang ditampilkan.
         </div>
 
         {loading && !feed && (
@@ -353,6 +357,9 @@ npm run watch      # sisir terus tiap jam`}</pre>
                         p.account || "—"
                       )}
                       {p.published ? ` · ${p.published}` : ""}
+                      {p.publishedAt
+                        ? ` · ${new Date(p.publishedAt).toLocaleDateString("id-ID")}`
+                        : " · waktu tidak terbaca"}
                       {p.collectedAt ? ` · disisir ${fmtTime(p.collectedAt)}` : ""}
                     </div>
 
@@ -361,6 +368,18 @@ npm run watch      # sisir terus tiap jam`}</pre>
                         {p.url}
                       </a>
                     </div>
+
+                    {p.shotId && (
+                      <img
+                        className="fb-shot"
+                        src={`/api/fb/shot?id=${encodeURIComponent(p.shotId)}`}
+                        alt="tangkapan layar postingan"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
 
                     {p.content && <div className="fb-body">{p.content}</div>}
                     {p.engagementText && (

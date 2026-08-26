@@ -47,6 +47,11 @@ const CFG = {
   withComments: process.env.FB_FETCH_COMMENTS !== "false",
   detailPerQuery: Number(process.env.FB_DETAIL_PER_QUERY) || 5,
   commentsPerPost: Number(process.env.FB_COMMENTS_PER_POST) || 8,
+  // Hanya postingan baru yang dipantau. Post yang waktunya tidak terbaca tetap
+  // dikirim (biar tidak ada yang hilang diam-diam) dan ditandai di aplikasi.
+  maxAgeDays: Number(process.env.FB_MAX_AGE_DAYS) || 3,
+  // Tangkapan layar postingan, disimpan sebagai JPEG base64.
+  withShots: process.env.FB_SCREENSHOT !== "false",
   loopMinutes: Number(process.env.FB_LOOP_MINUTES) || 60,
   // Tema pantauan Facebook: aksi jalanan & tekanan politik ke pemerintahan.
   // Kueri tema ini dipakai apa adanya; kata kunci juga digabung dengan tiap
@@ -67,6 +72,53 @@ const CFG = {
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (ms) => ms + Math.floor(Math.random() * ms * 0.5);
+
+// Pembaca waktu Facebook ("3 j", "2 hari yang lalu", "Kemarin", "12 Agustus").
+// Kembarannya di sisi aplikasi: src/lib/fbtime.ts.
+const SATUAN_MS = {
+  dtk: 1e3, detik: 1e3, s: 1e3,
+  mnt: 6e4, menit: 6e4, m: 6e4, min: 6e4,
+  j: 36e5, jam: 36e5, h: 36e5, hour: 36e5, hours: 36e5,
+  hr: 864e5, hari: 864e5, d: 864e5, day: 864e5, days: 864e5,
+  mgg: 6048e5, minggu: 6048e5, w: 6048e5, week: 6048e5, weeks: 6048e5,
+  bln: 2592e6, bulan: 2592e6, month: 2592e6, months: 2592e6,
+  thn: 31536e6, tahun: 31536e6, y: 31536e6, year: 31536e6,
+};
+const BULAN = {
+  januari: 0, februari: 1, maret: 2, april: 3, mei: 4, juni: 5, juli: 6,
+  agustus: 7, september: 8, oktober: 9, november: 10, desember: 11,
+  jan: 0, feb: 1, mar: 2, apr: 3, jun: 5, jul: 6, agu: 7, agt: 7,
+  sep: 8, okt: 9, nov: 10, des: 11,
+};
+
+function parseFbTime(raw, now = Date.now()) {
+  const t = (raw || "").toLowerCase().replace(/\s+/g, " ").trim();
+  if (!t) return 0;
+  if (/baru saja|just now|beberapa detik/.test(t)) return now;
+  if (/kemarin|yesterday/.test(t)) return now - 864e5;
+
+  const rel = t.match(
+    /(\d+)\s*(dtk|detik|mnt|menit|jam|hari|mgg|minggu|bln|bulan|thn|tahun|s|m|j|h|d|w|y|min|hour|hours|day|days|week|weeks|month|months|year|years)\b/
+  );
+  if (rel && SATUAN_MS[rel[2]]) return now - Number(rel[1]) * SATUAN_MS[rel[2]];
+
+  const tgl = t.match(/(\d{1,2})\s+([a-z]+)(?:\s+(\d{4}))?/);
+  if (tgl && BULAN[tgl[2]] !== undefined) {
+    const nowD = new Date(now);
+    const tahun = tgl[3] ? Number(tgl[3]) : nowD.getFullYear();
+    const d = new Date(tahun, BULAN[tgl[2]], Number(tgl[1]), 12, 0, 0);
+    if (!tgl[3] && d.getTime() > now + 864e5) d.setFullYear(tahun - 1);
+    return d.getTime();
+  }
+  return 0;
+}
+
+// true = terlalu lama. Waktu tak terbaca dianggap masih layak (0 = tak tahu).
+function terlaluLama(published) {
+  const ms = parseFbTime(published);
+  if (!ms) return false;
+  return (Date.now() - ms) / 864e5 > CFG.maxAgeDays;
+}
 
 // ---------- daftar kueri ----------
 // Nama target diambil dari data/targets.json milik aplikasi (kalau worker jalan
@@ -398,12 +450,24 @@ async function scrapeSearch(page, query) {
           .slice(0, 120);
       }
 
-      // waktu: Facebook menaruhnya di aria-label/title anchor permalink
-      const published = clean(
-        permaEl.getAttribute("aria-label") ||
-          permaEl.getAttribute("title") ||
-          permaEl.textContent
-      ).slice(0, 60);
+      // waktu: cari teks pendek berpola waktu di dalam kartu. Untuk post grup,
+      // anchor permalink berbentuk /photo/ dan tidak memuat label waktu.
+      const TIME_RE =
+        /^(baru saja|kemarin|\d+\s*(dtk|detik|mnt|menit|j|jam|h|hari|mgg|minggu|bln|bulan|thn|tahun)\b|\d{1,2}\s+[A-Za-zÀ-ÿ]+(\s+\d{4})?)/i;
+      let published = clean(
+        permaEl.getAttribute("aria-label") || permaEl.getAttribute("title") || ""
+      );
+      if (!TIME_RE.test(published)) {
+        published = "";
+        for (const el of art.querySelectorAll("a, span, abbr")) {
+          const t = clean(el.textContent);
+          if (t.length <= 40 && TIME_RE.test(t)) {
+            published = t;
+            break;
+          }
+        }
+      }
+      published = published.slice(0, 60);
 
       // isi: teks kartu, dibersihkan dari label antarmuka. "Facebook" muncul
       // berulang karena teks alt gambar, sering menempel tanpa spasi.
@@ -456,7 +520,7 @@ async function scrapePostDetail(page, url) {
     await sleep(jitter(2000));
   }
 
-  return await page.evaluate((maxComments) => {
+  const data = await page.evaluate((maxComments) => {
     // textContent, bukan innerText: kartu Facebook memakai content-visibility
     // sehingga innerText mengembalikan kosong.
     const clean = (s) =>
@@ -549,6 +613,32 @@ async function scrapePostDetail(page, url) {
 
     return { title, content, comments: comments.slice(0, maxComments) };
   }, CFG.commentsPerPost);
+
+  return data;
+}
+
+// Tangkapan layar kartu postingan sebagai bukti visual. JPEG mutu sedang biar
+// ukurannya wajar (~60-150 KB); kalau kartunya tak ketemu, ambil layar tampak.
+async function screenshotPost(page) {
+  if (!CFG.withShots) return "";
+  try {
+    const kartu = page
+      .locator('div[role="article"]')
+      .filter({ hasNot: page.locator('[aria-label^="Komentar oleh" i]') })
+      .first();
+
+    let buf;
+    if (await kartu.isVisible({ timeout: 3000 }).catch(() => false)) {
+      buf = await kartu.screenshot({ type: "jpeg", quality: 60, timeout: 15000 });
+    } else {
+      buf = await page.screenshot({ type: "jpeg", quality: 60, timeout: 15000 });
+    }
+    const b64 = buf.toString("base64");
+    // Terlalu besar -> lewati daripada membebani penyimpanan.
+    return b64.length > 400000 ? "" : b64;
+  } catch {
+    return "";
+  }
 }
 
 // ---------- pengiriman ----------
@@ -617,8 +707,14 @@ async function cmdCrawl() {
   for (const q of queries) {
     try {
       log('kueri: "' + q + '"');
-      const posts = await scrapeSearch(page, q);
-      log("  dapat " + posts.length + " post");
+      const mentah = await scrapeSearch(page, q);
+      // Saring umur di sini supaya post lama tidak ikut dibuka satu per satu.
+      const posts = mentah.filter((p) => !terlaluLama(p.published));
+      const dibuang = mentah.length - posts.length;
+      log(
+        "  dapat " + posts.length + " post" +
+          (dibuang ? ` (${dibuang} dibuang, lebih dari ${CFG.maxAgeDays} hari)` : "")
+      );
 
       // Perdalam sebagian post: isi penuh + komentar teratas. Yang lain tetap
       // dikirim apa adanya dari hasil pencarian.
@@ -632,7 +728,12 @@ async function cmdCrawl() {
               p.content = d.content;
             }
             p.comments = d.comments;
-            log("    + " + d.comments.length + " komentar: " + p.title.slice(0, 60));
+            p.shot = await screenshotPost(page);
+            log(
+              "    + " + d.comments.length + " komentar" +
+                (p.shot ? ", foto " + Math.round(p.shot.length / 1365) + " KB" : "") +
+                ": " + p.title.slice(0, 50)
+            );
           } catch (e) {
             log("    ! gagal buka post: " + e.message);
           }

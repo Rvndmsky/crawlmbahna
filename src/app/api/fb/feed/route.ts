@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listFbEntries, usingRedis, type FbComment } from "@/lib/fbstore";
 import { detectMovement, engagementFrom } from "@/lib/social";
+import { umurHari } from "@/lib/fbtime";
 import { validateToken, COOKIE } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -30,16 +31,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // Kesegaran: hanya post dalam rentang H-3 (post lama dari kiriman terdahulu
+  // ikut tersaring di sini, bukan cuma saat masuk).
+  const MAX_AGE_DAYS = Number(process.env.FB_MAX_AGE_DAYS) || 3;
+
   const entries = (await listFbEntries()).map((e) => ({
     query: e.query,
     collectedAt: e.collectedAt,
-    posts: e.posts.map((p) => {
+    posts: e.posts
+      .filter((p) => !p.publishedAt || umurHari(p.publishedAt) <= MAX_AGE_DAYS)
+      .map((p) => {
       const comments = (p.comments || []).map(mapComment);
       return {
         url: p.url,
         account: p.account,
         accountUrl: p.accountUrl,
         published: p.published,
+        publishedAt: p.publishedAt || 0,
+        shotId: p.shotId || "",
         title: p.title || "",
         content: p.content,
         engagement: engagementFrom(p.engagementText),
@@ -72,6 +81,7 @@ export async function GET(req: NextRequest) {
         0
       ),
     },
+    maxAgeDays: MAX_AGE_DAYS,
     workerConfigured: !!process.env.FB_WORKER_TOKEN,
     storage: usingRedis ? "redis" : "file",
   });

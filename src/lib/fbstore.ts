@@ -23,10 +23,12 @@ export type FbRawPost = {
   account: string;
   accountUrl: string;
   published: string; // teks apa adanya dari Facebook ("3 j", "12 Agustus")
+  publishedAt: number; // hasil pembacaan waktu -> unix ms (0 = tak terbaca)
   title: string; // diturunkan dari kalimat pertama (Facebook tak punya judul)
   content: string;
   engagementText: string;
   comments: FbComment[]; // komentar teratas, urut like terbanyak
+  shotId: string; // id tangkapan layar (gambarnya disimpan terpisah)
 };
 
 export type FbEntry = {
@@ -128,6 +130,50 @@ const parseEntry = (raw: any): FbEntry | null => {
     return null;
   }
 };
+
+// ---------- tangkapan layar ----------
+// Gambar disimpan TERPISAH dari entri: kalau ikut di dalam entri, satu SET ke
+// Upstash bisa menembus batas ukuran permintaan.
+const SHOT_DIR = path.join(DATA_DIR, "shots");
+const shotKey = (id: string) => `fb:shot:${id}`;
+
+// Id dari URL post — cukup dengan hash sederhana, bukan untuk keamanan.
+export function shotIdFor(url: string): string {
+  let h = 0;
+  for (let i = 0; i < url.length; i++) {
+    h = (h * 31 + url.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36) + "-" + url.length.toString(36);
+}
+
+export async function saveShot(id: string, base64: string): Promise<void> {
+  if (!id || !base64) return;
+  if (usingRedis) {
+    // Simpan 30 hari; bukti visual tidak perlu abadi.
+    await redis(["SET", shotKey(id), base64, "EX", 60 * 60 * 24 * 30]);
+    return;
+  }
+  try {
+    if (!fs.existsSync(SHOT_DIR)) fs.mkdirSync(SHOT_DIR, { recursive: true });
+    fs.writeFileSync(path.join(SHOT_DIR, `${id}.b64`), base64, "utf8");
+  } catch {
+    /* read-only FS: lewati */
+  }
+}
+
+export async function getShot(id: string): Promise<string> {
+  if (!id) return "";
+  if (usingRedis) {
+    const v = await redis(["GET", shotKey(id)]);
+    return typeof v === "string" ? v : "";
+  }
+  try {
+    const f = path.join(SHOT_DIR, `${id}.b64`);
+    return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "";
+  } catch {
+    return "";
+  }
+}
 
 // ---------- API modul ----------
 export async function saveFbEntry(entry: FbEntry): Promise<number> {

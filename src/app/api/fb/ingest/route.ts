@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveFbEntry, fbStats, type FbRawPost } from "@/lib/fbstore";
+import {
+  saveFbEntry,
+  fbStats,
+  saveShot,
+  shotIdFor,
+  type FbRawPost,
+} from "@/lib/fbstore";
+import { parseFbTime, umurHari } from "@/lib/fbtime";
 import { validateToken, COOKIE } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -28,11 +35,14 @@ function sanitize(p: any): FbRawPost | null {
     return null;
   }
   const content = String(p?.content || "").slice(0, 4000);
+  const published = String(p?.published || "").slice(0, 80);
   return {
     url,
     account: String(p?.account || "").slice(0, 160),
     accountUrl: String(p?.accountUrl || "").slice(0, 400),
-    published: String(p?.published || "").slice(0, 80),
+    published,
+    publishedAt: parseFbTime(published),
+    shotId: "",
     // Facebook tidak punya judul; kalau worker belum mengisinya, ambil kalimat
     // pertama isi post.
     title:
@@ -62,16 +72,45 @@ export async function POST(req: NextRequest) {
     const query = String(body?.query || "").trim();
     if (!query) return NextResponse.json({ error: "kueri kosong" }, { status: 400 });
 
-    const posts = (Array.isArray(body?.posts) ? body.posts : [])
-      .map(sanitize)
-      .filter((p: FbRawPost | null): p is FbRawPost => !!p);
+    const MAX_AGE_DAYS = Number(process.env.FB_MAX_AGE_DAYS) || 3;
+    const mentah = (Array.isArray(body?.posts) ? body.posts : []) as any[];
+
+    const posts: FbRawPost[] = [];
+    let terlaluLama = 0;
+    for (const raw of mentah) {
+      const p = sanitize(raw);
+      if (!p) continue;
+      // Batas kesegaran: post yang jelas lebih tua dari H-3 ditolak. Post yang
+      // waktunya tidak terbaca (publishedAt 0) tetap diterima.
+      if (p.publishedAt && umurHari(p.publishedAt) > MAX_AGE_DAYS) {
+        terlaluLama++;
+        continue;
+      }
+      // Tangkapan layar dipisah dari entri supaya entri tetap ramping.
+      const shot = String(raw?.shot || "");
+      if (shot) {
+        const id = shotIdFor(p.url);
+        try {
+          await saveShot(id, shot);
+          p.shotId = id;
+        } catch {
+          /* gagal simpan gambar tidak boleh menggagalkan postnya */
+        }
+      }
+      posts.push(p);
+    }
 
     const saved = await saveFbEntry({
       query,
       collectedAt: Number(body?.collectedAt) || Date.now(),
       posts,
     });
-    return NextResponse.json({ ok: true, saved, received: posts.length });
+    return NextResponse.json({
+      ok: true,
+      saved,
+      received: posts.length,
+      ditolakUmur: terlaluLama,
+    });
   } catch (e: any) {
     return NextResponse.json(
       { error: e?.message || "gagal menyimpan" },
