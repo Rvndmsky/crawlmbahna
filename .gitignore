@@ -8,3 +8,4 @@ data
 .vercel
 worker/node_modules
 worker/fb-profile
+worker/.env
