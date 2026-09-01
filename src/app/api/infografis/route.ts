@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { bacaDokumen, jenisBerkas } from "@/lib/doc";
 import { analisaDokumen, rakitSvg } from "@/lib/infografis";
+import { buatIlustrasi, promptIlustrasi } from "@/lib/gambar";
 import {
   simpanInfografis,
   daftarInfografis,
@@ -103,7 +104,12 @@ export async function POST(req: NextRequest) {
     const spec = judulPengguna
       ? { ...hasil.spec, judul: judulPengguna }
       : hasil.spec;
-    const svg = rakitSvg(spec);
+    // Ilustrasi header dibuat model gambar. Gagal atau dimatikan lewat ENV ->
+    // infografis tetap terbit, hanya tanpa pita gambar.
+    const ilustrasi = await buatIlustrasi(
+      promptIlustrasi(spec.judul, spec.kategori, spec.ringkasan)
+    );
+    const svg = rakitSvg(spec, new Date(), ilustrasi);
     const item = {
       id,
       judul: spec.judul,

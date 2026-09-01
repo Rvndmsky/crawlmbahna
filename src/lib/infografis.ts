@@ -209,7 +209,13 @@ function teksMultibaris(
 }
 
 // Infografis potret 1080x1350 — nyaman dibagikan & dicetak.
-export function rakitSvg(spec: InfoSpec, tanggal = new Date()): string {
+// "ilustrasi" = base64 gambar header (opsional). Gambar hanya jadi pita atas;
+// seluruh teks tetap dirakit di sini supaya angkanya persis.
+export function rakitSvg(
+  spec: InfoSpec,
+  tanggal = new Date(),
+  ilustrasi = ""
+): string {
   const L = 1080;
   const T = 1350;
   const M = 72; // margin kiri/kanan
@@ -228,6 +234,22 @@ export function rakitSvg(spec: InfoSpec, tanggal = new Date()): string {
     )}</text>`
   );
   y = 132 + 68;
+
+  // Pita ilustrasi (bila ada). Diberi gradasi ke bawah supaya judul di
+  // bawahnya tetap terbaca dan sambungannya tidak terlihat terpotong.
+  const PITA = 250;
+  if (ilustrasi) {
+    bagian.push(
+      `<defs><linearGradient id="lembut" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="70%" stop-color="${WARNA.permukaan}" stop-opacity="0"/>` +
+        `<stop offset="100%" stop-color="${WARNA.permukaan}" stop-opacity="1"/>` +
+        `</linearGradient></defs>`,
+      `<image x="0" y="132" width="${L}" height="${PITA}" preserveAspectRatio="xMidYMid slice" ` +
+        `href="data:image/png;base64,${ilustrasi}"/>`,
+      `<rect x="0" y="132" width="${L}" height="${PITA}" fill="url(#lembut)"/>`
+    );
+    y = 132 + PITA + 52;
+  }
 
   // Judul
   const judul = teksMultibaris(spec.judul, M, y, {
@@ -311,7 +333,10 @@ export function rakitSvg(spec: InfoSpec, tanggal = new Date()): string {
       `<text x="${M}" y="${y}" font-size="15" font-weight="700" fill="${WARNA.redup}" letter-spacing="2">POKOK BAHASAN</text>`
     );
     y += 30;
-    spec.poin.forEach((p, i) => {
+    for (let i = 0; i < spec.poin.length; i++) {
+      // Ruang bawah dijaga: kotak kesimpulan + kaki menempati ~230px terakhir.
+      if (y > T - 300) break;
+      const p = spec.poin[i];
       const warna = WARNA.seri[i % WARNA.seri.length];
       bagian.push(
         `<circle cx="${M + 13}" cy="${y + 8}" r="13" fill="${warna}"/>`,
@@ -329,7 +354,7 @@ export function rakitSvg(spec: InfoSpec, tanggal = new Date()): string {
       });
       bagian.push(isi.svg);
       y += 42 + isi.tinggi + 14;
-    });
+    }
     y += 12;
   }
 
