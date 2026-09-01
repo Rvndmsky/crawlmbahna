@@ -24,7 +24,7 @@ export async function GET() {
     },
     // Nama ENV apa saja yang mirip, untuk menangkap salah ketik.
     kunciMirip: Object.keys(process.env)
-      .filter((k) => /FB|WORKER|UPSTASH|REDIS/i.test(k))
+      .filter((k) => /FB|WORKER|UPSTASH|REDIS|KV_|STORAGE|DATABASE/i.test(k))
       .sort(),
   });
 }
