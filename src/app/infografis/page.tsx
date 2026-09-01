@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import Shell from "../shell";
 
 // Section Infografis: daftar hasil yang sudah dibuat + tombol Baru untuk
 // mengunggah dokumen (PDF/DOCX). Agen menilai kelayakan isinya lebih dulu;
@@ -190,33 +190,7 @@ export default function InfografisPage() {
   }
 
   return (
-    <>
-      <header className="topbar">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => router.push("/")}>
-          mbah<span className="dot">na</span>
-        </div>
-        <div style={{ flex: 1, fontWeight: 600 }}>🖼 Infografis</div>
-        <button
-          type="button"
-          className="refresh"
-          title="pantau individu"
-          onClick={() => router.push("/gettargetmbahna")}
-        >
-          🎯
-        </button>
-        <button
-          type="button"
-          className="refresh"
-          title="pantau Facebook"
-          onClick={() => router.push("/facebook")}
-        >
-          📘
-        </button>
-        <button type="button" className="refresh" title="dashboard" onClick={() => router.push("/")}>
-          🔥
-        </button>
-        <ThemeToggle />
-      </header>
+    <Shell judul="🖼 Infografis">
 
       <div className="wrap" style={{ maxWidth: 980 }}>
         {/* Baris aksi */}
@@ -450,6 +424,6 @@ export default function InfografisPage() {
           </>
         )}
       </div>
-    </>
+    </Shell>
   );
 }

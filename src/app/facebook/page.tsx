@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import Shell from "../shell";
 import { makeDetailSlug, todayYYYYMMDD } from "@/lib/slug";
 
 // Halaman pemantauan Facebook — berbasis ISU (demo, aksi massa, petisi),
@@ -150,51 +150,11 @@ export default function FacebookPage() {
   );
 
   return (
-    <>
-      <header className="topbar">
-        <div
-          className="logo"
-          style={{ cursor: "pointer" }}
-          onClick={() => router.push("/")}
-        >
-          mbah<span className="dot">na</span>
-        </div>
-        <div style={{ flex: 1, fontWeight: 600 }}>📘 Pantau Facebook — Isu &amp; Gerakan</div>
-        <button
-          type="button"
-          className="refresh"
-          title="muat ulang"
-          onClick={load}
-          disabled={loading}
-        >
+    <Shell judul="📘 Crawl Social Media" aksi={
+        <button type="button" className="refresh" title="muat ulang" onClick={load} disabled={loading}>
           ↻
         </button>
-        <button
-          type="button"
-          className="refresh"
-          title="pantau individu"
-          onClick={() => router.push("/gettargetmbahna")}
-        >
-          🎯
-        </button>
-        <button
-          type="button"
-          className="refresh"
-          title="infografis dari dokumen"
-          onClick={() => router.push("/infografis")}
-        >
-          🖼
-        </button>
-        <button
-          type="button"
-          className="refresh"
-          title="dashboard"
-          onClick={() => router.push("/")}
-        >
-          🔥
-        </button>
-        <ThemeToggle />
-      </header>
+      }>
 
       <div className="wrap" style={{ maxWidth: 940 }}>
         <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
@@ -457,6 +417,6 @@ npm run watch      # sisir terus tiap jam`}</pre>
           </>
         )}
       </div>
-    </>
+    </Shell>
   );
 }

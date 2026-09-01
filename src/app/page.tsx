@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "./theme-toggle";
+import Shell from "./shell";
 import IndonesiaMap from "./id-map";
 import { makeDetailSlug } from "@/lib/slug";
 import { resolveCoord } from "@/lib/geo";
@@ -141,11 +141,6 @@ export default function IntelDashboard() {
   const [elapsed, setElapsed] = useState(0);
   const [bidx, setBidx] = useState(0);
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/login");
-  }
-
   function goDetail(subject: string, heat: number, url?: string, title?: string) {
     const dateCompact = (data?.date || "").replace(/-/g, "");
     const slug = makeDetailSlug(title || subject, dateCompact);
@@ -263,47 +258,15 @@ export default function IntelDashboard() {
   }, [breakingLen]);
 
   return (
-    <div className="intel">
-      <header className="intel-top">
-        <div className="brand-row">
-          <div className="logo">
-            mbah<span className="dot">na</span>
-          </div>
-          <span className="sub-brand">Website Crawl Simple Membantu Pemerintah RI</span>
-        </div>
-        <div style={{ flex: 1 }} />
-        <ThemeToggle />
-        <button
-          className="refresh"
-          title="pantau individu (threads/ig/x)"
-          onClick={() => router.push("/gettargetmbahna")}
-        >
-          🎯
-        </button>
-        <button
-          className="refresh"
-          title="infografis dari dokumen"
-          onClick={() => router.push("/infografis")}
-        >
-          🖼
-        </button>
-        <button
-          className="refresh"
-          title="pantau Facebook (isu & gerakan)"
-          onClick={() => router.push("/facebook")}
-        >
-          📘
-        </button>
-        <button className="refresh" onClick={() => load(true)} disabled={loading}>
+    <Shell
+      judul="Dashboard Intelijen"
+      aksi={
+        <button className="refresh" title="muat ulang" onClick={() => load(true)} disabled={loading}>
           ↻
         </button>
-        <button className="refresh" title="setup AI" onClick={() => router.push("/settings")}>
-          ⚙
-        </button>
-        <button className="refresh" title="keluar" onClick={logout}>
-          ⏻
-        </button>
-      </header>
+      }
+    >
+      <div className="intel">
 
       <div className="intel-body">
         {/* Search bar utama (di body, gaya Google) */}
@@ -518,6 +481,7 @@ export default function IntelDashboard() {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </Shell>
   );
 }

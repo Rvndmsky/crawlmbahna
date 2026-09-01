@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import ThemeToggle from "../../theme-toggle";
+import Shell from "../../shell";
 import { parseDetailSlug, titleCase } from "@/lib/slug";
 
 type RelatedSource = { title: string; url: string; source: string };
@@ -141,18 +141,7 @@ function Detail() {
   const d = data?.dossier;
 
   return (
-    <>
-      <header className="topbar">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => router.push("/")}>
-          mbah<span className="dot">na</span>
-        </div>
-        <div style={{ flex: 1, fontWeight: 600 }}>📑 Dossier Monitoring</div>
-        <button className="refresh" onClick={() => load(true)} disabled={loading}>
-          ↻
-        </button>
-        <ThemeToggle />
-        <button onClick={() => router.back()}>← Kembali</button>
-      </header>
+    <Shell judul="📑 Dossier Intel">
 
       <div className="wrap" style={{ maxWidth: 900 }}>
         <div className="dossier-src-line">
@@ -375,7 +364,7 @@ function Detail() {
           </>
         )}
       </div>
-    </>
+    </Shell>
   );
 }
 

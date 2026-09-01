@@ -69,5 +69,15 @@ export function validateToken(token: string | undefined | null): boolean {
   }
 }
 
+// Identitas pengguna yang sedang login. Akun tunggal, jadi diambil dari ENV.
+// Nama tampil = bagian sebelum @ pada email, huruf depan dibesarkan.
+export function sessionUser(): { email: string; nama: string } {
+  const nama = EMAIL.split("@")[0].replace(/[._-]+/g, " ").trim();
+  return {
+    email: EMAIL,
+    nama: nama.charAt(0).toUpperCase() + nama.slice(1),
+  };
+}
+
 // Stateless: logout cukup hapus cookie (dilakukan di route).
 export function destroySession() {}

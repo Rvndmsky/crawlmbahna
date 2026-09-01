@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import Shell from "../shell";
 import { makeDetailSlug, todayYYYYMMDD } from "@/lib/slug";
 
 type NewsItem = {
@@ -103,14 +103,14 @@ function Results() {
   }
 
   return (
-    <>
-      <header className="topbar">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => router.push("/")}>
-          mbah<span className="dot">na</span>
-        </div>
-        <form onSubmit={submit}>
-          <input value={box} onChange={(e) => setBox(e.target.value)} />
-          <button type="submit">Cari</button>
+    <Shell
+      judul="Pencarian Berita"
+      aksi={
+        <>
+          <form className="mini-search" onSubmit={submit}>
+            <input value={box} onChange={(e) => setBox(e.target.value)} />
+            <button type="submit">Cari</button>
+          </form>
           <button
             type="button"
             className="refresh"
@@ -120,20 +120,9 @@ function Results() {
           >
             ↻
           </button>
-        </form>
-        <button
-          type="button"
-          className="refresh"
-          title="pantau individu (threads/ig/x)"
-          onClick={() => router.push("/gettargetmbahna")}
-        >
-          🎯
-        </button>
-        <button type="button" className="refresh" title="dashboard" onClick={() => router.push("/")}>
-          🔥
-        </button>
-        <ThemeToggle />
-      </header>
+        </>
+      }
+    >
 
       <div className="wrap">
         {loading && (
@@ -195,7 +184,7 @@ function Results() {
           </>
         )}
       </div>
-    </>
+    </Shell>
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import Shell from "../shell";
 import { makeDetailSlug, todayYYYYMMDD } from "@/lib/slug";
 
 type Sent = "positive" | "negative" | "neutral";
@@ -278,28 +278,39 @@ function TargetView() {
   }, [data]);
 
   return (
-    <>
-      <header className="topbar">
-        <div
-          className="logo"
-          style={{ cursor: "pointer" }}
-          onClick={() => router.push("/")}
-        >
-          mbah<span className="dot">na</span>
-        </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const n = box.trim();
-            if (n) openTarget(n);
-          }}
-        >
-          <input
-            value={box}
-            onChange={(e) => setBox(e.target.value)}
-            placeholder="nama orang / target…"
-          />
-          <button type="submit">Sisir</button>
+    <Shell
+      judul="🎯 Subject Target"
+      aksi={
+        <>
+          <form
+            className="mini-search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = box.trim();
+              if (n) openTarget(n);
+            }}
+          >
+            <input
+              value={box}
+              onChange={(e) => setBox(e.target.value)}
+              placeholder="nama orang / target…"
+            />
+            <button type="submit">Sisir</button>
+          </form>
+          <select
+            className="days-sel"
+            value={days}
+            onChange={(e) => {
+              const d = Number(e.target.value);
+              setDays(d);
+              if (data?.name) crawl(data.name, true, d);
+            }}
+            title="rentang waktu"
+          >
+            <option value={7}>7 hari</option>
+            <option value={14}>14 hari</option>
+            <option value={30}>30 hari</option>
+          </select>
           <button
             type="button"
             className="refresh"
@@ -309,47 +320,9 @@ function TargetView() {
           >
             ↻
           </button>
-        </form>
-        <select
-          className="days-sel"
-          value={days}
-          onChange={(e) => {
-            const d = Number(e.target.value);
-            setDays(d);
-            if (data?.name) crawl(data.name, true, d);
-          }}
-          title="rentang waktu"
-        >
-          <option value={7}>7 hari</option>
-          <option value={14}>14 hari</option>
-          <option value={30}>30 hari</option>
-        </select>
-        <button
-          type="button"
-          className="refresh"
-          title="infografis dari dokumen"
-          onClick={() => router.push("/infografis")}
-        >
-          🖼
-        </button>
-        <button
-          type="button"
-          className="refresh"
-          title="pantau Facebook (isu & gerakan)"
-          onClick={() => router.push("/facebook")}
-        >
-          📘
-        </button>
-        <button
-          type="button"
-          className="refresh"
-          title="dashboard"
-          onClick={() => router.push("/")}
-        >
-          🔥
-        </button>
-        <ThemeToggle />
-      </header>
+        </>
+      }
+    >
 
       <div className="wrap" style={{ maxWidth: 940 }}>
         <div className="section-title" style={{ marginTop: 4 }}>
@@ -762,7 +735,7 @@ function TargetView() {
           </>
         )}
       </div>
-    </>
+    </Shell>
   );
 }
 

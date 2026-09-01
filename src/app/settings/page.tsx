@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "../theme-toggle";
+import Shell from "../shell";
 
 type Preset = "anthropic" | "openrouter" | "custom";
 
@@ -112,15 +112,7 @@ export default function SettingsPage() {
   const isAnthropic = PRESETS[preset].provider === "anthropic";
 
   return (
-    <>
-      <header className="topbar">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => router.push("/")}>
-          mbah<span className="dot">na</span>
-        </div>
-        <div style={{ flex: 1, fontWeight: 600 }}>⚙ Setup AI Provider</div>
-        <ThemeToggle />
-        <button onClick={() => router.push("/")}>← Dashboard</button>
-      </header>
+    <Shell judul="⚙ Settings">
 
       <div className="wrap" style={{ maxWidth: 620 }}>
         <div className="form-group">
@@ -264,6 +256,6 @@ npm run watch      # sisir terus tiap jam`}</pre>
           (folder <code>data/</code> di-gitignore). Jangan commit / bagikan.
         </div>
       </div>
-    </>
+    </Shell>
   );
 }
