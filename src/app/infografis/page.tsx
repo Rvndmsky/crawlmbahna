@@ -190,16 +190,41 @@ export default function InfografisPage() {
     setError(null);
   }
 
-  // Unduh PNG: SVG digambar ke canvas di browser, tanpa pustaka tambahan.
-  function unduhPng() {
+  // Unduh PNG. Jalur utama: raster dari server (hasilnya seragam di semua
+  // peramban). Bila gagal, jatuh ke konversi canvas di browser.
+  async function unduhPng() {
+    if (aktif?.id) {
+      try {
+        const res = await fetch(
+          `/api/infografis/img?id=${encodeURIComponent(aktif.id)}&format=png`
+        );
+        if (res.ok) {
+          const b = await res.blob();
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(b);
+          a.download = `infografis-${aktif.id}.png`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+          return;
+        }
+      } catch {
+        /* lanjut ke jalur canvas */
+      }
+    }
+    unduhPngCanvas();
+  }
+
+  function unduhPngCanvas() {
     if (!svg) return;
     const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
+      // Tinggi infografis mengikuti panjang isi, jadi ukuran kanvas diambil
+      // dari gambarnya — bukan dipatok.
       const c = document.createElement("canvas");
-      c.width = 1080;
-      c.height = 1350;
+      c.width = img.naturalWidth || 1080;
+      c.height = img.naturalHeight || 1350;
       const ctx = c.getContext("2d");
       if (!ctx) return;
       ctx.fillStyle = "#fcfcfb";

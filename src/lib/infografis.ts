@@ -269,7 +269,10 @@ export function rakitSvg(
   ilustrasi = ""
 ): string {
   const L = 1080;
-  const T = 1350;
+  // Tinggi mengikuti isi: dipatok tetap, pokok bahasan dan kronologi terakhir
+  // ikut terpotong begitu dokumennya panjang. Minimalnya tetap 1350 supaya
+  // dokumen pendek tidak terlihat gempal.
+  const T_MIN = 1350;
   const M = 72; // margin kiri/kanan
   const isiLebar = L - M * 2;
   const bagian: string[] = [];
@@ -372,21 +375,21 @@ export function rakitSvg(
     );
     y += 26;
     for (const t of spec.temuan) {
-      const baris = teksMultibaris(t, M + 26, y + 14, {
-        ukuran: 18,
+      const baris = teksMultibaris(t, M + 24, y + 13, {
+        ukuran: 17,
         warna: WARNA.tinta,
-        maksKar: 62,
+        maksKar: 66,
         maksBaris: 2,
-        jarak: 25,
+        jarak: 23,
         tebal: 600,
       });
       bagian.push(
         `<rect x="${M}" y="${y + 2}" width="4" height="${Math.max(18, baris.tinggi - 6)}" rx="2" fill="${WARNA.seri[0]}"/>`,
         baris.svg
       );
-      y += baris.tinggi + 12;
+      y += baris.tinggi + 9;
     }
-    y += 16;
+    y += 14;
   }
 
   // Angka kunci — tiap angka selalu berlabel (warna tidak pernah berdiri sendiri)
@@ -394,7 +397,7 @@ export function rakitSvg(
     const n = spec.sorotan.length;
     const jarak = 16;
     const lebar = Math.floor((isiLebar - jarak * (n - 1)) / n);
-    const tinggi = 148;
+    const tinggi = 132;
     spec.sorotan.forEach((s, i) => {
       const x = M + i * (lebar + jarak);
       const warna = WARNA.seri[i % WARNA.seri.length];
@@ -402,26 +405,26 @@ export function rakitSvg(
       bagian.push(
         `<rect x="${x}" y="${y}" width="${lebar}" height="${tinggi}" rx="14" fill="${WARNA.papan}"/>`,
         `<rect x="${x}" y="${y}" width="6" height="${tinggi}" rx="3" fill="${warna}"/>`,
-        `<text x="${x + 24}" y="${y + 62}" font-size="${nilaiUkuran}" font-weight="800" fill="${WARNA.tinta}">${esc(
+        `<text x="${x + 22}" y="${y + 56}" font-size="${nilaiUkuran}" font-weight="800" fill="${WARNA.tinta}">${esc(
           s.nilai
         )}</text>`,
-        teksMultibaris(s.label, x + 24, y + 94, {
+        teksMultibaris(s.label, x + 22, y + 84, {
           ukuran: 16,
           warna: WARNA.tintaKedua,
-          maksKar: Math.floor(lebar / 8.6),
+          maksKar: Math.floor(lebar / 8.4),
           maksBaris: 2,
-          jarak: 21,
+          jarak: 19,
         }).svg
       );
       if (s.catatan) {
         bagian.push(
-          `<text x="${x + 24}" y="${y + tinggi - 16}" font-size="13" fill="${WARNA.redup}">${esc(
+          `<text x="${x + 22}" y="${y + tinggi - 14}" font-size="12.5" fill="${WARNA.redup}">${esc(
             s.catatan.slice(0, Math.floor(lebar / 7))
           )}</text>`
         );
       }
     });
-    y += tinggi + 42;
+    y += tinggi + 34;
   }
 
   // Pokok bahasan
@@ -431,32 +434,30 @@ export function rakitSvg(
     );
     y += 30;
     for (let i = 0; i < spec.poin.length; i++) {
-      // Ruang bawah dijaga: kotak kesimpulan + kaki menempati ~230px terakhir.
-      if (y > T - 300) break;
       const p = spec.poin[i];
       const warna = WARNA.seri[i % WARNA.seri.length];
       bagian.push(
         `<circle cx="${M + 13}" cy="${y + 8}" r="13" fill="${warna}"/>`,
         `<text x="${M + 13}" y="${y + 14}" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">${i + 1}</text>`,
-        `<text x="${M + 42}" y="${y + 14}" font-size="21" font-weight="700" fill="${WARNA.tinta}">${esc(
+        `<text x="${M + 40}" y="${y + 14}" font-size="20" font-weight="700" fill="${WARNA.tinta}">${esc(
           p.judul
         )}</text>`
       );
-      const isi = teksMultibaris(p.isi, M + 42, y + 42, {
-        ukuran: 17,
+      const isi = teksMultibaris(p.isi, M + 40, y + 38, {
+        ukuran: 16,
         warna: WARNA.tintaKedua,
-        maksKar: 60,
+        maksKar: 64,
         maksBaris: 2,
-        jarak: 25,
+        jarak: 23,
       });
       bagian.push(isi.svg);
-      y += 42 + isi.tinggi + 14;
+      y += 38 + isi.tinggi + 10;
     }
     y += 12;
   }
 
   // Linimasa
-  if (spec.linimasa.length && y < T - 320) {
+  if (spec.linimasa.length) {
     bagian.push(
       `<text x="${M}" y="${y}" font-size="15" font-weight="700" fill="${WARNA.redup}" letter-spacing="2">KRONOLOGI</text>`
     );
@@ -476,7 +477,7 @@ export function rakitSvg(
           jarak: 23,
         }).svg
       );
-      y += 68;
+      y += 62;
     });
     bagian.push(
       `<rect x="${M + 6}" y="${mulai}" width="2" height="${y - mulai - 40}" fill="${WARNA.garis}"/>`
@@ -484,14 +485,18 @@ export function rakitSvg(
     y += 10;
   }
 
+  // Tinggi akhir: isi + ruang untuk kotak kesimpulan, kaki, dan pita bawah.
+  const RUANG_KAKI = spec.kesimpulan ? 252 : 130;
+  const T = Math.max(T_MIN, y + RUANG_KAKI);
+
   // Kesimpulan
   if (spec.kesimpulan) {
-    const k = teksMultibaris(spec.kesimpulan, M + 24, T - 192, {
-      ukuran: 19,
+    const k = teksMultibaris(spec.kesimpulan, M + 24, T - 168, {
+      ukuran: 18,
       warna: WARNA.tinta,
-      maksKar: 66,
-      maksBaris: 3,
-      jarak: 28,
+      maksKar: 70,
+      maksBaris: 2,
+      jarak: 26,
     });
     bagian.push(
       `<rect x="${M}" y="${T - 230}" width="${isiLebar}" height="112" rx="14" fill="${WARNA.papan}"/>`,
