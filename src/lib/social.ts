@@ -384,6 +384,31 @@ const platformAkunOf = (p: any) => {
   return PLATFORM_AKUN.includes(v) ? v : "";
 };
 
+// Model sering menyebut handle tanpa URL. Sebelumnya entri seperti itu terbuang
+// oleh saringan, sehingga target dengan enam akun bisa menyisakan satu saja di
+// layar. URL disusun sendiri dari platform + handle — sekalian membuat akunnya
+// bisa dibaca worker untuk jumlah pengikut.
+function urlProfil(platform: string, handle: string): string {
+  const h = String(handle || "").trim().replace(/^@+/, "");
+  if (!h || /\s/.test(h)) return "";
+  switch (platform) {
+    case "instagram":
+      return `https://www.instagram.com/${h}/`;
+    case "threads":
+      return `https://www.threads.com/@${h}`;
+    case "x":
+      return `https://x.com/${h}`;
+    case "facebook":
+      return `https://www.facebook.com/${h}`;
+    case "tiktok":
+      return `https://www.tiktok.com/@${h}`;
+    case "youtube":
+      return `https://www.youtube.com/@${h}`;
+    default:
+      return "";
+  }
+}
+
 const platformOf = (p: any) => {
   const v = String(p || "").toLowerCase();
   if (v === "twitter" || v === "x.com") return "x";
@@ -465,11 +490,13 @@ function parse(
     accounts: (Array.isArray(p.accounts) ? p.accounts : [])
       .filter((a: any) => a && (a.handle || a.url))
       .map((a: any) => {
-        const url = String(a.url || "");
+        const platform = platformAkunOf(a.platform) || platformFromUrl(String(a.url || ""));
+        const handle = String(a.handle || "");
+        const url = String(a.url || "") || urlProfil(platform, handle);
         const yakin = String(a.keyakinan || "").toLowerCase();
         return {
-          platform: platformAkunOf(a.platform) || platformFromUrl(url),
-          handle: String(a.handle || ""),
+          platform,
+          handle: handle || (url ? url.replace(/^https?:\/\/(www\.)?/, "") : ""),
           url,
           verified: !!a.verified,
           followers: String(a.followers || ""),
@@ -481,7 +508,10 @@ function parse(
             : "sedang") as Keyakinan,
         };
       })
-      .filter((a: TargetAccount) => a.platform),
+      // Simpan akun yang punya platform DAN penanda (handle atau URL). Entri
+      // kosong yang kadang dikirim model untuk platform "tidak ditemukan"
+      // tersaring di sini.
+      .filter((a: TargetAccount) => a.platform && (a.handle || a.url)),
   };
 
   const impersonators: ImpersonatorAccount[] = (
