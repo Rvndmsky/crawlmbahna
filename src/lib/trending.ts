@@ -32,6 +32,7 @@ export type TrendTopic = {
 export type CityItem = {
   kota: string; // kota/kabupaten
   provinsi: string;
+  published: string; // tanggal terbit berita (ISO 8601)
   headline: string;
   summary: string;
   heat: number; // 0-100
@@ -54,10 +55,22 @@ export type TrendingResult = {
 const CACHE_MS = 60 * 60 * 1000; // segar 1 jam; berita baru muncul tiap jam / ganti hari
 const CACHE_KEY = "intel";
 
-// Batas bawah rentang dashboard: 14 hari ke belakang dari hari ini (WIB).
+// Batas kesegaran dashboard: satu minggu. Berita lebih tua dari ini dibuang,
+// baik lewat aturan di prompt maupun saringan di bawah.
+const MAKS_HARI = 7;
+
 function sinceDate(): string {
-  const ms = Date.now() + 7 * 60 * 60 * 1000 - 14 * 24 * 60 * 60 * 1000;
+  const ms = Date.now() + 7 * 60 * 60 * 1000 - MAKS_HARI * 24 * 60 * 60 * 1000;
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+// true = tanggalnya terbaca DAN lebih tua dari batas. Tanggal yang tidak
+// terbaca dibiarkan lolos supaya item tidak hilang diam-diam hanya karena
+// formatnya aneh.
+function kedaluwarsa(published: string): boolean {
+  const t = Date.parse(String(published || ""));
+  if (Number.isNaN(t)) return false;
+  return (Date.now() - t) / 86400000 > MAKS_HARI;
 }
 
 function today(): string {
@@ -67,8 +80,9 @@ function today(): string {
 
 const SYSTEM = `Kamu analis intelijen untuk badan intelijen negara Indonesia.
 FOKUS KHUSUS: isu POLITIK, PEMERINTAHAN, HUKUM, dan KEAMANAN Indonesia dalam
-RENTANG 14 HARI TERAKHIR (dihitung mundur dari tanggal yang diberikan).
-Berita lebih tua dari 14 hari JANGAN dipakai.
+RENTANG 7 HARI TERAKHIR (satu minggu, dihitung mundur dari tanggal yang diberikan).
+Berita lebih tua dari 7 hari JANGAN dipakai sama sekali — dashboard ini harus
+selalu memperlihatkan keadaan terkini, bukan arsip.
 Sumber: web berita & media sosial publik.
 
 PRIORITAS TERTINGGI: deteksi indikasi ANCAMAN TERHADAP KEDAULATAN & KEUTUHAN NKRI
@@ -87,7 +101,7 @@ agar cepat. Jangan mencari satu per satu berlebihan.
 
 Kembalikan DUA bagian:
 
-1) "topics" — isu politik/pemerintahan nasional PALING HANGAT dalam 14 hari terakhir
+1) "topics" — isu politik/pemerintahan nasional PALING HANGAT dalam 7 hari terakhir
    (TEPAT 10 topik), yang terbaru dan terpanas didahulukan:
    - Kelompokkan jadi TOPIK (gabung berita seisu). Bukan artikel tunggal.
    - "heat" 0-100 (seberapa ramai dibicarakan; yang masih hangat hari ini bernilai lebih tinggi).
@@ -116,7 +130,8 @@ Kembalikan DUA bagian:
 2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN (TEPAT 8 kota/kabupaten,
    tidak kurang tidak lebih; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
    Kota Semarang, Makassar, Medan, Jayapura, Banda Aceh, dll — spesifik kota/kabupaten, BUKAN provinsi):
-   - RENTANG WAKTU: berita yang terbit dalam 14 HARI TERAKHIR; utamakan yang paling baru.
+   - RENTANG WAKTU: berita yang terbit dalam 7 HARI TERAKHIR; utamakan yang paling baru.
+   - "published": WAJIB diisi tanggal terbit sebenarnya (ISO 8601, mis. 2026-08-25).
    - Tiap kota/kabupaten: 1 headline dengan DAMPAK PALING BESAR pada rentang itu — utamakan kejadian besar:
      ledakan/bom, kebakaran, bencana (banjir/longsor/gempa), kecelakaan maut, kerusuhan/bentrok,
      insiden keamanan, ATAU isu politik/pemerintahan lokal penting. Ambil yang paling update/terbaru
@@ -137,7 +152,8 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, bentuk:
   ],
   "cities": [
     { "kota":"Kota Bandung", "provinsi":"Jawa Barat", "headline":"", "summary":"", "heat":0,
-      "sentiment":"neutral", "url":"", "source":"", "platform":"news", "lat":-6.9, "lon":107.6 }
+      "sentiment":"neutral", "url":"", "source":"", "platform":"news", "published":"",
+      "lat":-6.9, "lon":107.6 }
   ]
 }`;
 
@@ -187,6 +203,7 @@ function parse(text: string): { topics: TrendTopic[]; cities: CityItem[] } {
     .map((p: any) => ({
       kota: String(p.kota || ""),
       provinsi: String(p.provinsi || ""),
+      published: String(p.published || ""),
       headline: String(p.headline || ""),
       summary: String(p.summary || ""),
       heat: heatOf(p.heat),
@@ -220,7 +237,7 @@ export async function getTrending(
   const text = await runWeb(
     SYSTEM,
     `Tanggal HARI INI: ${today()}. Rentang yang boleh dipakai: ${sinceDate()} s/d ${today()} ` +
-      `(14 hari terakhir). Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
+      `(7 hari terakhir). Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
       `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon; berita kota dalam rentang itu, ` +
       `pilih yang dampaknya paling besar: ledakan/kebakaran/bencana/kerusuhan/insiden atau isu pemerintahan lokal). ` +
       `Sertakan sumber asli + tanggal terbit. ` +
@@ -230,7 +247,13 @@ export async function getTrending(
     12000,
     "dashboard"
   );
-  const { topics, cities } = parse(text);
+  const mentah = parse(text);
+  // Saringan kesegaran: aturan di prompt kadang dilanggar model, jadi tanggal
+  // yang bisa dibaca diperiksa ulang di sini.
+  const topics = mentah.topics
+    .map((t) => ({ ...t, sources: t.sources.filter((s) => !kedaluwarsa(s.published)) }))
+    .filter((t) => t.sources.length > 0);
+  const cities = mentah.cities.filter((c) => !kedaluwarsa(c.published));
   const result: TrendingResult = {
     date: today(),
     generatedAt: Date.now(),

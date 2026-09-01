@@ -29,6 +29,7 @@ type TrendTopic = {
 type CityItem = {
   kota: string;
   provinsi: string;
+  published: string;
   headline: string;
   summary: string;
   heat: number;
@@ -335,7 +336,7 @@ export default function IntelDashboard() {
               })()}
 
             <div className="meta">
-              Snapshot {data.date}
+              Snapshot {data.date} · hanya berita 7 hari terakhir
               {data.cached && <span className="badge-cache">cache harian</span>}
               {data.generatedAt ? ` · diperbarui ${fmtTime(data.generatedAt)}` : ""}
             </div>
