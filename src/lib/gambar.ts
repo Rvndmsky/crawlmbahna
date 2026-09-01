@@ -63,13 +63,18 @@ export async function buatIlustrasi(prompt: string): Promise<string> {
 // tanpa teks: yang boleh membawa makna verbal hanya lapisan SVG.
 export function promptIlustrasi(judul: string, kategori: string, ringkasan: string): string {
   return [
-    "Editorial infographic header illustration, wide banner composition.",
+    "Intelligence briefing header illustration, wide banner composition.",
     `Topic: ${judul}. Category: ${kategori}. Context: ${ringkasan}`,
-    "Style: flat vector editorial illustration, clean geometric shapes, subtle paper texture,",
-    "muted professional palette of deep blue (#2a78d6), warm orange (#eb6834) and teal (#1baf7a)",
-    "on a light off-white background (#fcfcfb).",
-    "Composition: simple, uncluttered, plenty of negative space, suitable as a header band.",
-    "ABSOLUTELY NO TEXT, no letters, no numbers, no words, no captions, no logos, no watermarks.",
-    "No photorealism, no faces of identifiable real people, no gore, no violence.",
+    "Style: flat vector / corporate intelligence briefing aesthetic — the visual language of an",
+    "executive briefing deck or command-center wall display. Clean geometric shapes, precise",
+    "linework, restrained iconography (map outlines, node-link network motifs, timeline rails,",
+    "document and location glyphs) rendered as abstract shapes.",
+    "Palette: deep blue (#2a78d6), warm orange (#eb6834), teal (#1baf7a) on off-white (#fcfcfb).",
+    "Composition: formal, precise, uncluttered, generous negative space, grid-aligned,",
+    "readable at a glance, suitable as a header band above dense text.",
+    "ABSOLUTELY NO TEXT of any kind: no letters, no numbers, no words, no captions, no labels,",
+    "no logos, no watermarks, no fake writing. Typography is handled separately.",
+    "No photorealism, no faces of identifiable real people, no gore, no violence, no weapons",
+    "pointed at people, no political party symbols or national emblems.",
   ].join(" ");
 }
