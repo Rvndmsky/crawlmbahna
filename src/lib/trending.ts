@@ -73,6 +73,17 @@ function kedaluwarsa(published: string): boolean {
   return (Date.now() - t) / 86400000 > MAKS_HARI;
 }
 
+// Breaking hanya untuk berita 1x24 jam. Berbeda dari saringan kesegaran di
+// atas, di sini tanggal yang TIDAK terbaca dianggap tidak memenuhi syarat:
+// label breaking adalah klaim mendesak, jadi harus bisa dibuktikan tanggalnya.
+// Item tetap tampil, hanya labelnya yang dilepas.
+function masihBreaking(published: string): boolean {
+  const t = Date.parse(String(published || ""));
+  if (Number.isNaN(t)) return false;
+  const umurJam = (Date.now() - t) / 3600000;
+  return umurJam >= 0 && umurJam <= 24;
+}
+
 function today(): string {
   // Tanggal WIB (UTC+7) supaya "hari ini" sesuai waktu Indonesia.
   return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -121,8 +132,10 @@ Kembalikan DUA bagian:
      * Dinamika parlemen (DPR/MPR/DPD): voting, sidang paripurna, interpelasi, hak angket.
      * Pernyataan kontroversial/ngawur pejabat/tokoh publik yang memicu gejolak.
      * Ancaman kedaulatan/keamanan serius, atau info yang BARU terungkap & belum ramai.
-     WAJIB: breaking:true HANYA untuk berita yang TERBIT HARI INI (tanggal yang diberikan, pukul 00:00-23:59
-     waktu Indonesia). Berita kemarin atau sebelumnya => breaking:false walau penting. Cek tanggal terbit sumber.
+     WAJIB: breaking:true HANYA untuk berita berumur MAKSIMAL 1x24 JAM dari tanggal yang
+     diberikan. Lebih tua dari itu => breaking:false walau isinya penting. Cek tanggal terbit
+     sumbernya, dan pastikan "published" pada sumber terisi — label breaking tanpa tanggal
+     yang bisa diperiksa akan dilepas oleh sistem.
      Tandai MINIMAL 5 topik yang PALING mendesak & TERBIT HARI INI sebagai breaking:true; sisanya false.
    - 2-4 "sources" (judul + URL asli + sumber + platform + tanggal).
    - Sertakan isu bermuatan ancaman kedaulatan bila ada hari ini, walau heat-nya belum tinggi.
@@ -251,7 +264,15 @@ export async function getTrending(
   // Saringan kesegaran: aturan di prompt kadang dilanggar model, jadi tanggal
   // yang bisa dibaca diperiksa ulang di sini.
   const topics = mentah.topics
-    .map((t) => ({ ...t, sources: t.sources.filter((s) => !kedaluwarsa(s.published)) }))
+    .map((t) => {
+      const sources = t.sources.filter((s) => !kedaluwarsa(s.published));
+      return {
+        ...t,
+        sources,
+        // Label breaking dilepas bila tak ada satu pun sumber berumur <= 24 jam.
+        breaking: t.breaking && sources.some((s) => masihBreaking(s.published)),
+      };
+    })
     .filter((t) => t.sources.length > 0);
   const cities = mentah.cities.filter((c) => !kedaluwarsa(c.published));
   const result: TrendingResult = {

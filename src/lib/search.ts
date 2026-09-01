@@ -54,7 +54,7 @@ Aturan:
 - Ringkasan ("summary") Bahasa Indonesia, 1-2 kalimat, faktual, netral.
 - "sentiment" salah satu dari: positive, negative, neutral (nada pemberitaan terhadap pemerintah/isu).
   "sentiment_score" antara -1 dan 1.
-- "breaking": true untuk item MENDESAK / baru pecah yang TERBIT HARI INI — mis. OTT/penangkapan korupsi,
+- "breaking": true HANYA untuk item MENDESAK berumur maksimal 1x24 JAM — mis. OTT/penangkapan korupsi,
   penetapan tersangka pejabat, teror/bom, insiden keamanan, pengesahan/revisi UU, keputusan MK,
   dinamika parlemen (voting/paripurna/hak angket), pernyataan kontroversial pejabat, atau ancaman kedaulatan.
   JUGA breaking:true bila JUDUL/sumber berita memuat label PERSIS frasa "BREAKING NEWS"
@@ -80,6 +80,14 @@ Keluarkan HANYA JSON valid tanpa penjelasan lain, tanpa code fence, mengikuti be
     }
   ]
 }`;
+
+// Breaking hanya untuk berita 1x24 jam, dan harus bisa dibuktikan tanggalnya.
+function masihBreaking(published: string): boolean {
+  const t = Date.parse(String(published || ""));
+  if (Number.isNaN(t)) return false;
+  const umurJam = (Date.now() - t) / 3600000;
+  return umurJam >= 0 && umurJam <= 24;
+}
 
 function parseItems(text: string): NewsItem[] {
   let t = text.trim();
@@ -108,7 +116,7 @@ function parseItems(text: string): NewsItem[] {
           : "neutral",
         sentiment_score:
           typeof it.sentiment_score === "number" ? it.sentiment_score : 0,
-        breaking: !!it.breaking,
+        breaking: !!it.breaking && masihBreaking(String(it.published || "")),
       }));
   } catch {
     return [];
