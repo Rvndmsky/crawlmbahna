@@ -83,8 +83,14 @@ export default function InfografisPage() {
   useEffect(() => {
     if (!menu) return;
     const tutup = () => setMenu("");
-    document.addEventListener("click", tutup);
-    return () => document.removeEventListener("click", tutup);
+    // Pemasangan ditunda satu tick: klik yang MEMBUKA menu masih dalam
+    // perjalanan, dan kalau listener dipasang sekarang, klik itu sendiri yang
+    // langsung menutupnya kembali.
+    const t = setTimeout(() => document.addEventListener("click", tutup), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("click", tutup);
+    };
   }, [menu]);
 
   function pilihBerkas(file: File) {

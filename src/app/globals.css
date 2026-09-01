@@ -1169,9 +1169,12 @@ pre.cmd {
   flex-direction: column;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
   background: var(--panel);
+  /* Jangan overflow:hidden — menu titik tiga menjulur ke bawah baris dan
+     akan terpotong. Sudut dibulatkan lewat baris pertama/terakhir. */
 }
+.info-baris:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+.info-baris:last-child { border-radius: 0 0 var(--radius) var(--radius); }
 .info-baris {
   display: flex;
   align-items: center;
@@ -1447,6 +1450,8 @@ body {
 .hapus-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* menu titik tiga pada baris daftar */
+.info-baris { position: relative; }
+.info-baris:has(.baris-menu) { z-index: 20; }
 .baris-menu-bungkus { position: relative; flex: 0 0 auto; }
 .kebab {
   border: 1px solid transparent;
