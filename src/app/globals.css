@@ -1580,3 +1580,19 @@ body {
   .info-toolbar-kanan { justify-content: flex-end; }
   .info-toolbar-berkas { max-width: none; }
 }
+
+/* daftar berita terkait di dossier: judul + sumber & tanggal */
+.terkait-list { display: flex; flex-direction: column; gap: 2px; }
+.terkait-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all 0.12s;
+}
+.terkait-item:hover { background: var(--bg-2); border-color: var(--border); text-decoration: none; }
+.terkait-judul { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+.terkait-item:hover .terkait-judul { color: var(--accent-2); }
+.terkait-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); }

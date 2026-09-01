@@ -1,13 +1,19 @@
 import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 
-export type RelatedSource = { title: string; url: string; source: string };
+export type RelatedSource = {
+  title: string;
+  url: string;
+  source: string;
+  published: string; // ISO 8601 — dipakai menyaring berita lintas tahun
+};
 export type Lokasi = { nama: string; lat: number; lon: number };
 export type Actor = { nama: string; peran: string; afiliasi: string };
 
 export type Dossier = {
   image: string;
   headline: string;
+  tanggalBerita: string; // tanggal terbit berita utama (ISO 8601)
   kredibilitas: string; // kredibel | perlu_verifikasi | terindikasi_hoaks
   verifikasi: string;
   status: string; // berkembang | stabil | mereda
@@ -85,7 +91,14 @@ Isi berkas:
   kelurahan/kota, mis. "PT Raw Botanical Nusantara, Ngaliyan, Kota Semarang") — jangan hanya nama provinsi
   atau negara. Koordinat seakurat mungkin (boleh 0 bila ragu — peta memakai nama).
   Kosongkan array bila peristiwanya memang tidak punya tempat kejadian spesifik.
-- sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source}. Sertakan beragam media pendukung.
+- tanggal_berita: tanggal terbit berita UTAMA dalam ISO 8601 (mis. "2026-08-25"). Ambil dari halaman
+  beritanya. Wajib diisi bila terbaca.
+- sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source, published}.
+  SEZAMAN dengan berita utama: hanya berita yang terbit dalam rentang 30 HARI sebelum atau sesudah
+  tanggal berita utama. DILARANG mengambil berita dari tahun berbeda atau peristiwa lama yang kebetulan
+  mirip topiknya — berita 2025 tidak boleh dipasang pada peristiwa 2026. "published" WAJIB diisi ISO 8601;
+  bila tanggalnya tidak bisa dipastikan, JANGAN sertakan berita itu.
+  Sertakan beragam media, tapi semuanya harus membahas peristiwa yang SAMA.
 
 Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
 {
@@ -99,7 +112,8 @@ Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
   "dampak":"", "reaksi_publik":"", "upaya_telah":"", "upaya_bisa":"",
   "implikasi":[""], "rekomendasi_pantau":[""], "saran_tindakan":[""],
   "lokasi":[{"nama":"","lat":0,"lon":0}],
-  "sumber_terkait":[{"title":"","url":"","source":""}]
+  "tanggal_berita":"",
+  "sumber_terkait":[{"title":"","url":"","source":"","published":""}]
 }`;
 
 const sentOf = (s: any): "positive" | "negative" | "neutral" =>
@@ -113,6 +127,7 @@ function parse(text: string): Dossier {
   return {
     image: str(p.image),
     headline: str(p.headline),
+    tanggalBerita: str(p.tanggal_berita),
     kredibilitas: ["kredibel", "perlu_verifikasi", "terindikasi_hoaks"].includes(
       p.kredibilitas
     )
@@ -156,14 +171,41 @@ function parse(text: string): Dossier {
       // Hanya TKP utama yang dipakai; sisanya dibuang supaya peta menunjuk
       // satu titik, bukan sebaran tempat yang kebetulan disebut berita.
       .slice(0, 1),
-    sumberTerkait: arr(p.sumber_terkait)
-      .filter((s: any) => s?.url)
-      .map((s: any) => ({
-        title: str(s?.title),
-        url: str(s?.url),
-        source: str(s?.source),
-      })),
+    sumberTerkait: saringSezaman(
+      arr(p.sumber_terkait)
+        .filter((s: any) => s?.url)
+        .map((s: any) => ({
+          title: str(s?.title),
+          url: str(s?.url),
+          source: str(s?.source),
+          published: str(s?.published),
+        })),
+      str(p.tanggal_berita)
+    ),
   };
+}
+
+// Berita terkait harus membahas peristiwa yang sama, jadi tanggalnya tidak
+// boleh melenceng jauh dari berita utama. Patokan: 30 hari. Bila tanggal berita
+// utama tidak terbaca, dipakai hari ini sebagai acuan.
+const RENTANG_TERKAIT_HARI = 30;
+
+function saringSezaman(daftar: RelatedSource[], tanggalUtama: string): RelatedSource[] {
+  const acuan = Date.parse(tanggalUtama) || Date.now();
+  const layak = daftar.filter((s) => {
+    const t = Date.parse(s.published);
+    if (Number.isNaN(t)) return false; // tanpa tanggal -> tak bisa dibuktikan sezaman
+    return Math.abs(acuan - t) / 86400000 <= RENTANG_TERKAIT_HARI;
+  });
+  // Kalau penyaringan menyisakan terlalu sedikit, tampilkan apa adanya daripada
+  // kehilangan seluruh rujukan — tetapi buang yang beda tahun.
+  if (layak.length >= 2) return layak;
+  const tahunAcuan = new Date(acuan).getFullYear();
+  return daftar.filter((s) => {
+    const t = Date.parse(s.published);
+    if (Number.isNaN(t)) return true;
+    return new Date(t).getFullYear() === tahunAcuan;
+  });
 }
 
 export async function getDossier(

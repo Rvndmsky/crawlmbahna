@@ -5,7 +5,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Shell from "../../shell";
 import { parseDetailSlug, titleCase } from "@/lib/slug";
 
-type RelatedSource = { title: string; url: string; source: string };
+type RelatedSource = { title: string; url: string; source: string; published: string };
 type Lokasi = { nama: string; lat: number; lon: number };
 type Actor = { nama: string; peran: string; afiliasi: string };
 type Dossier = {
@@ -35,6 +35,7 @@ type Dossier = {
   saranTindakan: string[];
   lokasi: Lokasi[];
   sumberTerkait: RelatedSource[];
+  tanggalBerita: string;
 };
 type DossierResult = {
   url: string;
@@ -345,11 +346,25 @@ function Detail() {
             {d.sumberTerkait.length > 0 && (
               <div className="panel">
                 <div className="panel-title">🔗 Berita Terkait (OSINT)</div>
-                <div className="sources">
+                {d.tanggalBerita && (
+                  <div className="hint" style={{ marginTop: 0, marginBottom: 10 }}>
+                    Sezaman dengan berita utama ({d.tanggalBerita})
+                  </div>
+                )}
+                <div className="terkait-list">
                   {d.sumberTerkait.map((s, i) => (
-                    <a key={i} href={s.url} target="_blank" rel="noreferrer">
-                      {s.source ? `[${s.source}] ` : ""}
-                      {s.title || s.url}
+                    <a
+                      key={i}
+                      className="terkait-item"
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="terkait-judul">{s.title || s.url}</span>
+                      <span className="terkait-meta">
+                        {s.source}
+                        {s.published ? ` · ${s.published}` : ""}
+                      </span>
                     </a>
                   ))}
                 </div>
