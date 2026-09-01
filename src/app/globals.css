@@ -1606,3 +1606,19 @@ body {
   line-height: 0;
 }
 .ikon-btn svg { display: block; }
+
+/* kolom keyakinan & dasar kepemilikan pada tabel akun */
+.yakin {
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  border: 1px solid var(--border-2);
+  color: var(--muted);
+}
+.yakin.tinggi { color: var(--pos); border-color: rgba(53,196,107,0.45); background: rgba(53,196,107,0.1); }
+.yakin.sedang { color: var(--warn); border-color: rgba(240,160,32,0.45); background: rgba(240,160,32,0.09); }
+.yakin.rendah { color: var(--neg); border-color: rgba(242,104,96,0.45); background: rgba(242,104,96,0.08); }
+.acct-bukti { font-size: 12.5px; color: var(--muted); max-width: 240px; }
+.acct-table { min-width: 760px; }

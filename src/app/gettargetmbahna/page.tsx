@@ -57,6 +57,8 @@ type TargetResult = {
       followers: string;
       status: "aktif" | "nonaktif" | "tidak_diketahui";
       lastPost: string;
+      bukti: string;
+      keyakinan: "tinggi" | "sedang" | "rendah";
     }[];
   };
   issues: { topic: string; summary: string; heat: number; sentiment: Sent }[];
@@ -85,13 +87,18 @@ type TargetResult = {
 type Target = { name: string; note: string; addedAt: number };
 
 const PLATFORMS = ["threads", "instagram", "x", "facebook"];
-const PLAT_ICON: Record<string, string> = {
-  threads: "@",
-  instagram: "IG",
+// Nama platform ditulis penuh; singkatan seperti "IG" atau "@" menyulitkan
+// pembacaan tabel akun.
+const PLAT_NAMA: Record<string, string> = {
+  threads: "Threads",
+  instagram: "Instagram",
   x: "X",
-  facebook: "FB",
-  web: "web",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  web: "Web",
 };
+const namaPlatform = (p: string) => PLAT_NAMA[p] || p;
 const TRUSTED: AccountType[] = ["resmi", "terverifikasi", "media"];
 const SENT_COLORS: Record<Sent, string> = {
   positive: "#2ea043",
@@ -461,6 +468,8 @@ function TargetView() {
                         <th>Status</th>
                         <th>Followers</th>
                         <th>Aktivitas terakhir</th>
+                        <th>Keyakinan</th>
+                        <th>Dasar kepemilikan</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -468,7 +477,7 @@ function TargetView() {
                         <tr key={i}>
                           <td>
                             <span className="plat-badge">
-                              {PLAT_ICON[a.platform] || a.platform}
+                              {namaPlatform(a.platform)}
                             </span>
                           </td>
                           <td>
@@ -486,8 +495,12 @@ function TargetView() {
                                 : "tidak diketahui"}
                             </span>
                           </td>
-                          <td className="mono">{a.followers || "—"}</td>
+                          <td className="mono">{a.followers || "tidak terbaca"}</td>
                           <td className="mono">{a.lastPost || "—"}</td>
+                          <td>
+                            <span className={`yakin ${a.keyakinan}`}>{a.keyakinan}</span>
+                          </td>
+                          <td className="acct-bukti">{a.bukti || "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -506,7 +519,7 @@ function TargetView() {
                   {data.impersonators.map((im, i) => (
                     <div className="imp-row" key={i}>
                       <span className="plat-badge">
-                        {PLAT_ICON[im.platform] || im.platform}
+                        {namaPlatform(im.platform)}
                       </span>
                       <a href={im.url || "#"} target="_blank" rel="noreferrer">
                         {im.handle}
@@ -678,7 +691,7 @@ function TargetView() {
             {shown.map((p, i) => (
               <article className="card clickable" key={i} onClick={() => openDossier(p)}>
                 <div className="head">
-                  <span className="plat-badge">{PLAT_ICON[p.platform] || p.platform}</span>
+                  <span className="plat-badge">{namaPlatform(p.platform)}</span>
                   <span className={`ptype ${p.postType}`}>{p.postType}</span>
                   {p.byTarget && <span className="own-badge">akun target</span>}
                   {p.verified && !p.byTarget && <span className="ver">ya</span>}

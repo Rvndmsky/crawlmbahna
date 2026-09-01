@@ -103,6 +103,8 @@ export type ImpersonatorAccount = {
 
 export type AccountStatus = "aktif" | "nonaktif" | "tidak_diketahui";
 
+export type Keyakinan = "tinggi" | "sedang" | "rendah";
+
 export type TargetAccount = {
   platform: string;
   handle: string; // username, mis. @nama
@@ -111,6 +113,8 @@ export type TargetAccount = {
   followers: string; // teks apa adanya, mis. "1,2 jt"
   status: AccountStatus; // aktif = masih posting dalam ~90 hari
   lastPost: string; // tanggal aktivitas terakhir yang terlihat
+  bukti: string; // DASAR kepemilikan: kenapa akun ini diyakini milik target
+  keyakinan: Keyakinan; // seberapa yakin akun ini benar miliknya
 };
 
 export type TargetProfile = {
@@ -239,7 +243,7 @@ Keluarkan HANYA JSON valid, tanpa penjelasan, tanpa code fence, bentuk:
   "profile": { "name":"", "aka":[""], "role":"", "org":"", "domisili":"", "bio":"",
     "photo":"", "photo_source":"",
     "accounts":[{"platform":"instagram","handle":"@x","url":"","verified":false,
-      "followers":"","status":"aktif","last_post":""}] },
+      "followers":"","status":"aktif","last_post":"","bukti":"","keyakinan":"tinggi"}] },
   "impersonators": [{ "platform":"x", "handle":"@x_parody", "url":"", "reason":"" }],
   "issues": [{ "topic":"", "summary":"", "heat":0, "sentiment":"neutral" }],
   "movements": [{ "jenis":"demo", "topic":"", "summary":"", "tanggal":"", "lokasi":"",
@@ -367,6 +371,18 @@ const sentOf = (s: any): "positive" | "negative" | "neutral" =>
   ["positive", "negative", "neutral"].includes(s) ? s : "neutral";
 const num0100 = (n: any) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
 const score = (n: any) => Math.max(-1, Math.min(1, Number(n) || 0));
+// Daftar akun boleh mencakup platform di luar tiga yang disisir model, karena
+// bagian ini memetakan jejak digital orangnya, bukan sumber postingan.
+const PLATFORM_AKUN = [...PLATFORMS, "facebook", "tiktok", "youtube"];
+const platformAkunOf = (p: any) => {
+  const v = String(p || "").toLowerCase().trim();
+  if (v === "twitter" || v === "x.com") return "x";
+  if (v === "ig") return "instagram";
+  if (v === "fb") return "facebook";
+  if (v === "yt") return "youtube";
+  return PLATFORM_AKUN.includes(v) ? v : "";
+};
+
 const platformOf = (p: any) => {
   const v = String(p || "").toLowerCase();
   if (v === "twitter" || v === "x.com") return "x";
@@ -449,14 +465,19 @@ function parse(
       .filter((a: any) => a && (a.handle || a.url))
       .map((a: any) => {
         const url = String(a.url || "");
+        const yakin = String(a.keyakinan || "").toLowerCase();
         return {
-          platform: platformOf(a.platform) || platformFromUrl(url),
+          platform: platformAkunOf(a.platform) || platformFromUrl(url),
           handle: String(a.handle || ""),
           url,
           verified: !!a.verified,
           followers: String(a.followers || ""),
           status: statusOf(a.status),
           lastPost: String(a.last_post || a.lastPost || ""),
+          bukti: String(a.bukti || ""),
+          keyakinan: (["tinggi", "sedang", "rendah"].includes(yakin)
+            ? yakin
+            : "sedang") as Keyakinan,
         };
       })
       .filter((a: TargetAccount) => a.platform),
