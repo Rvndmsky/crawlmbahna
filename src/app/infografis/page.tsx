@@ -10,13 +10,20 @@ import Shell from "../shell";
 
 type Spec = {
   judul: string;
+  tanggal: string;
   subjudul: string;
+  catatanAtas: string;
   kategori: string;
-  ringkasan: string;
-  sorotan: { nilai: string; label: string; catatan: string }[];
-  poin: { judul: string; isi: string }[];
-  linimasa: { waktu: string; peristiwa: string }[];
-  kesimpulan: string;
+  klasifikasi: string;
+  ancaman: string;
+  statistik: { nilai: string; satuan: string; label: string }[];
+  peringkatJudul: string;
+  peringkat: { nama: string; nilai: number; satuan: string; fokus: string }[];
+  sorotanJudul: string;
+  sorotan: string[];
+  entitasJudul: string;
+  entitas: { nama: string; subjudul: string; tokoh: string; butir: string[]; catatan: string }[];
+  catatan: string[];
   sumber: string;
 };
 
@@ -441,23 +448,59 @@ export default function InfografisPage() {
 
             <div className="panel" style={{ marginTop: 18 }}>
               <div className="panel-title">Isi yang dipakai</div>
-              {aktif.spec.ringkasan && <div className="summary">{aktif.spec.ringkasan}</div>}
-              {aktif.spec.sorotan.length > 0 && (
+
+              <div className="chips" style={{ marginBottom: 12 }}>
+                <span className="chip">{aktif.spec.klasifikasi}</span>
+                <span className="chip">ancaman: {aktif.spec.ancaman}</span>
+                {aktif.spec.tanggal && <span className="chip">{aktif.spec.tanggal}</span>}
+              </div>
+
+              {aktif.spec.subjudul && <div className="summary">{aktif.spec.subjudul}</div>}
+
+              {aktif.spec.statistik.length > 0 && (
                 <div className="chips" style={{ marginTop: 10 }}>
-                  {aktif.spec.sorotan.map((s, i) => (
+                  {aktif.spec.statistik.map((s, i) => (
                     <span className="chip" key={i}>
-                      <b>{s.nilai}</b> — {s.label}
+                      <b>{s.nilai}</b> {s.satuan} — {s.label}
                     </span>
                   ))}
                 </div>
               )}
-              <ul className="bullets" style={{ marginTop: 12 }}>
-                {aktif.spec.poin.map((p, i) => (
-                  <li key={i}>
-                    <b>{p.judul}</b> — {p.isi}
-                  </li>
-                ))}
-              </ul>
+
+              {aktif.spec.peringkat.length > 0 && (
+                <>
+                  <div className="hint" style={{ marginTop: 14, marginBottom: 4 }}>
+                    {aktif.spec.peringkatJudul}
+                  </div>
+                  <ul className="bullets">
+                    {aktif.spec.peringkat.map((p, i) => (
+                      <li key={i}>
+                        <b>
+                          {p.nama} — {p.nilai} {p.satuan}
+                        </b>
+                        {p.fokus ? ` · ${p.fokus}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {aktif.spec.entitas.length > 0 && (
+                <>
+                  <div className="hint" style={{ marginTop: 14, marginBottom: 4 }}>
+                    {aktif.spec.entitasJudul}
+                  </div>
+                  <ul className="bullets">
+                    {aktif.spec.entitas.map((e, i) => (
+                      <li key={i}>
+                        <b>{e.nama}</b>
+                        {e.subjudul ? ` (${e.subjudul})` : ""}
+                        {e.tokoh ? ` — Tokoh: ${e.tokoh}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           </>
         )}

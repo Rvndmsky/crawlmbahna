@@ -107,7 +107,11 @@ export async function POST(req: NextRequest) {
     // Ilustrasi header dibuat model gambar. Gagal atau dimatikan lewat ENV ->
     // infografis tetap terbit, hanya tanpa pita gambar.
     const ilustrasi = await buatIlustrasi(
-      promptIlustrasi(spec.judul, spec.kategori, spec.ringkasan)
+      promptIlustrasi(
+        spec.judul,
+        spec.kategori,
+        [spec.subjudul, spec.catatanAtas].filter(Boolean).join(". ")
+      )
     );
     const svg = rakitSvg(spec, new Date(), ilustrasi);
     const item = {
