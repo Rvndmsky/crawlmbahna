@@ -58,6 +58,8 @@ const CFG = {
   loopMinutes: Number(process.env.FB_LOOP_MINUTES) || 60,
   // Berapa akun yang dibaca jumlah pengikutnya per putaran.
   maksAkun: Number(process.env.AKUN_PER_PUTARAN) || 12,
+  // Berapa permalink postingan diambil dari tiap profil.
+  postPerAkun: Number(process.env.POST_PER_AKUN) || 8,
   // Tema pantauan Facebook: aksi jalanan & tekanan politik ke pemerintahan.
   // Kueri tema ini dipakai apa adanya; kata kunci juga digabung dengan tiap
   // nama target bila daftar target ada.
@@ -782,6 +784,23 @@ async function sendToApp(query, posts) {
 const POLA_PENGIKUT =
   /([\d.,]+\s*(?:rb|jt|k|m|b|ribu|juta)?)\s*(pengikut|followers?|subscribers?)/i;
 
+// Pola permalink postingan per platform. X tidak ada di sini: profilnya
+// membalas 403 tanpa sesi, jadi postingannya memang tak bisa diambil anonim.
+const POLA_PERMALINK = {
+  threads: /\/@[^/]+\/post\/[A-Za-z0-9_-]+$/,
+  instagram: /\/(p|reel)\/[A-Za-z0-9_-]+\/?$/,
+};
+
+function platformDariUrl(url) {
+  if (/threads\.(com|net)/i.test(url)) return "threads";
+  if (/instagram\.com/i.test(url)) return "instagram";
+  if (/(^|\.)x\.com|twitter\.com/i.test(url)) return "x";
+  if (/tiktok\.com/i.test(url)) return "tiktok";
+  if (/youtube\.com/i.test(url)) return "youtube";
+  if (/facebook\.com/i.test(url)) return "facebook";
+  return "";
+}
+
 async function bacaPengikut(browser, url) {
   const ctx = await browser.newContext({
     locale: "id-ID",
@@ -803,6 +822,70 @@ async function bacaPengikut(browser, url) {
     return m ? m[1].trim() : "";
   } catch {
     return "";
+  } finally {
+    await ctx.close().catch(() => {});
+  }
+}
+
+// Satu kunjungan profil dipakai untuk dua hal sekaligus: jumlah pengikut dan
+// permalink postingan terbaru. Ini penting karena model TIDAK BISA memberi
+// permalink asli — hasil pencariannya hanya berisi artikel berita tentang
+// postingan itu, dan bila dipaksa, model mengarang alamatnya.
+async function bacaProfil(browser, url) {
+  const platform = platformDariUrl(url);
+  const pola = POLA_PERMALINK[platform];
+
+  const ctx = await browser.newContext({
+    locale: "id-ID",
+    timezoneId: "Asia/Jakarta",
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/140.0 Safari/537.36",
+  });
+  try {
+    const page = await ctx.newPage();
+    const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    if (resp && resp.status() >= 400) return { followers: "", posts: [] };
+    await sleep(jitter(4000));
+
+    const teks = await page.evaluate(() =>
+      (document.body.innerText || "").replace(/\s+/g, " ").slice(0, 4000)
+    );
+    const m = POLA_PENGIKUT.exec(teks);
+    const followers = m ? m[1].trim() : "";
+
+    let posts = [];
+    if (pola && CFG.postPerAkun > 0) {
+      for (let i = 0; i < 3; i++) {
+        await page.mouse.wheel(0, 1800);
+        await sleep(jitter(2200));
+      }
+      posts = await page.evaluate(
+        ({ polaStr, batas }) => {
+          const re = new RegExp(polaStr);
+          const bersih = (t) => (t || "").replace(/\s+/g, " ").trim();
+          const keluar = [];
+          const sudah = new Set();
+          for (const a of document.querySelectorAll("a[href]")) {
+            const href = a.getAttribute("href") || "";
+            if (!re.test(href)) continue;
+            const abs = a.href;
+            if (sudah.has(abs)) continue;
+            sudah.add(abs);
+            // Teks postingan hanya tersedia di Threads (profil Instagram cuma
+            // menampilkan petak gambar); kosongkan bila tidak ada.
+            const kartu = a.closest('[role="article"]') || a.parentElement;
+            keluar.push({ url: abs, content: bersih(kartu && kartu.innerText).slice(0, 500) });
+            if (keluar.length >= batas) break;
+          }
+          return keluar;
+        },
+        { polaStr: pola.source, batas: CFG.postPerAkun }
+      );
+    }
+    return { followers, posts };
+  } catch {
+    return { followers: "", posts: [] };
   } finally {
     await ctx.close().catch(() => {});
   }
@@ -834,13 +917,16 @@ async function cmdAkun() {
     return;
   }
 
-  log("membaca pengikut " + daftar.length + " akun (tanpa login)");
+  log("membaca " + daftar.length + " profil akun (tanpa login)");
   const browser = await chromium.launch({ headless: CFG.headless });
   const hasil = [];
   for (const url of daftar.slice(0, CFG.maksAkun)) {
-    const followers = await bacaPengikut(browser, url);
-    log("  " + (followers || "tidak terbaca") + "  <-  " + url.slice(0, 70));
-    if (followers) hasil.push({ url, followers });
+    const { followers, posts } = await bacaProfil(browser, url);
+    log(
+      "  " + (followers || "pengikut tidak terbaca") +
+        " | " + posts.length + " post  <-  " + url.slice(0, 60)
+    );
+    if (followers || posts.length) hasil.push({ url, followers, posts });
     await sleep(jitter(2500));
   }
   await browser.close();

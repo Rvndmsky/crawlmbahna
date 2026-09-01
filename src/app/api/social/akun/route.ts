@@ -32,6 +32,15 @@ export async function POST(req: NextRequest) {
       .map((h: any) => ({
         url: String(h?.url || ""),
         followers: String(h?.followers || "").slice(0, 24),
+        // Permalink dari profil resmi: inilah satu-satunya sumber postingan
+        // yang bisa dipertanggungjawabkan untuk Threads/Instagram.
+        posts: (Array.isArray(h?.posts) ? h.posts : [])
+          .slice(0, 12)
+          .map((p: any) => ({
+            url: String(p?.url || ""),
+            content: String(p?.content || "").slice(0, 500),
+          }))
+          .filter((p: { url: string }) => /^https?:\/\//i.test(p.url)),
         diperbaruiPada: Date.now(),
       }))
       .filter((h: { url: string }) => /^https?:\/\//i.test(h.url));

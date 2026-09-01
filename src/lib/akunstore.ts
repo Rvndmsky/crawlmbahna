@@ -13,9 +13,15 @@ import os from "node:os";
 // Aplikasi menaruh URL profil yang belum punya angka ke ANTRIAN; worker
 // mengambil antrian itu, membacanya, lalu mengirim balik.
 
+export type PostAkun = {
+  url: string; // permalink postingan
+  content: string; // teks postingan bila terbaca (Threads); kosong di Instagram
+};
+
 export type DataAkun = {
-  url: string;
+  url: string; // URL profil
   followers: string; // teks apa adanya, mis. "55,8 jt"
+  posts: PostAkun[]; // permalink postingan terbaru dari profil itu
   diperbaruiPada: number;
 };
 
@@ -110,7 +116,7 @@ export async function ambilAntrian(): Promise<string[]> {
 }
 
 export async function simpanFollowers(items: DataAkun[]): Promise<number> {
-  const sah = items.filter((i) => i.url && i.followers);
+  const sah = items.filter((i) => i.url && (i.followers || i.posts?.length));
   if (!sah.length) return 0;
 
   if (pakaiRedis) {

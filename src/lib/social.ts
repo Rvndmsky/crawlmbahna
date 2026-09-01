@@ -2,7 +2,7 @@ import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 import { normName } from "./targets";
 import { getFbPosts, type FbRawPost } from "./fbstore";
-import { ambilFollowers, antreAkun, kunciUrl } from "./akunstore";
+import { ambilFollowers, antreAkun, kunciUrl, type DataAkun } from "./akunstore";
 
 // Mesin pemantauan MEDIA SOSIAL per ORANG (individu) — terpisah dari /search
 // yang fokus berita. Cakupan tahap ini SENGAJA dibatasi 3 platform tempat
@@ -635,6 +635,36 @@ export function engagementFrom(text: string): number {
   return Math.max(1, Math.min(100, Math.round((Math.log10(top) / 6) * 100)));
 }
 
+// Postingan yang diambil worker dari profil RESMI target: kepemilikannya pasti,
+// jadi ditandai sebagai pernyataan langsung. Tidak ada analisa model di sini,
+// maka sentimen dibiarkan netral dan ditulis terus terang di ringkasannya.
+export function dariProfil(
+  url: string,
+  content: string,
+  akun: { platform: string; handle: string; url: string }
+): SocialPost {
+  return {
+    platform: akun.platform,
+    account: akun.handle,
+    accountUrl: akun.url,
+    url,
+    published: "",
+    content: content.slice(0, 400),
+    summary: "Diambil langsung dari akun resmi target — belum diringkas model.",
+    sentiment: "neutral",
+    sentiment_score: 0,
+    engagement: 0,
+    stance: "netral",
+    flag: "none",
+    accountType: "resmi",
+    verified: true,
+    byTarget: true,
+    postType: "post",
+    replyTo: "",
+    movement: detectMovement(content),
+  };
+}
+
 export function fbToPost(p: FbRawPost): SocialPost {
   const text = `${p.content} ${p.account}`;
   return {
@@ -772,6 +802,7 @@ export async function crawlTarget(
   // antrekan akun yang masih kosong supaya dibaca pada putaran berikutnya.
   // Model sering tidak tahu angka ini; browser yang membacanya langsung.
   const urlAkun = base.profile.accounts.map((a) => a.url).filter(Boolean);
+  let postAkun: SocialPost[] = [];
   if (urlAkun.length) {
     try {
       const tersimpan = await ambilFollowers(urlAkun);
@@ -779,10 +810,25 @@ export async function crawlTarget(
         const d = tersimpan[kunciUrl(a.url)];
         return d?.followers ? { ...a, followers: d.followers } : a;
       });
-      const kosong = base.profile.accounts
-        .filter((a) => !a.followers && a.url)
+
+      // Postingan yang dibaca worker LANGSUNG dari profil resmi. Ini satu-satunya
+      // sumber permalink yang bisa dipertanggungjawabkan untuk Threads/Instagram:
+      // hasil pencarian model hanya memuat artikel berita tentang postingan, dan
+      // bila dipaksa memberi permalink, model mengarang alamatnya.
+      postAkun = base.profile.accounts.flatMap((a) => {
+        const d: DataAkun | undefined = tersimpan[kunciUrl(a.url)];
+        return (d?.posts || []).map((p) => dariProfil(p.url, p.content, a));
+      });
+
+      // Antrekan ulang: akun tanpa angka pengikut ATAU tanpa postingan tersimpan.
+      const perluBaca = base.profile.accounts
+        .filter((a) => {
+          if (!a.url) return false;
+          const d = tersimpan[kunciUrl(a.url)];
+          return !d || !d.followers || !(d.posts || []).length;
+        })
         .map((a) => a.url);
-      if (kosong.length) await antreAkun(kosong);
+      if (perluBaca.length) await antreAkun(perluBaca);
     } catch {
       /* pengayaan gagal: profil tetap tampil apa adanya */
     }
@@ -807,5 +853,5 @@ export async function crawlTarget(
   // Yang di-cache hanya hasil model; post Facebook digabung saat dibaca supaya
   // kiriman worker berikutnya tidak tertahan cache.
   if (result.posts.length > 0) await setCache<TargetResult>(key, n, result);
-  return { ...result, posts: rank([...result.posts, ...fb]) };
+  return { ...result, posts: rank([...result.posts, ...postAkun, ...fb]) };
 }
