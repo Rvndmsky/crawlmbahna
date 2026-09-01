@@ -1634,3 +1634,31 @@ body {
 }
 .verif.ya { background: rgba(53,196,107,0.16); color: var(--pos); }
 .verif.belum { background: rgba(240,160,32,0.16); color: var(--warn); }
+
+/* panel pemeriksaan akhir infografis */
+.panel.periksa.lolos { border-color: rgba(53,196,107,0.4); }
+.panel.periksa.cacat { border-color: rgba(240,160,32,0.5); }
+.temuan-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 9px; }
+.temuan-list li { font-size: 13.5px; line-height: 1.5; }
+.parah {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 5px;
+  padding: 2px 7px;
+  margin-right: 8px;
+}
+.parah.ringan { background: rgba(138,151,171,0.16); color: var(--muted); }
+.parah.sedang { background: rgba(240,160,32,0.16); color: var(--warn); }
+.parah.berat { background: rgba(242,104,96,0.16); color: var(--neg); }
+.tanda-cacat {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--warn);
+  border: 1px solid rgba(240,160,32,0.45);
+  border-radius: 5px;
+  padding: 1px 7px;
+}

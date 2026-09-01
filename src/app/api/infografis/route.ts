@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { bacaDokumen, jenisBerkas } from "@/lib/doc";
 import { analisaDokumen, rakitSvg } from "@/lib/infografis";
 import { buatIlustrasi, promptIlustrasi } from "@/lib/gambar";
+import { periksaInfografis, ringkasIsi } from "@/lib/periksa";
 import {
   simpanInfografis,
   daftarInfografis,
@@ -114,6 +115,22 @@ export async function POST(req: NextRequest) {
       )
     );
     const svg = rakitSvg(spec, new Date(), ilustrasi);
+
+    // Pemeriksaan akhir: gambarnya dirasterkan lalu DILIHAT model penglihatan.
+    // Cacat tata letak (teks terpotong, tumpang tindih, ukuran) hanya kelihatan
+    // pada hasil jadi, bukan pada data yang menyusunnya.
+    let periksa = null;
+    try {
+      const sharp = (await import("sharp")).default;
+      const png = await sharp(Buffer.from(svg), { density: 110 })
+        .resize({ width: 900 })
+        .png({ compressionLevel: 6 })
+        .toBuffer();
+      periksa = await periksaInfografis(png.toString("base64"), ringkasIsi(spec));
+    } catch (e: any) {
+      console.error("pemeriksaan akhir dilewati:", e?.message);
+    }
+
     const item = {
       id,
       judul: spec.judul,
@@ -121,6 +138,7 @@ export async function POST(req: NextRequest) {
       namaBerkas: berkas.name,
       dibuatPada: Date.now(),
       spec,
+      periksa,
     };
     await simpanInfografis(item, svg);
 

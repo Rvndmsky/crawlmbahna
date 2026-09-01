@@ -392,6 +392,12 @@ const platformAkunOf = (p: any) => {
 // oleh saringan, sehingga target dengan enam akun bisa menyisakan satu saja di
 // layar. URL disusun sendiri dari platform + handle — sekalian membuat akunnya
 // bisa dibaca worker untuk jumlah pengikut.
+// threads.net dialihkan ke threads.com; menyimpan domain lama membuat halaman
+// profil tak terbaca worker.
+function rapikanUrlProfil(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?threads\.net/i, "https://www.threads.com");
+}
+
 function urlProfil(platform: string, handle: string): string {
   const h = String(handle || "").trim().replace(/^@+/, "");
   if (!h || /\s/.test(h)) return "";
@@ -496,7 +502,7 @@ function parse(
       .map((a: any) => {
         const platform = platformAkunOf(a.platform) || platformFromUrl(String(a.url || ""));
         const handle = String(a.handle || "");
-        const url = String(a.url || "") || urlProfil(platform, handle);
+        const url = rapikanUrlProfil(String(a.url || "") || urlProfil(platform, handle));
         const yakin = String(a.keyakinan || "").toLowerCase();
         return {
           platform,

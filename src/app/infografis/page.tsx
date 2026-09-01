@@ -27,6 +27,20 @@ type Spec = {
   sumber: string;
 };
 
+type Temuan = {
+  jenis: string;
+  bagian: string;
+  keterangan: string;
+  parah: "ringan" | "sedang" | "berat";
+};
+
+type Periksa = {
+  lolos: boolean;
+  ringkasan: string;
+  temuan: Temuan[];
+  model: string;
+};
+
 type Item = {
   id: string;
   judul: string;
@@ -34,6 +48,7 @@ type Item = {
   namaBerkas: string;
   dibuatPada: number;
   spec: Spec;
+  periksa?: Periksa | null;
 };
 
 type Mode = "daftar" | "baru" | "lihat";
@@ -446,6 +461,38 @@ export default function InfografisPage() {
               </div>
             )}
 
+            {aktif.periksa && (
+              <div className={`panel periksa ${aktif.periksa.lolos ? "lolos" : "cacat"}`}
+                style={{ marginTop: 18 }}>
+                <div className="panel-title">
+                  Pemeriksaan akhir —{" "}
+                  {aktif.periksa.lolos ? "layak terbit" : "ada yang perlu dibetulkan"}
+                </div>
+                {aktif.periksa.ringkasan && (
+                  <div className="summary">{aktif.periksa.ringkasan}</div>
+                )}
+                {aktif.periksa.temuan.length > 0 ? (
+                  <ul className="temuan-list">
+                    {aktif.periksa.temuan.map((t, i) => (
+                      <li key={i}>
+                        <span className={`parah ${t.parah}`}>{t.parah}</span>
+                        <b>{t.jenis.replace(/_/g, " ")}</b>
+                        {t.bagian ? ` · ${t.bagian}` : ""} — {t.keterangan}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="hint" style={{ marginTop: 8 }}>
+                    Tidak ada cacat tata letak maupun salah ketik yang terlihat.
+                  </div>
+                )}
+                <div className="hint">
+                  Diperiksa model penglihatan ({aktif.periksa.model}) dengan melihat
+                  gambar jadinya, bukan datanya.
+                </div>
+              </div>
+            )}
+
             <div className="panel" style={{ marginTop: 18 }}>
               <div className="panel-title">Isi yang dipakai</div>
 
@@ -536,6 +583,9 @@ export default function InfografisPage() {
                       <div className="info-baris-judul">{it.judul}</div>
                       <div className="muted" style={{ fontSize: 12.5 }}>
                         {it.kategori} · {it.namaBerkas} · {fmtTime(it.dibuatPada)}
+                        {it.periksa && !it.periksa.lolos && (
+                          <span className="tanda-cacat">perlu dibetulkan</span>
+                        )}
                       </div>
                     </div>
                     <div className="baris-menu-bungkus">

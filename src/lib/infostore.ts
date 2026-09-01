@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import type { InfoSpec } from "./infografis";
+import type { HasilPeriksa } from "./periksa";
 
 // Penyimpanan infografis yang sudah dibuat. Sama polanya dengan fbstore:
 // Upstash Redis bila ENV-nya ada (wajib di Vercel), berkas lokal bila tidak.
@@ -13,6 +14,7 @@ export type InfoItem = {
   namaBerkas: string;
   dibuatPada: number;
   spec: InfoSpec;
+  periksa?: HasilPeriksa | null; // hasil pemeriksaan akhir oleh model penglihatan
 };
 
 const DATA_DIR = process.env.VERCEL
