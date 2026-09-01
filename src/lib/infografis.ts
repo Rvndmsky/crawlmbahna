@@ -155,7 +155,7 @@ export async function analisaDokumen(
     `Nilai dulu apakah dokumen ini masuk cakupan. Kalau tidak, tolak dengan alasan ` +
     `spesifik. Kalau masuk, susun isi infografisnya. Pastikan JSON valid dan lengkap.`;
 
-  const teks = await runOffline(SYSTEM, prompt, 4000);
+  const teks = await runOffline(SYSTEM, prompt, 4000, "infografis");
   return bacaSpec(teks, namaBerkas);
 }
 

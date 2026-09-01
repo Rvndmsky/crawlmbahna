@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { readSettings } from "./config";
+import { readSettings, type Peran } from "./config";
 
 // Ekstrak objek JSON pertama dari teks (buang code fence / prosa).
 export function extractJson(text: string): any | null {
@@ -96,13 +96,14 @@ async function runOpenAI(
 export async function runWeb(
   system: string,
   userText: string,
-  maxTokens = 8000
+  maxTokens = 8000,
+  peran?: Peran
 ): Promise<string> {
-  const s = readSettings();
+  const s = readSettings(peran);
   if (!s.apiKey) throw new Error("API key belum di-set. Buka /settings.");
   return s.provider === "anthropic"
-    ? runAnthropic(system, userText, maxTokens)
-    : runOpenAI(system, userText, maxTokens);
+    ? runAnthropic(system, userText, maxTokens, s)
+    : runOpenAI(system, userText, maxTokens, s);
 }
 
 // Sama seperti runWeb, tapi TANPA pencarian web. Dipakai bila bahannya sudah
@@ -110,9 +111,10 @@ export async function runWeb(
 export async function runOffline(
   system: string,
   userText: string,
-  maxTokens = 8000
+  maxTokens = 8000,
+  peran?: Peran
 ): Promise<string> {
-  const s = readSettings();
+  const s = readSettings(peran);
   if (!s.apiKey) throw new Error("API key belum di-set. Buka /settings.");
   const tanpaTool = { ...s, webSearch: false };
   return s.provider === "anthropic"

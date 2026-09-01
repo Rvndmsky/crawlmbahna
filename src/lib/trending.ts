@@ -227,7 +227,8 @@ export async function getTrending(
       `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +
       `berita hari lain breaking:false. ` +
       `PENTING: pastikan JSON valid dan LENGKAP sampai kurung tutup terakhir, jangan terpotong.`,
-    12000
+    12000,
+    "dashboard"
   );
   const { topics, cities } = parse(text);
   const result: TrendingResult = {

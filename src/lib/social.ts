@@ -702,8 +702,8 @@ export async function crawlTarget(
   // Empat pass paralel: 1 profil + 1 per platform. Tanpa pemisahan ini, satu
   // pass gabungan cenderung habis di X karena post X paling banyak terindeks.
   const [profileRes, ...platformRes] = await Promise.allSettled([
-    runWeb(SYSTEM_PROFILE, profilePrompt, 6000),
-    ...MODEL_PLATFORMS.map((p) => runWeb(systemPosts(p), postPrompt(p), 6000)),
+    runWeb(SYSTEM_PROFILE, profilePrompt, 6000, "target"),
+    ...MODEL_PLATFORMS.map((p) => runWeb(systemPosts(p), postPrompt(p), 6000, "target")),
   ]);
 
   const base = parse(

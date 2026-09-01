@@ -123,7 +123,7 @@ async function runModel(query: string): Promise<NewsItem[]> {
     `Kueri: "${query}".\n` +
     `Hari ini: ${iso(now)}. Hanya berita terbit antara ${iso(weekAgo)} s/d ${iso(now)} ` +
     `(7 hari terakhir), urut dari terbaru. Sertakan sumber asli.`;
-  const text = await runWeb(SYSTEM, prompt, 8000);
+  const text = await runWeb(SYSTEM, prompt, 8000, "search");
   return parseItems(text);
 }
 

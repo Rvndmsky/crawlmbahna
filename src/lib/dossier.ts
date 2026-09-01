@@ -177,7 +177,8 @@ export async function getDossier(
       (url ? `URL berita: ${url}\n` : "") +
       (opts.context ? `Konteks: ${opts.context}\n` : "") +
       `Ambil isi/konteks dari web lalu keluarkan JSON.`,
-    8000
+    8000,
+    "dossier"
   );
   const dossier = parse(text);
   const result: DossierResult = {

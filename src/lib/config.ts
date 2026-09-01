@@ -45,17 +45,33 @@ function envDefaults(): Settings {
   };
 }
 
-export function readSettings(): Settings {
+// Bagian aplikasi yang memanggil model. Tiap bagian boleh memakai model
+// berbeda lewat ENV AI_MODEL_<BAGIAN>; kalau tidak di-set, ikut AI_MODEL.
+export type Peran =
+  | "dashboard"
+  | "search"
+  | "target"
+  | "dossier"
+  | "infografis";
+
+function modelPeran(peran?: Peran): string {
+  if (!peran) return "";
+  return process.env[`AI_MODEL_${peran.toUpperCase()}`] || "";
+}
+
+export function readSettings(peran?: Peran): Settings {
   const def = envDefaults();
+  const timpa = modelPeran(peran);
   try {
     if (fs.existsSync(FILE)) {
       const saved = JSON.parse(fs.readFileSync(FILE, "utf8"));
-      return { ...def, ...saved };
+      const gabung = { ...def, ...saved };
+      return timpa ? { ...gabung, model: timpa } : gabung;
     }
   } catch {
     /* fallback ke env */
   }
-  return def;
+  return timpa ? { ...def, model: timpa } : def;
 }
 
 export function writeSettings(partial: Partial<Settings>): Settings {
