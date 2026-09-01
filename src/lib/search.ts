@@ -135,8 +135,8 @@ async function runModel(query: string): Promise<NewsItem[]> {
   return parseItems(text);
 }
 
-function readCache(queryNorm: string, query: string): SearchResult | null {
-  const entry = getCache<NewsItem[]>(queryNorm, CACHE_MS);
+async function readCache(queryNorm: string, query: string): Promise<SearchResult | null> {
+  const entry = await getCache<NewsItem[]>(queryNorm, CACHE_MS);
   if (!entry) return null;
   return {
     query,
@@ -146,8 +146,8 @@ function readCache(queryNorm: string, query: string): SearchResult | null {
   };
 }
 
-function persist(query: string, queryNorm: string, items: NewsItem[]): number {
-  return setCache<NewsItem[]>(queryNorm, query, items);
+async function persist(query: string, queryNorm: string, items: NewsItem[]): Promise<number> {
+  return await setCache<NewsItem[]>(queryNorm, query, items);
 }
 
 function urlKey(u: string): string {
@@ -195,13 +195,13 @@ export async function search(
   const queryNorm = norm(q);
 
   if (!opts.fresh) {
-    const cached = readCache(queryNorm, q);
+    const cached = await readCache(queryNorm, q);
     if (cached) return cached;
   }
 
   // Web search (Claude) + konektor platform, paralel.
   const [web, connector] = await Promise.all([runModel(q), runConnectors(q)]);
   const items = merge(web, connector);
-  const searchedAt = persist(q, queryNorm, items);
+  const searchedAt = await persist(q, queryNorm, items);
   return { query: q, items, cached: false, searchedAt };
 }

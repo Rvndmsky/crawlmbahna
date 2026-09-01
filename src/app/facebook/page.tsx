@@ -152,7 +152,7 @@ export default function FacebookPage() {
   return (
     <Shell judul="Crawl Social Media" aksi={
         <button type="button" className="refresh" title="muat ulang" onClick={load} disabled={loading}>
-          ↻
+          Muat ulang
         </button>
       }>
 
@@ -171,11 +171,11 @@ export default function FacebookPage() {
           </div>
         )}
 
-        {error && <div className="error">⚠ {error}</div>}
+        {error && <div className="error">{error}</div>}
 
         {feed && feed.storage === "file" && (
           <div className="error">
-            ⚠ Penyimpanan masih berkas lokal. Kalau situs ini jalan di Vercel, data
+            Penyimpanan masih berkas lokal. Kalau situs ini jalan di Vercel, data
             kiriman worker <b>bisa hilang sewaktu-waktu</b> (filesystem serverless
             ephemeral). Set <code>UPSTASH_REDIS_REST_URL</code> +{" "}
             <code>UPSTASH_REDIS_REST_TOKEN</code> di Environment Variables lalu
@@ -194,7 +194,7 @@ export default function FacebookPage() {
                 <div className="stat-num" style={{ color: "#f0a020" }}>
                   {feed.stats.withMovement}
                 </div>
-                <div className="stat-lbl">📣 Bermuatan gerakan</div>
+                <div className="stat-lbl">Bermuatan gerakan</div>
               </div>
               <div className="stat">
                 <div className="stat-num">{feed.stats.comments}</div>
@@ -220,7 +220,7 @@ export default function FacebookPage() {
                 <div className="panel-title">Worker belum mengirim apa pun</div>
                 {!feed.workerConfigured && (
                   <div className="hint" style={{ marginTop: 0 }}>
-                    ⚠ <code>FB_WORKER_TOKEN</code> belum di-set di server, jadi
+                    <code>FB_WORKER_TOKEN</code> belum di-set di server, jadi
                     endpoint ingest tertutup.
                   </div>
                 )}
@@ -252,7 +252,7 @@ npm run watch      # sisir terus tiap jam`}</pre>
                       className={`fchip ${fMove === "gerakan" ? "active" : ""}`}
                       onClick={() => setFMove("gerakan")}
                     >
-                      📣 ada gerakan ({feed.stats.withMovement})
+                      ada gerakan ({feed.stats.withMovement})
                     </span>
                     {moveKinds.map(([kind, n]) => (
                       <span
@@ -302,12 +302,12 @@ npm run watch      # sisir terus tiap jam`}</pre>
                       <span className="plat-badge">FB</span>
                       {p.movement !== "none" && (
                         <span className="move-badge">
-                          📣 {MOVE_LABEL[p.movement] || p.movement}
+                          {MOVE_LABEL[p.movement] || p.movement}
                         </span>
                       )}
                       <span className="platform">{p.query}</span>
                       {p.engagement > 0 && (
-                        <span className="heat-num">🔥 {p.engagement}</span>
+                        <span className="heat-num">{p.engagement}</span>
                       )}
                     </div>
 
@@ -359,7 +359,7 @@ npm run watch      # sisir terus tiap jam`}</pre>
                     {p.comments.length > 0 && (
                       <div className="fb-comments">
                         <div className="fb-comments-head">
-                          💬 Komentar teratas ({p.comments.length})
+                          Komentar teratas ({p.comments.length})
                           {p.hotComments > 0 && (
                             <span className="move-badge" style={{ marginLeft: 8 }}>
                               {p.hotComments} memicu isu
@@ -373,15 +373,15 @@ npm run watch      # sisir terus tiap jam`}</pre>
                           >
                             <div className="fb-comment-top">
                               <b>{c.author || "—"}</b>
-                              <span className="fb-likes">👍 {c.likes}</span>
+                              <span className="fb-likes">suka {c.likes}</span>
                               {c.movement !== "none" && (
                                 <span className="move-badge">
-                                  📣 {MOVE_LABEL[c.movement] || c.movement}
+                                  {MOVE_LABEL[c.movement] || c.movement}
                                 </span>
                               )}
                               {c.url && (
                                 <a href={c.url} target="_blank" rel="noreferrer">
-                                  ↗
+                                  
                                 </a>
                               )}
                             </div>
@@ -397,10 +397,10 @@ npm run watch      # sisir terus tiap jam`}</pre>
                         style={{ cursor: "pointer" }}
                         onClick={() => openDossier(p, p.query)}
                       >
-                        📑 dossier →
+                        buka dossier
                       </span>
                       <a href={p.url} target="_blank" rel="noreferrer">
-                        buka post ↗
+                        buka post
                       </a>
                     </div>
                   </article>
@@ -410,7 +410,7 @@ npm run watch      # sisir terus tiap jam`}</pre>
                   Catatan: post Facebook diambil apa adanya — <b>belum dianalisa
                   model</b>. Label gerakan berasal dari pencocokan kata kunci
                   (demo, unjuk rasa, aksi massa, petisi, boikot, mogok, galang dana,
-                  kampanye), jadi bisa meleset. Klik 📑 dossier untuk analisa penuh.
+                  kampanye), jadi bisa meleset. Klik dossier untuk analisa penuh.
                 </div>
               </>
             )}

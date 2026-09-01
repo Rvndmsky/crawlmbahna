@@ -29,7 +29,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       type="button"
     >
-      {theme === "dark" ? "☀" : "🌙"}
+      {theme === "dark" ? "Terang" : "Gelap"}
     </button>
   );
 }

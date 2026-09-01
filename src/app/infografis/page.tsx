@@ -301,7 +301,7 @@ export default function InfografisPage() {
                 )}
               </div>
               <button className="btn" onClick={keDaftar} disabled={proses}>
-                ← Daftar
+                Kembali ke daftar
               </button>
             </>
           )}
@@ -370,7 +370,7 @@ export default function InfografisPage() {
                   </>
                 ) : berkas ? (
                   <>
-                    <div className="unggah-ikon">📄</div>
+                    <div className="unggah-ikon">Berkas</div>
                     <div className="unggah-judul">{berkas.name}</div>
                     <div className="hint" style={{ marginTop: 4 }}>
                       {(berkas.size / 1024 / 1024).toFixed(2)} MB · klik untuk ganti berkas
@@ -378,7 +378,7 @@ export default function InfografisPage() {
                   </>
                 ) : (
                   <>
-                    <div className="unggah-ikon">⬆</div>
+                    <div className="unggah-ikon">Unggah</div>
                     <div className="unggah-judul">Tarik berkas ke sini, atau klik untuk memilih</div>
                     <div className="hint" style={{ marginTop: 4 }}>
                       PDF atau DOCX · maksimal 12 MB
@@ -399,11 +399,11 @@ export default function InfografisPage() {
               )}
             </div>
 
-            {error && <div className="error">⚠ {error}</div>}
+            {error && <div className="error">{error}</div>}
 
             {tolak && (
               <div className="tolak-box">
-                <div className="tolak-judul">⛔ Dokumen ditolak</div>
+                <div className="tolak-judul">Dokumen ditolak</div>
                 <div className="tolak-berkas">{tolak.namaBerkas}</div>
                 <div className="tolak-alasan">{tolak.alasan}</div>
               </div>
@@ -517,7 +517,7 @@ export default function InfografisPage() {
 
             {!memuat && items.length === 0 && (
               <div className="panel" style={{ textAlign: "center", padding: "38px 20px" }}>
-                <div style={{ fontSize: 30, marginBottom: 10 }}>🖼</div>
+                <div style={{ fontSize: 30, marginBottom: 10 }}></div>
                 <div style={{ fontWeight: 600, marginBottom: 6 }}>Belum ada infografis</div>
                 <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
                   Unggah dokumen PDF atau DOCX untuk membuat yang pertama.

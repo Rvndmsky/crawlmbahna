@@ -215,7 +215,7 @@ export async function getDossier(
 ): Promise<DossierResult> {
   const key = "dossier:" + (url || title) + (opts.keyExtra ? "#" + opts.keyExtra : "");
   if (!opts.fresh) {
-    const cached = getCache<DossierResult>(key, CACHE_MS);
+    const cached = await getCache<DossierResult>(key, CACHE_MS);
     if (cached) return { ...cached.data, cached: true };
   }
 
@@ -236,6 +236,6 @@ export async function getDossier(
     cached: false,
     dossier,
   };
-  setCache<DossierResult>(key, url, result);
+  await setCache<DossierResult>(key, url, result);
   return result;
 }

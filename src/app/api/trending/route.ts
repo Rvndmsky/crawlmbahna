@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const fresh = req.nextUrl.searchParams.get("fresh") === "1";
   if (!readSettings().apiKey) {
     return NextResponse.json(
-      { error: "API key belum di-set. Buka halaman ⚙ Setup." },
+      { error: "API key belum di-set. Buka halaman Settings." },
       { status: 500 }
     );
   }

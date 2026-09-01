@@ -67,7 +67,7 @@ export default function IndonesiaMap({
         fillOpacity: 0.9,
       });
       m.bindTooltip(
-        `<b>${p.name}</b> · 🔥${p.heat}<br>${p.headline || ""}`,
+        `<b>${p.name}</b> · ${p.heat}<br>${p.headline || ""}`,
         { direction: "top", opacity: 0.95 }
       );
       m.on("click", () => onSelRef.current(p));

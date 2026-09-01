@@ -42,6 +42,7 @@ export default function SettingsPage() {
   const [webSearch, setWebSearch] = useState(true);
   const [keyMasked, setKeyMasked] = useState("");
   const [hasKey, setHasKey] = useState(false);
+  const [cache, setCache] = useState("");
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // Status worker Facebook (worker/fb-worker.mjs -> POST /api/fb/ingest)
@@ -69,6 +70,7 @@ export default function SettingsPage() {
         setWebSearch(!!s.webSearch);
         setKeyMasked(s.keyMasked || "");
         setHasKey(!!s.hasKey);
+        setCache(s.cache || "");
       })
       .catch(() => {});
 
@@ -173,15 +175,27 @@ export default function SettingsPage() {
           </label>
         </div>
 
-        {err && <div className="error">⚠ {err}</div>}
-        {saved && <div className="ok-box">✓ Tersimpan. Provider aktif.</div>}
+        {err && <div className="error">{err}</div>}
+        {saved && <div className="ok-box">Tersimpan. Provider aktif.</div>}
 
         <button className="save-btn" onClick={save}>
           Simpan
         </button>
 
+        {cache && (
+          <div className="hint" style={{ marginTop: 16 }}>
+            Cache hasil model: <b>{cache === "redis" ? "Upstash Redis (bersama)" : "berkas lokal"}</b>
+            {cache === "file" && (
+              <>
+                {" "}— di Vercel ini ephemeral dan per-instance, sehingga cache
+                nyaris selalu meleset dan model dipanggil ulang tiap kunjungan.
+              </>
+            )}
+          </div>
+        )}
+
         <div className="section-title" style={{ marginTop: 34 }}>
-          📘 Worker Facebook (crawl isu demo)
+          Worker Facebook (crawl isu demo)
         </div>
         <div className="panel">
           <div className="hint" style={{ marginTop: 0 }}>
@@ -226,7 +240,7 @@ export default function SettingsPage() {
 
           {fb && !fb.workerConfigured && (
             <div className="hint">
-              ⚠ <code>FB_WORKER_TOKEN</code> belum di-set di server, jadi endpoint{" "}
+              <code>FB_WORKER_TOKEN</code> belum di-set di server, jadi endpoint{" "}
               <code>/api/fb/ingest</code> tertutup. Set ENV itu (nilai sama dipakai di
               worker) supaya worker bisa mengirim hasil.
             </div>
@@ -245,14 +259,14 @@ npm run watch      # sisir terus tiap jam`}</pre>
           </div>
 
           <div className="hint">
-            ⚠ Otomasi akun melanggar ToS Facebook — akun bisa kena checkpoint/ban.
+            Otomasi akun melanggar ToS Facebook — akun bisa kena checkpoint/ban.
             Pakai akun sekunder. Worker hanya menyisir konten publik; postingan
             teman-saja dan grup tertutup tidak diambil.
           </div>
         </div>
 
         <div className="hint" style={{ marginTop: 20 }}>
-          ⚠ Key disimpan lokal di <code>data/settings.json</code> pada mesin ini
+          Key disimpan lokal di <code>data/settings.json</code> pada mesin ini
           (folder <code>data/</code> di-gitignore). Jangan commit / bagikan.
         </div>
       </div>

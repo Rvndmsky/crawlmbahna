@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readSettings, writeSettings, maskKey } from "@/lib/config";
+import { cacheDiRedis } from "@/lib/cache";
 import { validateToken, COOKIE } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
     webSearch: s.webSearch,
     keyMasked: maskKey(s.apiKey),
     hasKey: !!s.apiKey,
+    cache: cacheDiRedis ? "redis" : "file",
   });
 }
 

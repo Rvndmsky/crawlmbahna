@@ -118,7 +118,7 @@ function Results() {
             onClick={() => q.trim() && run(q, true)}
             disabled={loading}
           >
-            ↻
+            Muat ulang
           </button>
         </>
       }
@@ -132,7 +132,7 @@ function Results() {
           </div>
         )}
 
-        {error && <div className="error">⚠ {error}</div>}
+        {error && <div className="error">{error}</div>}
 
         {data && !loading && (
           <>
@@ -143,7 +143,7 @@ function Results() {
             </div>
 
             {data.items.length === 0 && (
-              <div className="state">Tidak ada hasil. Coba kata kunci lain atau tekan ↻.</div>
+              <div className="state">Tidak ada hasil. Coba kata kunci lain atau tekan Muat ulang.</div>
             )}
 
             {data.items.map((it, i) => (
@@ -154,7 +154,7 @@ function Results() {
               >
                 <div className="head">
                   {it.breaking && (
-                    <span className="threat-badge sm">🔴 BREAKING</span>
+                    <span className="threat-badge sm">BREAKING</span>
                   )}
                   <span className="platform">{it.platform || "web"}</span>
                   <span className="title">{it.title}</span>
@@ -169,14 +169,14 @@ function Results() {
                   <span className={`sent ${it.sentiment}`}>
                     {it.sentiment} ({it.sentiment_score.toFixed(2)})
                   </span>
-                  <span className="dossier-link">📑 Buka dossier intel →</span>
+                  <span className="dossier-link">Buka dossier intel </span>
                   <a
                     href={it.url}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    sumber ↗
+                    buka sumber
                   </a>
                 </div>
               </article>

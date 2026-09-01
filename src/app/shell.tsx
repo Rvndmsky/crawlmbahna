@@ -85,7 +85,7 @@ export default function Shell({
             title="menu"
             onClick={() => setBuka((v) => !v)}
           >
-            ☰
+            Menu
           </button>
           {judul && <div className="topbar-judul">{judul}</div>}
           <div style={{ flex: 1 }} />

@@ -57,14 +57,14 @@ export default function LoginPage() {
           required
         />
 
-        {err && <div className="error" style={{ marginTop: 4 }}>⚠ {err}</div>}
+        {err && <div className="error" style={{ marginTop: 4 }}>{err}</div>}
 
         <button className="save-btn" type="submit" disabled={loading} style={{ marginTop: 8 }}>
           {loading ? "memverifikasi…" : "Masuk"}
         </button>
 
         <div className="hint" style={{ marginTop: 14, textAlign: "center" }}>
-          🔒 Sesi token sekali-pakai. Logout otomatis mencabut akses.
+          Sesi token sekali-pakai. Logout otomatis mencabut akses.
         </div>
       </form>
     </main>

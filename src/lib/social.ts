@@ -665,7 +665,7 @@ export async function crawlTarget(
 
   const key = `target:${normName(n)}:${days}`;
   if (!opts.fresh) {
-    const cached = getCache<TargetResult>(key, CACHE_MS);
+    const cached = await getCache<TargetResult>(key, CACHE_MS);
     if (cached && cached.data.posts.length > 0) {
       return {
         ...cached.data,
@@ -734,6 +734,6 @@ export async function crawlTarget(
   };
   // Yang di-cache hanya hasil model; post Facebook digabung saat dibaca supaya
   // kiriman worker berikutnya tidak tertahan cache.
-  if (result.posts.length > 0) setCache<TargetResult>(key, n, result);
+  if (result.posts.length > 0) await setCache<TargetResult>(key, n, result);
   return { ...result, posts: rank([...result.posts, ...fb]) };
 }

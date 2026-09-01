@@ -53,9 +53,9 @@ const gmaps = (q: string) =>
 const gmapsEmbed = (q: string) =>
   `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
 const KRED: Record<string, { label: string; cls: string }> = {
-  kredibel: { label: "✓ Kredibel", cls: "positive" },
-  perlu_verifikasi: { label: "⚠ Perlu Verifikasi", cls: "neutral" },
-  terindikasi_hoaks: { label: "✕ Terindikasi Hoaks", cls: "negative" },
+  kredibel: { label: "Kredibel", cls: "positive" },
+  perlu_verifikasi: { label: "Perlu Verifikasi", cls: "neutral" },
+  terindikasi_hoaks: { label: "Terindikasi Hoaks", cls: "negative" },
 };
 
 function fmtTime(ms: number) {
@@ -156,7 +156,7 @@ function Detail() {
             Menyusun dossier intelijen… <b>{elapsed}s</b>
           </div>
         )}
-        {error && <div className="error">⚠ {error}</div>}
+        {error && <div className="error">{error}</div>}
 
         {d && !loading && (
           <>
@@ -182,7 +182,7 @@ function Detail() {
               {d.kategori && <span className="flag">{d.kategori}</span>}
               {d.threat !== "none" && (
                 <span className="threat-badge">
-                  🚨 {d.threat} · lvl {d.threatLevel}
+                  {d.threat} · lvl {d.threatLevel}
                 </span>
               )}
               {data?.cached && <span className="badge-cache">cache</span>}
@@ -200,7 +200,7 @@ function Detail() {
 
             {d.kronologiFakta && (
               <div className="panel">
-                <div className="panel-title">🕵️ Kronologi &amp; Fakta (5W+1H)</div>
+                <div className="panel-title">Kronologi &amp; Fakta (5W+1H)</div>
                 <div className="summary prose">{d.kronologiFakta}</div>
               </div>
             )}
@@ -208,7 +208,7 @@ function Detail() {
             {(d.aktor.length > 0 || d.organisasi.length > 0) && (
               <div className="dossier-grid">
                 <div className="panel">
-                  <div className="panel-title">👤 Aktor / Tokoh</div>
+                  <div className="panel-title">Aktor / Tokoh</div>
                   {d.aktor.length ? (
                     <ul className="actor-list">
                       {d.aktor.map((a, i) => (
@@ -224,7 +224,7 @@ function Detail() {
                   )}
                 </div>
                 <div className="panel">
-                  <div className="panel-title">🏛️ Organisasi / Lembaga</div>
+                  <div className="panel-title">Organisasi / Lembaga</div>
                   <Chips items={d.organisasi} />
                 </div>
               </div>
@@ -232,14 +232,14 @@ function Detail() {
 
             {d.lokasi.length > 0 && (
               <div className="panel">
-                <div className="panel-title">📍 Tempat Kejadian Perkara</div>
+                <div className="panel-title">Tempat Kejadian Perkara</div>
                 <a
                   className="loc-chip loc-primary"
                   href={gmaps(d.lokasi[0].nama)}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  🎯 {d.lokasi[0].nama} ↗
+                  {d.lokasi[0].nama} 
                 </a>
                 <iframe
                   className="loc-map"
@@ -253,7 +253,7 @@ function Detail() {
 
             {(d.penilaian || d.prakiraan || d.solusi) && (
               <div className="panel">
-                <div className="panel-title">🧠 Analisa</div>
+                <div className="panel-title">Analisa</div>
                 {d.penilaian && (
                   <div className="labeled">
                     <b>PENILAIAN</b>
@@ -277,21 +277,21 @@ function Detail() {
 
             {d.dampak && (
               <div className="panel">
-                <div className="panel-title">💥 Dampak (Pemerintahan &amp; Indonesia)</div>
+                <div className="panel-title">Dampak (Pemerintahan &amp; Indonesia)</div>
                 <div className="summary prose">{d.dampak}</div>
               </div>
             )}
 
             {d.reaksiPublik && (
               <div className="panel">
-                <div className="panel-title">📣 Reaksi Publik</div>
+                <div className="panel-title">Reaksi Publik</div>
                 <div className="summary prose">{d.reaksiPublik}</div>
               </div>
             )}
 
             {(d.upayaTelah || d.upayaBisa) && (
               <div className="panel">
-                <div className="panel-title">🛠️ Upaya</div>
+                <div className="panel-title">Upaya</div>
                 {d.upayaTelah && (
                   <div className="labeled">
                     <b>UPAYA YANG TELAH DILAKUKAN</b>
@@ -311,7 +311,7 @@ function Detail() {
               <div className="dossier-grid">
                 {d.implikasi.length > 0 && (
                   <div className="panel">
-                    <div className="panel-title">🔮 Implikasi</div>
+                    <div className="panel-title">Implikasi</div>
                     <ul className="bullets">
                       {d.implikasi.map((x, i) => (
                         <li key={i}>{x}</li>
@@ -321,7 +321,7 @@ function Detail() {
                 )}
                 {d.rekomendasiPantau.length > 0 && (
                   <div className="panel">
-                    <div className="panel-title">👁️ Rekomendasi Pantau</div>
+                    <div className="panel-title">Rekomendasi Pantau</div>
                     <ul className="bullets">
                       {d.rekomendasiPantau.map((x, i) => (
                         <li key={i}>{x}</li>
@@ -334,7 +334,7 @@ function Detail() {
 
             {d.saranTindakan.length > 0 && (
               <div className="panel panel-rec">
-                <div className="panel-title">✅ Saran Tindakan</div>
+                <div className="panel-title">Saran Tindakan</div>
                 <ul className="bullets">
                   {d.saranTindakan.map((x, i) => (
                     <li key={i}>{x}</li>
@@ -345,7 +345,7 @@ function Detail() {
 
             {d.sumberTerkait.length > 0 && (
               <div className="panel">
-                <div className="panel-title">🔗 Berita Terkait (OSINT)</div>
+                <div className="panel-title">Berita Terkait (OSINT)</div>
                 {d.tanggalBerita && (
                   <div className="hint" style={{ marginTop: 0, marginBottom: 10 }}>
                     Sezaman dengan berita utama ({d.tanggalBerita})

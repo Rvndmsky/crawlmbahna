@@ -236,7 +236,7 @@ export async function getTrending(
   opts: { fresh?: boolean } = {}
 ): Promise<TrendingResult> {
   if (!opts.fresh) {
-    const cached = getCache<TrendingResult>(CACHE_KEY, CACHE_MS);
+    const cached = await getCache<TrendingResult>(CACHE_KEY, CACHE_MS);
     // Abaikan cache kosong (hasil gagal parse) -> tarik ulang.
     if (
       cached &&
@@ -283,6 +283,6 @@ export async function getTrending(
     cities,
   };
   // Hanya cache kalau ada isinya.
-  if (topics.length > 0) setCache<TrendingResult>(CACHE_KEY, "intel", result);
+  if (topics.length > 0) await setCache<TrendingResult>(CACHE_KEY, "intel", result);
   return result;
 }

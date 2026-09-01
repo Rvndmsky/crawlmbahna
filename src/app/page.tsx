@@ -186,7 +186,7 @@ export default function IntelDashboard() {
     } catch (e: any) {
       setError(
         e?.name === "AbortError"
-          ? "Terlalu lama (>3 menit). Coba refresh, atau pilih model lebih cepat di ⚙ Setup."
+          ? "Terlalu lama (>3 menit). Coba refresh, atau pilih model lebih cepat di Settings Setup."
           : e?.message || "gagal memuat"
       );
     } finally {
@@ -263,7 +263,7 @@ export default function IntelDashboard() {
       judul="Dashboard Intelijen"
       aksi={
         <button className="refresh" title="muat ulang" onClick={() => load(true)} disabled={loading}>
-          ↻
+          Muat ulang
         </button>
       }
     >
@@ -304,7 +304,7 @@ export default function IntelDashboard() {
           </div>
         )}
 
-        {error && <div className="error">⚠ {error}</div>}
+        {error && <div className="error">{error}</div>}
 
         {data && stats && !loading && (
           <>
@@ -322,7 +322,7 @@ export default function IntelDashboard() {
                         key={bidx}
                         onClick={() => openTopic(cur)}
                       >
-                        {cur.threat !== "none" && "🚨 "}
+                        {cur.threat !== "none" && ""}
                         {cur.topic}
                       </span>
                     </div>
@@ -364,7 +364,7 @@ export default function IntelDashboard() {
                 >
                   {stats.threats.length}
                 </div>
-                <div className="stat-lbl">🚨 Ancaman kedaulatan</div>
+                <div className="stat-lbl">Ancaman kedaulatan</div>
               </div>
             </div>
 
@@ -372,7 +372,7 @@ export default function IntelDashboard() {
             {stats.threats.length > 0 && (
               <>
                 <div className="section-title alert-title">
-                  🚨 ANCAMAN KEDAULATAN NKRI
+                  ANCAMAN KEDAULATAN NKRI
                 </div>
                 {stats.threats.map((t, i) => (
                   <article className="alert-card clickable" key={i} onClick={() => openTopic(t)}>
@@ -381,7 +381,7 @@ export default function IntelDashboard() {
                         {t.threat} · level {t.threatLevel}
                       </span>
                       <span className="platform">{t.category}</span>
-                      <span className="heat-num">🔥 {t.heat}</span>
+                      <span className="heat-num">{t.heat}</span>
                     </div>
                     <div className="title">{t.topic}</div>
                     {t.summary && <div className="summary">{t.summary}</div>}
@@ -391,7 +391,7 @@ export default function IntelDashboard() {
                           [{s.platform}] {s.source || s.title}
                         </a>
                       ))}
-                      <span className="dossier-link">📑 dossier →</span>
+                      <span className="dossier-link">buka dossier</span>
                     </div>
                   </article>
                 ))}
@@ -418,12 +418,12 @@ export default function IntelDashboard() {
 
             {/* Peta sebaran isu */}
             <div className="panel">
-              <div className="panel-title">🗺️ Peta Sebaran Isu (Kota/Kabupaten)</div>
+              <div className="panel-title">Peta Sebaran Isu (Kota/Kabupaten)</div>
               <IndonesiaMap points={mapPoints} onSelect={(pt) => openCity(pt.name, pt.heat)} />
             </div>
 
             {/* Kartu kota/kabupaten */}
-            <div className="section-title">📍 Berita per Kota / Kabupaten</div>
+            <div className="section-title">Berita per Kota / Kabupaten</div>
             <div className="prov-grid">
               {data.cities.slice(0, 8).map((c, i) => (
                 <div
@@ -443,14 +443,14 @@ export default function IntelDashboard() {
                     <div className="heatbar-fill" style={{ width: `${c.heat}%` }} />
                   </div>
                   <div className="prov-src">
-                    [{c.platform}] {c.source} · 🔥 {c.heat} · 📑 dossier
+                    [{c.platform}] {c.source} · {c.heat} · dossier
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Isu nasional terpanas */}
-            <div className="section-title">🔥 Isu Nasional Terkini</div>
+            <div className="section-title">Isu Nasional Terkini</div>
             {data.topics.slice(0, 10).map((t, i) => (
               <article className="trend clickable" key={i} onClick={() => openTopic(t)}>
                 <div className="rank">#{i + 1}</div>
@@ -458,10 +458,10 @@ export default function IntelDashboard() {
                   <div className="head">
                     <span className="platform">{t.category}</span>
                     {t.threat !== "none" && (
-                      <span className="threat-badge sm">🚨 {t.threat}</span>
+                      <span className="threat-badge sm">{t.threat}</span>
                     )}
                     <span className={`sent ${t.sentiment}`}>{t.sentiment}</span>
-                    <span className="heat-num">🔥 {t.heat}</span>
+                    <span className="heat-num">{t.heat}</span>
                   </div>
                   <div className="title">{t.topic}</div>
                   <div className="heatbar">
@@ -474,7 +474,7 @@ export default function IntelDashboard() {
                         [{s.platform}] {s.source || s.title}
                       </a>
                     ))}
-                    <span className="dossier-link">📑 dossier →</span>
+                    <span className="dossier-link">buka dossier</span>
                   </div>
                 </div>
               </article>

@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Status untuk halaman ⚙ Setup (pakai sesi login biasa, bukan token worker).
+// Status untuk halaman Settings (pakai sesi login biasa, bukan token worker).
 export async function GET(req: NextRequest) {
   if (!validateToken(req.cookies.get(COOKIE)?.value)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

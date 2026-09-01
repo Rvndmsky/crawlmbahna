@@ -209,7 +209,7 @@ function TargetView() {
     } catch (e: any) {
       setError(
         e?.name === "AbortError"
-          ? "Terlalu lama. Coba lagi atau pilih model lebih cepat di ⚙ Setup."
+          ? "Terlalu lama. Coba lagi atau pilih model lebih cepat di Settings."
           : e?.message || "gagal menyisir"
       );
     } finally {
@@ -289,14 +289,14 @@ function TargetView() {
           onClick={() => data?.name && crawl(data.name, true)}
           disabled={loading}
         >
-          ↻
+          Muat ulang
         </button>
       }
     >
 
       <div className="wrap" style={{ maxWidth: 940 }}>
         <div className="section-title" style={{ marginTop: 4 }}>
-          🎯 Pantau Individu — Threads · Instagram · X
+          Pantau Individu — Threads · Instagram · X
         </div>
         <div className="hint" style={{ marginTop: -6, marginBottom: 14 }}>
           Fokus perorangan (tokoh publik / influencer), <b>7 hari terakhir</b>.
@@ -329,7 +329,7 @@ function TargetView() {
                   title="hapus"
                   onClick={() => delTarget(t.name)}
                 >
-                  ✕
+                  hapus
                 </span>
               </span>
             ))}
@@ -385,7 +385,7 @@ function TargetView() {
           </div>
         )}
 
-        {error && <div className="error">⚠ {error}</div>}
+        {error && <div className="error">{error}</div>}
 
         {data && !loading && (
           <>
@@ -435,7 +435,7 @@ function TargetView() {
               )}
               {data.profile.photo && !photoErr && data.profile.photoSource && (
                 <div className="hint" style={{ marginTop: 6 }}>
-                  📷 foto: {data.profile.photoSource}
+                  foto: {data.profile.photoSource}
                 </div>
               )}
 
@@ -463,7 +463,7 @@ function TargetView() {
                             <a href={a.url || "#"} target="_blank" rel="noreferrer">
                               {a.handle || a.url}
                             </a>
-                            {a.verified && <span className="ver"> ✔</span>}
+                            {a.verified && <span className="ver"> ya</span>}
                           </td>
                           <td>
                             <span className={`acct-status ${a.status}`}>
@@ -488,7 +488,7 @@ function TargetView() {
             {data.impersonators.length > 0 && (
               <>
                 <div className="section-title alert-title">
-                  ⚠ Akun Mengatasnamakan Target (bukan sumber sah)
+                  Akun Mengatasnamakan Target (bukan sumber sah)
                 </div>
                 <div className="panel">
                   {data.impersonators.map((im, i) => (
@@ -536,7 +536,7 @@ function TargetView() {
             {/* Gerakan / mobilisasi */}
             {data.movements.length > 0 && (
               <>
-                <div className="section-title">📣 Gerakan &amp; Mobilisasi Terkait</div>
+                <div className="section-title">Gerakan &amp; Mobilisasi Terkait</div>
                 {data.movements.map((m, i) => (
                   <article className="alert-card" key={i}>
                     <div className="head">
@@ -549,16 +549,16 @@ function TargetView() {
                     <div className="title">{m.topic}</div>
                     {m.summary && <div className="summary">{m.summary}</div>}
                     <div className="move-meta">
-                      {m.tanggal && <span>🗓 {m.tanggal}</span>}
-                      {m.lokasi && <span>📍 {m.lokasi}</span>}
-                      {m.penggerak && <span>👥 {m.penggerak}</span>}
-                      {m.skala && <span>📊 {m.skala}</span>}
+                      {m.tanggal && <span>{m.tanggal}</span>}
+                      {m.lokasi && <span>{m.lokasi}</span>}
+                      {m.penggerak && <span>{m.penggerak}</span>}
+                      {m.skala && <span>{m.skala}</span>}
                     </div>
                     {m.urls.length > 0 && (
                       <div className="sources">
                         {m.urls.map((u, j) => (
                           <a key={j} href={u} target="_blank" rel="noreferrer">
-                            sumber {j + 1} ↗
+                            sumber {j + 1}
                           </a>
                         ))}
                       </div>
@@ -571,14 +571,14 @@ function TargetView() {
             {/* Isu utama */}
             {data.issues.length > 0 && (
               <>
-                <div className="section-title">🗣 Isu yang Menyeret Namanya</div>
+                <div className="section-title">Isu yang Menyeret Namanya</div>
                 {data.issues.map((it, i) => (
                   <article className="trend" key={i}>
                     <div className="rank">#{i + 1}</div>
                     <div className="trend-body">
                       <div className="head">
                         <span className={`sent ${it.sentiment}`}>{it.sentiment}</span>
-                        <span className="heat-num">🔥 {it.heat}</span>
+                        <span className="heat-num">{it.heat}</span>
                       </div>
                       <div className="title">{it.topic}</div>
                       <div className="heatbar">
@@ -592,7 +592,7 @@ function TargetView() {
             )}
 
             {/* Postingan */}
-            <div className="section-title">📲 Postingan &amp; Interaksi</div>
+            <div className="section-title">Postingan &amp; Interaksi</div>
             <div className="filter-row">
               <div className="chips">
                 <span
@@ -653,13 +653,13 @@ function TargetView() {
                 Sebaran: {PLATFORMS.map((p) => `${p} ${stats.plat[p] || 0}`).join(" · ")}.
                 Platform bernilai 0 = tidak ada permalink post publik yang ketemu di
                 rentang {data.days} hari ini (post Instagram/Threads memang lebih jarang
-                terindeks daripada X). Coba perpanjang rentang atau tekan ↻.
+                terindeks daripada X). Coba perpanjang rentang atau tekan Muat ulang.
               </div>
             )}
 
             {shown.length === 0 && (
               <div className="state">
-                Tidak ada postingan sesuai filter. Longgarkan filter atau tekan ↻.
+                Tidak ada postingan sesuai filter. Longgarkan filter atau tekan Muat ulang.
               </div>
             )}
 
@@ -669,17 +669,17 @@ function TargetView() {
                   <span className="plat-badge">{PLAT_ICON[p.platform] || p.platform}</span>
                   <span className={`ptype ${p.postType}`}>{p.postType}</span>
                   {p.byTarget && <span className="own-badge">akun target</span>}
-                  {p.verified && !p.byTarget && <span className="ver">✔</span>}
+                  {p.verified && !p.byTarget && <span className="ver">ya</span>}
                   {p.flag !== "none" && (
-                    <span className="threat-badge sm">⚠ {p.flag.replace(/_/g, " ")}</span>
+                    <span className="threat-badge sm">{p.flag.replace(/_/g, " ")}</span>
                   )}
                   {p.movement !== "none" && (
-                    <span className="move-badge">📣 {p.movement.replace(/_/g, " ")}</span>
+                    <span className="move-badge">{p.movement.replace(/_/g, " ")}</span>
                   )}
                 </div>
                 <div className="src">
                   {p.account || "—"}
-                  {p.replyTo ? ` ↩ ${p.replyTo}` : ""}
+                  {p.replyTo ? ` balas ke ${p.replyTo}` : ""}
                   {p.published ? ` · ${p.published}` : ""}
                   {` · ${p.accountType}`}
                 </div>
@@ -690,15 +690,15 @@ function TargetView() {
                     {p.sentiment} ({p.sentiment_score.toFixed(2)})
                   </span>
                   <span className={`stance ${p.stance}`}>{p.stance}</span>
-                  {p.engagement > 0 && <span className="heat-num">🔥 {p.engagement}</span>}
-                  <span className="dossier-link">📑 dossier →</span>
+                  {p.engagement > 0 && <span className="heat-num">{p.engagement}</span>}
+                  <span className="dossier-link">buka dossier</span>
                   <a
                     href={p.url}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    buka post ↗
+                    buka post
                   </a>
                 </div>
               </article>
