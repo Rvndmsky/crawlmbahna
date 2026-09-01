@@ -6,7 +6,7 @@
   --border: #232c3d;
   --border-2: #2e3a4f;
   --text: #e8eef6;
-  --muted: #8a97ab;
+  --muted: #98a6bb;
   --accent: #4f8cff;
   --accent-2: #7aa8ff;
   --pos: #35c46b;
@@ -31,7 +31,7 @@ html[data-theme="light"] {
   --border: #dbe1ea;
   --border-2: #c3cddb;
   --text: #18202e;
-  --muted: #5c6675;
+  --muted: #55606f;
   --accent: #2f6fed;
   --accent-2: #1f5fdc;
   --pos: #17924c;
@@ -1256,7 +1256,7 @@ pre.cmd {
   color: var(--accent-2);
   font-weight: 600;
 }
-.sidebar-ikon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-item { letter-spacing: 0.1px; }
 
 .sidebar-kaki {
   padding: 16px 20px;
@@ -1321,3 +1321,37 @@ pre.cmd {
   .topbar-baru { padding: 10px 14px; gap: 8px; }
   .login-sebagai { display: none; }
 }
+
+/* ============ TIPOGRAFI TEGAS ============ */
+/* Teks bawaan sistem cenderung ringan; bobot dan spasi dirapatkan supaya
+   antarmuka terbaca tegas, bukan melayang. */
+body {
+  font-weight: 450;
+  letter-spacing: -0.006em;
+  line-height: 1.55;
+}
+
+.sidebar-brand { font-weight: 900; letter-spacing: -1.2px; }
+.sidebar-item { font-size: 14.5px; font-weight: 600; }
+.sidebar-item.aktif { font-weight: 700; }
+.sidebar-kaki { font-weight: 500; }
+
+.topbar-judul { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.login-sebagai { font-weight: 500; }
+.logout-btn { font-weight: 700; letter-spacing: 0.01em; }
+
+.section-title { font-weight: 800; letter-spacing: -0.02em; }
+.panel-title { font-weight: 700; letter-spacing: 0.06em; }
+.title { font-weight: 700; letter-spacing: -0.015em; }
+.info-bar-judul { font-weight: 800; letter-spacing: -0.02em; }
+.info-baris-judul { font-weight: 700; letter-spacing: -0.01em; }
+.stat-num { font-weight: 800; letter-spacing: -0.03em; }
+.stat-lbl { font-weight: 500; }
+.hero-brand, .logo { font-weight: 900; letter-spacing: -1.4px; }
+
+.btn, .topbar button, .mini-search button, .save-btn, .preset { font-weight: 700; }
+.form-group > label { font-weight: 700; letter-spacing: -0.01em; }
+.meta, .hint, .muted, .src { font-weight: 500; }
+.summary { font-weight: 450; }
+.fchip, .tchip, .chip { font-weight: 600; }
+.acct-table th { font-weight: 700; }

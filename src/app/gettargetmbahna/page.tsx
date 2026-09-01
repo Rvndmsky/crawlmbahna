@@ -279,7 +279,7 @@ function TargetView() {
 
   return (
     <Shell
-      judul="🎯 Subject Target"
+      judul="Subject Target"
       aksi={
         <>
           <form

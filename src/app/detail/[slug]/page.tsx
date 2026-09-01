@@ -141,7 +141,7 @@ function Detail() {
   const d = data?.dossier;
 
   return (
-    <Shell judul="📑 Dossier Intel">
+    <Shell judul="Dossier Intel">
 
       <div className="wrap" style={{ maxWidth: 900 }}>
         <div className="dossier-src-line">

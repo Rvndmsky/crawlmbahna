@@ -8,11 +8,11 @@ import ThemeToggle from "./theme-toggle";
 // bilah atas hanya untuk identitas pengguna, ganti tema, dan keluar.
 
 const MENU = [
-  { href: "/", ikon: "🔥", label: "Dashboard" },
-  { href: "/gettargetmbahna", ikon: "🎯", label: "Subject Target" },
-  { href: "/facebook", ikon: "📘", label: "Crawl Social Media" },
-  { href: "/infografis", ikon: "🖼", label: "Infografis" },
-  { href: "/settings", ikon: "⚙", label: "Settings" },
+  { href: "/", label: "Dashboard" },
+  { href: "/gettargetmbahna", label: "Subject Target" },
+  { href: "/facebook", label: "Crawl Social Media" },
+  { href: "/infografis", label: "Infografis" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export default function Shell({
@@ -60,8 +60,7 @@ export default function Shell({
               className={`sidebar-item ${aktif(m.href) ? "aktif" : ""}`}
               onClick={() => router.push(m.href)}
             >
-              <span className="sidebar-ikon">{m.ikon}</span>
-              <span>{m.label}</span>
+              {m.label}
             </button>
           ))}
         </nav>

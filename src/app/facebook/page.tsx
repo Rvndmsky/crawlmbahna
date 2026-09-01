@@ -150,7 +150,7 @@ export default function FacebookPage() {
   );
 
   return (
-    <Shell judul="📘 Crawl Social Media" aksi={
+    <Shell judul="Crawl Social Media" aksi={
         <button type="button" className="refresh" title="muat ulang" onClick={load} disabled={loading}>
           ↻
         </button>

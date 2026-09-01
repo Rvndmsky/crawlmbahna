@@ -112,7 +112,7 @@ export default function SettingsPage() {
   const isAnthropic = PRESETS[preset].provider === "anthropic";
 
   return (
-    <Shell judul="⚙ Settings">
+    <Shell judul="Settings">
 
       <div className="wrap" style={{ maxWidth: 620 }}>
         <div className="form-group">

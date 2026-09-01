@@ -190,7 +190,7 @@ export default function InfografisPage() {
   }
 
   return (
-    <Shell judul="🖼 Infografis">
+    <Shell judul="Infografis">
 
       <div className="wrap" style={{ maxWidth: 980 }}>
         {/* Baris aksi */}
