@@ -33,6 +33,7 @@ type SocialPost = {
   postType: string;
   replyTo: string;
   movement: string;
+  terverifikasi: boolean;
 };
 
 type TargetResult = {
@@ -694,6 +695,18 @@ function TargetView() {
                   <span className="plat-badge">{namaPlatform(p.platform)}</span>
                   <span className={`ptype ${p.postType}`}>{p.postType}</span>
                   {p.byTarget && <span className="own-badge">akun target</span>}
+                  {p.terverifikasi ? (
+                    <span className="verif ya" title="permalink dilihat langsung dari profil resmi">
+                      terverifikasi
+                    </span>
+                  ) : (
+                    <span
+                      className="verif belum"
+                      title="berasal dari model dan belum dibuktikan keberadaannya"
+                    >
+                      belum diverifikasi
+                    </span>
+                  )}
                   {p.verified && !p.byTarget && <span className="ver">ya</span>}
                   {p.flag !== "none" && (
                     <span className="threat-badge sm">{p.flag.replace(/_/g, " ")}</span>

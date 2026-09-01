@@ -1622,3 +1622,15 @@ body {
 .yakin.rendah { color: var(--neg); border-color: rgba(242,104,96,0.45); background: rgba(242,104,96,0.08); }
 .acct-bukti { font-size: 12.5px; color: var(--muted); max-width: 240px; }
 .acct-table { min-width: 760px; }
+
+/* penanda keaslian permalink postingan */
+.verif {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+.verif.ya { background: rgba(53,196,107,0.16); color: var(--pos); }
+.verif.belum { background: rgba(240,160,32,0.16); color: var(--warn); }

@@ -77,6 +77,10 @@ export type SocialPost = {
   postType: PostType; // post asli / reply / repost / komentar
   replyTo: string; // akun/handle yang dibalas (bila reply/quote/repost)
   movement: MovementType; // gerakan yang diserukan/dibahas di post ini
+  // true = permalink-nya benar-benar dilihat worker di profil resmi.
+  // false = berasal dari model dan BELUM dibuktikan ada. Model tidak punya
+  // akses ke indeks permalink media sosial; bila dipaksa, ia mengarang alamat.
+  terverifikasi: boolean;
 };
 
 // Gerakan/aksi kolektif terkait target (mis. demo, aksi massa, petisi).
@@ -582,6 +586,7 @@ function parse(
         postType: postTypeOf(s.post_type || s.postType),
         replyTo: String(s.reply_to || s.replyTo || ""),
         movement: moveOf(s.movement),
+        terverifikasi: false, // dari model; ditandai true bila cocok data worker
       };
     })
     // Akun palsu tidak boleh nyasar ke daftar post (sumber tidak sahih), dan
@@ -662,6 +667,7 @@ export function dariProfil(
     postType: "post",
     replyTo: "",
     movement: detectMovement(content),
+    terverifikasi: true,
   };
 }
 
@@ -687,6 +693,7 @@ export function fbToPost(p: FbRawPost): SocialPost {
     postType: "post",
     replyTo: "",
     movement: detectMovement(text),
+    terverifikasi: true, // dilihat langsung worker Facebook
   };
 }
 
@@ -709,6 +716,55 @@ function rank(list: SocialPost[]): SocialPost[] {
     (s.movement !== "none" ? 60 : 0) +
     s.engagement;
   return out.sort((a, b) => w(b) - w(a));
+}
+
+// Pengayaan dari data worker: jumlah pengikut, postingan asli dari profil resmi,
+// dan penandaan post model yang permalink-nya ternyata memang ada.
+// Dijalankan juga saat hasil diambil dari cache — kalau tidak, angka pengikut
+// baru muncul setelah cache kedaluwarsa, padahal worker sudah membacanya.
+async function perkaya(hasil: TargetResult): Promise<TargetResult> {
+  const urlAkun = hasil.profile.accounts.map((a) => a.url).filter(Boolean);
+  if (!urlAkun.length) return hasil;
+
+  try {
+    const tersimpan = await ambilFollowers(urlAkun);
+
+    const accounts = hasil.profile.accounts.map((a) => {
+      const d = tersimpan[kunciUrl(a.url)];
+      return d?.followers ? { ...a, followers: d.followers } : a;
+    });
+
+    // Permalink yang benar-benar dilihat worker di profil resmi.
+    const nyata = new Map<string, { url: string; content: string; akun: TargetAccount }>();
+    for (const a of accounts) {
+      const d: DataAkun | undefined = tersimpan[kunciUrl(a.url)];
+      for (const p of d?.posts || []) nyata.set(kunciUrl(p.url), { ...p, akun: a });
+    }
+
+    // Post dari model dinaikkan statusnya bila permalinknya cocok; yang tidak
+    // cocok tetap tampil, tapi ditandai belum terbukti.
+    const posts = hasil.posts.map((p) =>
+      nyata.has(kunciUrl(p.url)) ? { ...p, terverifikasi: true } : p
+    );
+    const sudahAda = new Set(posts.map((p) => kunciUrl(p.url)));
+    for (const [k, v] of nyata) {
+      if (!sudahAda.has(k)) posts.push(dariProfil(v.url, v.content, v.akun));
+    }
+
+    // Antrekan akun yang belum lengkap datanya untuk putaran worker berikutnya.
+    const perluBaca = accounts
+      .filter((a) => {
+        if (!a.url) return false;
+        const d = tersimpan[kunciUrl(a.url)];
+        return !d || !d.followers || !(d.posts || []).length;
+      })
+      .map((a) => a.url);
+    if (perluBaca.length) await antreAkun(perluBaca);
+
+    return { ...hasil, profile: { ...hasil.profile, accounts }, posts: rank(posts) };
+  } catch {
+    return hasil; // pengayaan gagal: tampilkan apa adanya
+  }
 }
 
 export async function crawlTarget(
@@ -749,11 +805,11 @@ export async function crawlTarget(
   if (!opts.fresh) {
     const cached = await getCache<TargetResult>(key, CACHE_MS);
     if (cached && cached.data.posts.length > 0) {
-      return {
+      return await perkaya({
         ...cached.data,
         cached: true,
         posts: rank([...cached.data.posts, ...fb]),
-      };
+      });
     }
   }
 
@@ -798,42 +854,6 @@ export async function crawlTarget(
     )
   );
 
-  // Jumlah pengikut: pakai angka yang sudah dibaca worker bila ada, lalu
-  // antrekan akun yang masih kosong supaya dibaca pada putaran berikutnya.
-  // Model sering tidak tahu angka ini; browser yang membacanya langsung.
-  const urlAkun = base.profile.accounts.map((a) => a.url).filter(Boolean);
-  let postAkun: SocialPost[] = [];
-  if (urlAkun.length) {
-    try {
-      const tersimpan = await ambilFollowers(urlAkun);
-      base.profile.accounts = base.profile.accounts.map((a) => {
-        const d = tersimpan[kunciUrl(a.url)];
-        return d?.followers ? { ...a, followers: d.followers } : a;
-      });
-
-      // Postingan yang dibaca worker LANGSUNG dari profil resmi. Ini satu-satunya
-      // sumber permalink yang bisa dipertanggungjawabkan untuk Threads/Instagram:
-      // hasil pencarian model hanya memuat artikel berita tentang postingan, dan
-      // bila dipaksa memberi permalink, model mengarang alamatnya.
-      postAkun = base.profile.accounts.flatMap((a) => {
-        const d: DataAkun | undefined = tersimpan[kunciUrl(a.url)];
-        return (d?.posts || []).map((p) => dariProfil(p.url, p.content, a));
-      });
-
-      // Antrekan ulang: akun tanpa angka pengikut ATAU tanpa postingan tersimpan.
-      const perluBaca = base.profile.accounts
-        .filter((a) => {
-          if (!a.url) return false;
-          const d = tersimpan[kunciUrl(a.url)];
-          return !d || !d.followers || !(d.posts || []).length;
-        })
-        .map((a) => a.url);
-      if (perluBaca.length) await antreAkun(perluBaca);
-    } catch {
-      /* pengayaan gagal: profil tetap tampil apa adanya */
-    }
-  }
-
   // Foto kosong -> coba Wikipedia sebelum menyerah ke avatar inisial.
   let profile = base.profile;
   if (!profile.photo) {
@@ -853,5 +873,5 @@ export async function crawlTarget(
   // Yang di-cache hanya hasil model; post Facebook digabung saat dibaca supaya
   // kiriman worker berikutnya tidak tertahan cache.
   if (result.posts.length > 0) await setCache<TargetResult>(key, n, result);
-  return { ...result, posts: rank([...result.posts, ...postAkun, ...fb]) };
+  return await perkaya({ ...result, posts: rank([...result.posts, ...fb]) });
 }
