@@ -56,6 +56,8 @@ const CFG = {
   // jadi bisa dimatikan.
   recentFilter: process.env.FB_RECENT_FILTER === "true",
   loopMinutes: Number(process.env.FB_LOOP_MINUTES) || 60,
+  // Berapa akun yang dibaca jumlah pengikutnya per putaran.
+  maksAkun: Number(process.env.AKUN_PER_PUTARAN) || 12,
   // Tema pantauan Facebook: aksi jalanan & tekanan politik ke pemerintahan.
   // Kueri tema ini dipakai apa adanya; kata kunci juga digabung dengan tiap
   // nama target bila daftar target ada.
@@ -772,6 +774,95 @@ async function sendToApp(query, posts) {
   }
 }
 
+
+// ---------- jumlah pengikut akun media sosial ----------
+// Dibaca TANPA login: Instagram, Threads, TikTok, dan YouTube menampilkan
+// jumlah pengikut kepada pengunjung anonim. X/Twitter membalas 403 tanpa sesi,
+// jadi platform itu dilewati dengan sendirinya.
+const POLA_PENGIKUT =
+  /([\d.,]+\s*(?:rb|jt|k|m|b|ribu|juta)?)\s*(pengikut|followers?|subscribers?)/i;
+
+async function bacaPengikut(browser, url) {
+  const ctx = await browser.newContext({
+    locale: "id-ID",
+    timezoneId: "Asia/Jakarta",
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/140.0 Safari/537.36",
+  });
+  try {
+    const page = await ctx.newPage();
+    const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    if (resp && resp.status() >= 400) return "";
+    await sleep(jitter(4000));
+
+    const teks = await page.evaluate(() =>
+      (document.body.innerText || "").replace(/\s+/g, " ").slice(0, 4000)
+    );
+    const m = POLA_PENGIKUT.exec(teks);
+    return m ? m[1].trim() : "";
+  } catch {
+    return "";
+  } finally {
+    await ctx.close().catch(() => {});
+  }
+}
+
+async function cmdAkun() {
+  if (!CFG.token) {
+    log("FB_WORKER_TOKEN kosong — tidak bisa mengambil antrian akun.");
+    return;
+  }
+
+  let daftar = [];
+  try {
+    const res = await fetch(CFG.appUrl + "/api/social/akun", {
+      headers: { "x-worker-token": CFG.token },
+    });
+    if (!res.ok) {
+      log("antrian akun ditolak: HTTP " + res.status);
+      return;
+    }
+    daftar = (await res.json()).urls || [];
+  } catch (e) {
+    log("gagal mengambil antrian akun:", e.message);
+    return;
+  }
+
+  if (!daftar.length) {
+    log("antrian akun kosong.");
+    return;
+  }
+
+  log("membaca pengikut " + daftar.length + " akun (tanpa login)");
+  const browser = await chromium.launch({ headless: CFG.headless });
+  const hasil = [];
+  for (const url of daftar.slice(0, CFG.maksAkun)) {
+    const followers = await bacaPengikut(browser, url);
+    log("  " + (followers || "tidak terbaca") + "  <-  " + url.slice(0, 70));
+    if (followers) hasil.push({ url, followers });
+    await sleep(jitter(2500));
+  }
+  await browser.close();
+
+  if (!hasil.length) {
+    log("tidak ada angka yang terbaca.");
+    return;
+  }
+  try {
+    const res = await fetch(CFG.appUrl + "/api/social/akun", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-worker-token": CFG.token },
+      body: JSON.stringify({ hasil }),
+    });
+    const j = await res.json().catch(() => ({}));
+    log(res.ok ? "  -> tersimpan " + (j.tersimpan ?? hasil.length) + " akun"
+                : "  -> ditolak app: HTTP " + res.status);
+  } catch (e) {
+    log("gagal mengirim hasil akun:", e.message);
+  }
+}
+
 // ---------- putaran utama ----------
 async function cmdCrawl() {
   const queries = buildQueries();
@@ -850,6 +941,7 @@ async function cmdCrawl() {
 }
 
 async function main() {
+  if (has("--akun")) return cmdAkun();
   if (has("--login")) return cmdLogin();
   if (has("--check")) return cmdCheck();
   if (has("--export-session")) return cmdExportSession();
@@ -857,6 +949,8 @@ async function main() {
   if (has("--loop")) {
     for (;;) {
       await cmdCrawl();
+      // Sekalian layani antrian jumlah pengikut; tidak butuh sesi Facebook.
+      await cmdAkun().catch((e) => log("akun gagal:", e.message));
       log("tidur " + CFG.loopMinutes + " menit...");
       await sleep(CFG.loopMinutes * 60 * 1000);
     }

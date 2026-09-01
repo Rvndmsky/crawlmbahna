@@ -10,6 +10,7 @@
     "export-session": "node fb-worker.mjs --export-session",
     "import-session": "node fb-worker.mjs --import-session",
     "crawl": "node fb-worker.mjs",
+    "akun": "node fb-worker.mjs --akun",
     "watch": "node fb-worker.mjs --loop"
   },
   "dependencies": {

@@ -103,6 +103,32 @@ komentar, worker membuka sebagian post satu per satu:
 
 Judul tidak ada di Facebook, jadi diturunkan dari kalimat pertama isi post.
 
+## Jumlah pengikut akun (tanpa login)
+
+Selain Facebook, worker juga membaca jumlah pengikut akun media sosial target
+untuk halaman Subject Target. Ini TIDAK butuh login:
+
+```bash
+npm run akun     # baca antrian akun, kirim hasilnya ke website
+```
+
+Alurnya: aplikasi menaruh URL profil yang jumlah pengikutnya belum diketahui ke
+antrian; worker mengambil antrian itu lewat `GET /api/social/akun`, membuka tiap
+profil dengan Chromium anonim, lalu mengirim angkanya kembali.
+
+Hasil uji pada profil publik:
+
+| Platform | Terbaca tanpa login |
+|---|---|
+| Instagram | ya |
+| Threads | ya |
+| TikTok | ya |
+| YouTube | ya (subscriber) |
+| X / Twitter | tidak — membalas HTTP 403 tanpa sesi |
+
+`npm run watch` menjalankan ini otomatis setiap putaran, sesudah penyisiran
+Facebook. Jumlah akun per putaran diatur `AKUN_PER_PUTARAN` (bawaan 12).
+
 ## Batas yang dipaksakan
 
 - Hanya **Page publik, grup publik, dan hasil pencarian publik**. Postingan

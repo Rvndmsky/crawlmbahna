@@ -2,6 +2,7 @@ import { runWeb, extractJson } from "./web";
 import { getCache, setCache } from "./cache";
 import { normName } from "./targets";
 import { getFbPosts, type FbRawPost } from "./fbstore";
+import { ambilFollowers, antreAkun, kunciUrl } from "./akunstore";
 
 // Mesin pemantauan MEDIA SOSIAL per ORANG (individu) — terpisah dari /search
 // yang fokus berita. Cakupan tahap ini SENGAJA dibatasi 3 platform tempat
@@ -736,6 +737,26 @@ export async function crawlTarget(
       (s) => s.platform === MODEL_PLATFORMS[i]
     )
   );
+
+  // Jumlah pengikut: pakai angka yang sudah dibaca worker bila ada, lalu
+  // antrekan akun yang masih kosong supaya dibaca pada putaran berikutnya.
+  // Model sering tidak tahu angka ini; browser yang membacanya langsung.
+  const urlAkun = base.profile.accounts.map((a) => a.url).filter(Boolean);
+  if (urlAkun.length) {
+    try {
+      const tersimpan = await ambilFollowers(urlAkun);
+      base.profile.accounts = base.profile.accounts.map((a) => {
+        const d = tersimpan[kunciUrl(a.url)];
+        return d?.followers ? { ...a, followers: d.followers } : a;
+      });
+      const kosong = base.profile.accounts
+        .filter((a) => !a.followers && a.url)
+        .map((a) => a.url);
+      if (kosong.length) await antreAkun(kosong);
+    } catch {
+      /* pengayaan gagal: profil tetap tampil apa adanya */
+    }
+  }
 
   // Foto kosong -> coba Wikipedia sebelum menyerah ke avatar inisial.
   let profile = base.profile;

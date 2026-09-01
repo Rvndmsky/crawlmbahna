@@ -14,7 +14,7 @@ export function middleware(req: NextRequest) {
 
   // Worker Facebook mengirim tanpa cookie sesi — route-nya menjaga diri sendiri
   // dengan header x-worker-token (POST) / validateToken (GET).
-  if (pathname === "/api/fb/ingest") {
+  if (pathname === "/api/fb/ingest" || pathname === "/api/social/akun") {
     return NextResponse.next();
   }
 
