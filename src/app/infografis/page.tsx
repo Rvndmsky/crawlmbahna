@@ -433,21 +433,16 @@ export default function InfografisPage() {
             )}
 
             {items.length > 0 && (
-              <div className="info-grid">
+              <div className="info-daftar">
                 {items.map((it) => (
-                  <div className="info-kartu" key={it.id} onClick={() => buka(it)}>
-                    <img
-                      className="info-thumb"
-                      src={`/api/infografis/img?id=${encodeURIComponent(it.id)}`}
-                      alt={it.judul}
-                      loading="lazy"
-                    />
-                    <div className="info-kartu-isi">
-                      <div className="info-kartu-judul">{it.judul}</div>
-                      <div className="muted" style={{ fontSize: 12 }}>
-                        {it.kategori} · {fmtTime(it.dibuatPada)}
+                  <div className="info-baris" key={it.id} onClick={() => buka(it)}>
+                    <div className="info-baris-utama">
+                      <div className="info-baris-judul">{it.judul}</div>
+                      <div className="muted" style={{ fontSize: 12.5 }}>
+                        {it.kategori} · {it.namaBerkas} · {fmtTime(it.dibuatPada)}
                       </div>
                     </div>
+                    <span className="info-baris-buka">buka →</span>
                   </div>
                 ))}
               </div>
