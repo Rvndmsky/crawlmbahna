@@ -81,11 +81,15 @@ export default function Shell({
       <div className="shell-isi">
         <header className="topbar-baru">
           <button
-            className="refresh hanya-sempit"
+            className="refresh ikon-btn hanya-sempit"
             title="menu"
+            aria-label="buka menu"
             onClick={() => setBuka((v) => !v)}
           >
-            Menu
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
           </button>
           {judul && <div className="topbar-judul">{judul}</div>}
           <div style={{ flex: 1 }} />

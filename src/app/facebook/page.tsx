@@ -151,8 +151,12 @@ export default function FacebookPage() {
 
   return (
     <Shell judul="Crawl Social Media" aksi={
-        <button type="button" className="refresh" title="muat ulang" onClick={load} disabled={loading}>
-          Muat ulang
+        <button type="button" className="refresh ikon-btn" title="muat ulang" onClick={load} disabled={loading}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+            <path d="M20 5v6h-6" />
+          </svg>
         </button>
       }>
 

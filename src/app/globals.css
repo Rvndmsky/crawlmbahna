@@ -1596,3 +1596,13 @@ body {
 .terkait-judul { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
 .terkait-item:hover .terkait-judul { color: var(--accent-2); }
 .terkait-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+/* tombol berikon garis (pengganti emoji) */
+.ikon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  line-height: 0;
+}
+.ikon-btn svg { display: block; }
