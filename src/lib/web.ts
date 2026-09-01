@@ -19,9 +19,10 @@ export function extractJson(text: string): any | null {
 async function runAnthropic(
   system: string,
   userText: string,
-  maxTokens: number
+  maxTokens: number,
+  settings?: ReturnType<typeof readSettings>
 ): Promise<string> {
-  const s = readSettings();
+  const s = settings || readSettings();
   const client = new Anthropic({ apiKey: s.apiKey });
   const tools = s.webSearch
     ? [
@@ -57,9 +58,10 @@ async function runAnthropic(
 async function runOpenAI(
   system: string,
   userText: string,
-  maxTokens: number
+  maxTokens: number,
+  settings?: ReturnType<typeof readSettings>
 ): Promise<string> {
-  const s = readSettings();
+  const s = settings || readSettings();
   const base = s.baseURL.replace(/\/+$/, "");
   const body: any = {
     model: s.model,
@@ -101,4 +103,19 @@ export async function runWeb(
   return s.provider === "anthropic"
     ? runAnthropic(system, userText, maxTokens)
     : runOpenAI(system, userText, maxTokens);
+}
+
+// Sama seperti runWeb, tapi TANPA pencarian web. Dipakai bila bahannya sudah
+// ada di depan mata (mis. isi dokumen yang diunggah) — lebih cepat & murah.
+export async function runOffline(
+  system: string,
+  userText: string,
+  maxTokens = 8000
+): Promise<string> {
+  const s = readSettings();
+  if (!s.apiKey) throw new Error("API key belum di-set. Buka /settings.");
+  const tanpaTool = { ...s, webSearch: false };
+  return s.provider === "anthropic"
+    ? runAnthropic(system, userText, maxTokens, tanpaTool)
+    : runOpenAI(system, userText, maxTokens, tanpaTool);
 }

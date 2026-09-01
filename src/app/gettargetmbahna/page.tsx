@@ -327,6 +327,14 @@ function TargetView() {
         <button
           type="button"
           className="refresh"
+          title="infografis dari dokumen"
+          onClick={() => router.push("/infografis")}
+        >
+          🖼
+        </button>
+        <button
+          type="button"
+          className="refresh"
           title="pantau Facebook (isu & gerakan)"
           onClick={() => router.push("/facebook")}
         >

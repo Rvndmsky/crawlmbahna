@@ -1124,3 +1124,79 @@ pre.cmd {
   margin: 10px 0;
   background: var(--bg-2);
 }
+
+/* ============ INFOGRAFIS ============ */
+.unggah {
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 18px;
+}
+.unggah:hover { border-color: var(--accent); background: rgba(79,140,255,0.05); }
+.unggah.seret { border-color: var(--accent); background: rgba(79,140,255,0.12); }
+.unggah.sibuk { cursor: default; border-style: solid; }
+.unggah-ikon { font-size: 30px; color: var(--accent); margin-bottom: 8px; }
+.unggah-judul { font-size: 15px; font-weight: 600; }
+
+.tolak-box {
+  border: 1px solid var(--neg);
+  background: rgba(242,104,96,0.07);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.tolak-judul { font-weight: 700; color: var(--neg); margin-bottom: 6px; }
+.tolak-berkas { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+.tolak-alasan { line-height: 1.55; font-size: 14px; }
+
+.info-aksi { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 16px; }
+
+.info-pratinjau {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fcfcfb;
+  line-height: 0;
+}
+.info-pratinjau svg { width: 100%; height: auto; display: block; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+.info-kartu {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--panel);
+  transition: border-color 0.12s, transform 0.12s;
+}
+.info-kartu:hover { border-color: var(--accent); transform: translateY(-2px); }
+.info-kartu.aktif { border-color: var(--accent); }
+.info-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  background: #fcfcfb;
+  border-bottom: 1px solid var(--border);
+}
+.info-kartu-isi { padding: 10px 12px; }
+.info-kartu-judul { font-size: 13.5px; font-weight: 600; line-height: 1.35; margin-bottom: 4px; }
+
+.info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.info-bar-judul { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }

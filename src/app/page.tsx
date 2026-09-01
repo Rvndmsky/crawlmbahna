@@ -282,6 +282,13 @@ export default function IntelDashboard() {
         </button>
         <button
           className="refresh"
+          title="infografis dari dokumen"
+          onClick={() => router.push("/infografis")}
+        >
+          🖼
+        </button>
+        <button
+          className="refresh"
           title="pantau Facebook (isu & gerakan)"
           onClick={() => router.push("/facebook")}
         >

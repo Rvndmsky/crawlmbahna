@@ -180,6 +180,14 @@ export default function FacebookPage() {
         <button
           type="button"
           className="refresh"
+          title="infografis dari dokumen"
+          onClick={() => router.push("/infografis")}
+        >
+          🖼
+        </button>
+        <button
+          type="button"
+          className="refresh"
           title="dashboard"
           onClick={() => router.push("/")}
         >
