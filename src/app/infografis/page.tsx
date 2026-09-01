@@ -55,6 +55,8 @@ export default function InfografisPage() {
   const [memuat, setMemuat] = useState(true);
   const [judul, setJudul] = useState("");
   const [berkas, setBerkas] = useState<File | null>(null);
+  const [menghapus, setMenghapus] = useState(""); // id yang sedang dihapus
+  const [menu, setMenu] = useState(""); // id baris yang menunya terbuka
 
   async function muatDaftar() {
     try {
@@ -76,6 +78,14 @@ export default function InfografisPage() {
     muatDaftar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Menu titik tiga ditutup begitu klik jatuh di luar menu.
+  useEffect(() => {
+    if (!menu) return;
+    const tutup = () => setMenu("");
+    document.addEventListener("click", tutup);
+    return () => document.removeEventListener("click", tutup);
+  }, [menu]);
 
   function pilihBerkas(file: File) {
     const nama = file.name.toLowerCase();
@@ -141,6 +151,30 @@ export default function InfografisPage() {
       setSvg(res.ok ? await res.text() : "");
     } catch {
       setSvg("");
+    }
+  }
+
+  async function hapus(it: Item) {
+    if (!confirm(`Hapus infografis "${it.judul}"? Tindakan ini tidak bisa dibatalkan.`)) {
+      return;
+    }
+    setMenghapus(it.id);
+    try {
+      const res = await fetch(`/api/infografis?id=${encodeURIComponent(it.id)}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "gagal menghapus");
+      setItems(Array.isArray(json.items) ? json.items : []);
+      if (aktif?.id === it.id) {
+        setAktif(null);
+        setSvg("");
+        setMode("daftar");
+      }
+    } catch (e: any) {
+      setError(e?.message || "gagal menghapus");
+    } finally {
+      setMenghapus("");
     }
   }
 
@@ -224,7 +258,7 @@ export default function InfografisPage() {
                 </div>
                 {mode === "lihat" && aktif && (
                   <div className="hint" style={{ marginTop: 2 }}>
-                    {aktif.kategori} · dari {aktif.namaBerkas} · {fmtTime(aktif.dibuatPada)}
+                    dibuat {fmtTime(aktif.dibuatPada)}
                   </div>
                 )}
               </div>
@@ -317,12 +351,12 @@ export default function InfografisPage() {
             </div>
 
             <div className="info-aksi">
-              <button className="save-btn" onClick={unggah} disabled={proses || !berkas}>
+              <button className="tbl-btn utama" onClick={unggah} disabled={proses || !berkas}>
                 {proses ? "Memproses…" : "Buat Infografis"}
               </button>
               {berkas && !proses && (
-                <button className="btn" onClick={() => setBerkas(null)}>
-                  Hapus berkas
+                <button className="tbl-btn" onClick={() => setBerkas(null)}>
+                  Ganti berkas
                 </button>
               )}
             </div>
@@ -342,13 +376,27 @@ export default function InfografisPage() {
         {/* Mode: lihat hasil */}
         {mode === "lihat" && aktif && (
           <>
-            <div className="info-aksi">
-              <button className="save-btn" onClick={unduhPng} disabled={!svg}>
-                ⬇ Unduh PNG
-              </button>
-              <button className="btn" onClick={unduhSvg} disabled={!svg}>
-                ⬇ Unduh SVG
-              </button>
+            <div className="info-toolbar">
+              <div className="info-toolbar-kiri">
+                <span className="info-chip">{aktif.kategori}</span>
+                <span className="muted info-toolbar-berkas">{aktif.namaBerkas}</span>
+              </div>
+              <div className="info-toolbar-kanan">
+                <button className="tbl-btn utama" onClick={unduhPng} disabled={!svg}>
+                  Unduh PNG
+                </button>
+                <button className="tbl-btn" onClick={unduhSvg} disabled={!svg}>
+                  Unduh SVG
+                </button>
+                <span className="tbl-pisah" />
+                <button
+                  className="tbl-btn bahaya"
+                  onClick={() => aktif && hapus(aktif)}
+                  disabled={menghapus === aktif.id}
+                >
+                  {menghapus === aktif.id ? "Menghapus…" : "Hapus"}
+                </button>
+              </div>
             </div>
 
             {svg ? (
@@ -416,7 +464,40 @@ export default function InfografisPage() {
                         {it.kategori} · {it.namaBerkas} · {fmtTime(it.dibuatPada)}
                       </div>
                     </div>
-                    <span className="info-baris-buka">buka →</span>
+                    <div className="baris-menu-bungkus">
+                      <button
+                        className="kebab"
+                        title="pilihan"
+                        disabled={menghapus === it.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenu(menu === it.id ? "" : it.id);
+                        }}
+                      >
+                        {menghapus === it.id ? "…" : "⋯"}
+                      </button>
+                      {menu === it.id && (
+                        <div className="baris-menu" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setMenu("");
+                              buka(it);
+                            }}
+                          >
+                            Open
+                          </button>
+                          <button
+                            className="menu-hapus"
+                            onClick={() => {
+                              setMenu("");
+                              hapus(it);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

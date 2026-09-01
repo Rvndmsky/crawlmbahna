@@ -1425,3 +1425,152 @@ body {
   .sidebar-item, .sidebar-item::before, .sidebar { transition: none; }
   .sidebar-item:hover { transform: none; }
 }
+
+.hapus-btn {
+  padding: 7px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.hapus-btn:hover:not(:disabled) {
+  border-color: var(--neg);
+  color: var(--neg);
+  background: rgba(242, 104, 96, 0.08);
+}
+.hapus-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* menu titik tiga pada baris daftar */
+.baris-menu-bungkus { position: relative; flex: 0 0 auto; }
+.kebab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.kebab:hover:not(:disabled) { background: var(--bg-2); color: var(--text); border-color: var(--border-2); }
+.kebab:disabled { opacity: 0.5; cursor: default; }
+
+.baris-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 148px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  padding: 5px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: masuk-menu 0.14s ease;
+}
+@keyframes masuk-menu {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.baris-menu button {
+  text-align: left;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.baris-menu button:hover { background: var(--bg-2); }
+.baris-menu .menu-hapus { color: var(--neg); }
+.baris-menu .menu-hapus:hover { background: rgba(242, 104, 96, 0.1); }
+
+/* bilah aksi infografis: satu baris rapi, tinggi tombol seragam */
+.info-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: none;
+  background: var(--panel);
+}
+.info-toolbar-kiri { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.info-toolbar-kanan { display: flex; align-items: center; gap: 8px; }
+.info-toolbar-berkas {
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+.info-chip {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  background: rgba(79, 140, 255, 0.14);
+  border-radius: 20px;
+  padding: 4px 11px;
+}
+
+/* Tombol bilah: satu ukuran, beda peran lewat warna, bukan lewat bentuk. */
+.tbl-btn {
+  height: 36px;
+  padding: 0 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.tbl-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-2); }
+.tbl-btn:disabled { opacity: 0.45; cursor: default; }
+.tbl-btn.utama {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.tbl-btn.utama:hover:not(:disabled) { filter: brightness(1.08); color: #fff; }
+.tbl-btn.bahaya { color: var(--muted); }
+.tbl-btn.bahaya:hover:not(:disabled) {
+  border-color: var(--neg);
+  color: var(--neg);
+  background: rgba(242, 104, 96, 0.08);
+}
+.tbl-pisah { width: 1px; height: 24px; background: var(--border-2); margin: 0 2px; }
+
+/* Pratinjau menyatu dengan bilah di atasnya. */
+.info-toolbar + .info-pratinjau {
+  margin-top: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+@media (max-width: 640px) {
+  .info-toolbar { flex-direction: column; align-items: stretch; }
+  .info-toolbar-kanan { justify-content: flex-end; }
+  .info-toolbar-berkas { max-width: none; }
+}

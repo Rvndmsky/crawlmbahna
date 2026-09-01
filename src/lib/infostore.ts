@@ -103,6 +103,35 @@ export async function ambilSvg(id: string): Promise<string> {
   }
 }
 
+// Hapus satu infografis beserta gambarnya.
+export async function hapusInfografis(id: string): Promise<boolean> {
+  if (!id) return false;
+
+  if (pakaiRedis) {
+    const sisa = (await daftarInfografis()).filter((x) => x.id !== id);
+    await redis(["DEL", kunciSvg(id)]);
+    await redis(["DEL", KUNCI_DAFTAR]);
+    // Daftar ditulis ulang karena entri disimpan sebagai JSON di dalam list;
+    // LREM butuh nilai yang sama persis, sedangkan hasil serialisasi bisa beda.
+    for (const it of [...sisa].reverse()) {
+      await redis(["LPUSH", KUNCI_DAFTAR, JSON.stringify(it)]);
+    }
+    return true;
+  }
+
+  const list = bacaBerkas();
+  const sisa = list.filter((x) => x.id !== id);
+  if (sisa.length === list.length) return false;
+  tulisBerkas(sisa);
+  try {
+    const f = path.join(SVG_DIR, `${id}.svg`);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+  } catch {
+    /* berkas gambar gagal dihapus: daftar sudah bersih, biarkan */
+  }
+  return true;
+}
+
 export async function daftarInfografis(): Promise<InfoItem[]> {
   if (pakaiRedis) {
     const raws: any[] = (await redis(["LRANGE", KUNCI_DAFTAR, 0, MAKS_ITEM - 1])) || [];

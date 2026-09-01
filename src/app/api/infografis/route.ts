@@ -4,6 +4,7 @@ import { analisaDokumen, rakitSvg } from "@/lib/infografis";
 import {
   simpanInfografis,
   daftarInfografis,
+  hapusInfografis,
   idBaru,
   pakaiRedis,
 } from "@/lib/infostore";
@@ -121,4 +122,17 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// DELETE: buang satu infografis dari daftar (beserta gambarnya).
+export async function DELETE(req: NextRequest) {
+  if (!validateToken(req.cookies.get(COOKIE)?.value)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const id = req.nextUrl.searchParams.get("id") || "";
+  if (!/^[a-z0-9]{6,40}$/i.test(id)) {
+    return NextResponse.json({ error: "id tidak sah" }, { status: 400 });
+  }
+  const ok = await hapusInfografis(id);
+  return NextResponse.json({ ok, items: await daftarInfografis() });
 }
