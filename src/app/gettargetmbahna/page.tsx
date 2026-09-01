@@ -116,7 +116,8 @@ function TargetView() {
   const [box, setBox] = useState(nameParam);
   const [bulk, setBulk] = useState("");
   const [showBulk, setShowBulk] = useState(false);
-  const [days, setDays] = useState(14);
+  // Rentang pantau dipatok 7 hari terakhir dihitung dari saat penyisiran.
+  const days = 7;
   const [data, setData] = useState<TargetResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -281,31 +282,15 @@ function TargetView() {
     <Shell
       judul="Subject Target"
       aksi={
-        <>
-          <select
-            className="days-sel"
-            value={days}
-            onChange={(e) => {
-              const d = Number(e.target.value);
-              setDays(d);
-              if (data?.name) crawl(data.name, true, d);
-            }}
-            title="rentang waktu"
-          >
-            <option value={7}>7 hari</option>
-            <option value={14}>14 hari</option>
-            <option value={30}>30 hari</option>
-          </select>
-          <button
-            type="button"
-            className="refresh"
-            title="sisir ulang (abaikan cache)"
-            onClick={() => data?.name && crawl(data.name, true)}
-            disabled={loading}
-          >
-            ↻
-          </button>
-        </>
+        <button
+          type="button"
+          className="refresh"
+          title="sisir ulang (abaikan cache)"
+          onClick={() => data?.name && crawl(data.name, true)}
+          disabled={loading}
+        >
+          ↻
+        </button>
       }
     >
 
@@ -314,7 +299,8 @@ function TargetView() {
           🎯 Pantau Individu — Threads · Instagram · X
         </div>
         <div className="hint" style={{ marginTop: -6, marginBottom: 14 }}>
-          Fokus perorangan (tokoh publik / influencer). Sumber diutamakan akun
+          Fokus perorangan (tokoh publik / influencer), <b>7 hari terakhir</b>.
+          Sumber diutamakan akun
           <b> resmi milik orangnya</b> + akun terverifikasi/media — akun palsu/parodi
           dipisah ke daftar impersonasi.
         </div>

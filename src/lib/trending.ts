@@ -54,13 +54,21 @@ export type TrendingResult = {
 const CACHE_MS = 60 * 60 * 1000; // segar 1 jam; berita baru muncul tiap jam / ganti hari
 const CACHE_KEY = "intel";
 
+// Batas bawah rentang dashboard: 14 hari ke belakang dari hari ini (WIB).
+function sinceDate(): string {
+  const ms = Date.now() + 7 * 60 * 60 * 1000 - 14 * 24 * 60 * 60 * 1000;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
 function today(): string {
   // Tanggal WIB (UTC+7) supaya "hari ini" sesuai waktu Indonesia.
   return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 const SYSTEM = `Kamu analis intelijen untuk badan intelijen negara Indonesia.
-FOKUS KHUSUS: isu POLITIK, PEMERINTAHAN, HUKUM, dan KEAMANAN Indonesia HARI INI.
+FOKUS KHUSUS: isu POLITIK, PEMERINTAHAN, HUKUM, dan KEAMANAN Indonesia dalam
+RENTANG 14 HARI TERAKHIR (dihitung mundur dari tanggal yang diberikan).
+Berita lebih tua dari 14 hari JANGAN dipakai.
 Sumber: web berita & media sosial publik.
 
 PRIORITAS TERTINGGI: deteksi indikasi ANCAMAN TERHADAP KEDAULATAN & KEUTUHAN NKRI
@@ -79,9 +87,10 @@ agar cepat. Jangan mencari satu per satu berlebihan.
 
 Kembalikan DUA bagian:
 
-1) "topics" — isu politik/pemerintahan nasional PALING HANGAT hari ini (TEPAT 10 topik):
+1) "topics" — isu politik/pemerintahan nasional PALING HANGAT dalam 14 hari terakhir
+   (TEPAT 10 topik), yang terbaru dan terpanas didahulukan:
    - Kelompokkan jadi TOPIK (gabung berita seisu). Bukan artikel tunggal.
-   - "heat" 0-100 (seberapa ramai dibicarakan hari ini).
+   - "heat" 0-100 (seberapa ramai dibicarakan; yang masih hangat hari ini bernilai lebih tinggi).
    - "category" pilih SATU yang PALING pas: politik, pemerintahan, hukum, korupsi, keamanan,
      pertahanan, pemilu, ekonomi, sosial, agama, ham, lingkungan, internasional, siber.
      (korupsi=kasus rasuah/KPK; pertahanan=TNI/alutsista; ham=hak asasi; lingkungan=SDA/agraria/tambang;
@@ -107,11 +116,11 @@ Kembalikan DUA bagian:
 2) "cities" — berita politik/pemerintahan menonjol PER KOTA/KABUPATEN (TEPAT 8 kota/kabupaten,
    tidak kurang tidak lebih; mis. Jakarta Pusat, Kota Bandung, Kabupaten Bogor, Surabaya,
    Kota Semarang, Makassar, Medan, Jayapura, Banda Aceh, dll — spesifik kota/kabupaten, BUKAN provinsi):
-   - RENTANG WAKTU: HANYA berita yang terbit HARI INI (00:00-23:59 waktu Indonesia). Bukan kemarin.
-   - Tiap kota/kabupaten: 1 headline dengan DAMPAK PALING BESAR hari ini — utamakan kejadian besar:
+   - RENTANG WAKTU: berita yang terbit dalam 14 HARI TERAKHIR; utamakan yang paling baru.
+   - Tiap kota/kabupaten: 1 headline dengan DAMPAK PALING BESAR pada rentang itu — utamakan kejadian besar:
      ledakan/bom, kebakaran, bencana (banjir/longsor/gempa), kecelakaan maut, kerusuhan/bentrok,
      insiden keamanan, ATAU isu politik/pemerintahan lokal penting. Ambil yang paling update/terbaru
-     bila ada perkembangan di kota itu hari ini.
+     bila ada perkembangan terbaru di kota itu.
    - "kota" (nama kota/kabupaten), "provinsi" (induknya), "heat" 0-100, "sentiment",
      ringkasan singkat, URL + sumber + platform.
    - "lat" & "lon": KOORDINAT kota/kabupaten tsb (desimal, mis. Jakarta lat -6.2 lon 106.8).
@@ -210,8 +219,9 @@ export async function getTrending(
 
   const text = await runWeb(
     SYSTEM,
-    `Tanggal HARI INI: ${today()}. Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
-      `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon; berita kota HANYA hari ini ${today()}, ` +
+    `Tanggal HARI INI: ${today()}. Rentang yang boleh dipakai: ${sinceDate()} s/d ${today()} ` +
+      `(14 hari terakhir). Berikan peta intelijen isu politik & pemerintahan Indonesia: ` +
+      `10 topik nasional dan TEPAT 8 kota/kabupaten (dengan lat/lon; berita kota dalam rentang itu, ` +
       `pilih yang dampaknya paling besar: ledakan/kebakaran/bencana/kerusuhan/insiden atau isu pemerintahan lokal). ` +
       `Sertakan sumber asli + tanggal terbit. ` +
       `Breaking (breaking:true) HANYA untuk berita yang TERBIT tanggal ${today()} (00:00-23:59); ` +

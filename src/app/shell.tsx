@@ -93,7 +93,11 @@ export default function Shell({
           <ThemeToggle />
         </header>
 
-        <main className="shell-utama">{children}</main>
+        {/* key pathname: React merakit ulang isi tiap pindah rute, sehingga
+            animasi masuk terputar lagi. */}
+        <main className="shell-utama" key={pathname}>
+          {children}
+        </main>
       </div>
     </div>
   );
