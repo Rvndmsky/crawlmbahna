@@ -1259,11 +1259,41 @@ pre.cmd {
 .sidebar-item { letter-spacing: 0.1px; }
 
 .sidebar-kaki {
-  padding: 16px 20px;
-  font-size: 11px;
+  /* Blok akun sengaja dijauhkan dari menu: dipisah garis, ditempel ke dasar. */
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sidebar-akun {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.sidebar-akun-label {
+  font-size: 10.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.sidebar-akun-nama {
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.sidebar-kaki .logout-btn { width: 100%; padding: 10px 12px; }
+.sidebar-tagline {
+  font-size: 10.5px;
   line-height: 1.5;
   color: var(--muted);
-  border-top: 1px solid var(--border);
+  font-weight: 500;
+  padding-top: 2px;
 }
 
 .sidebar-tirai {

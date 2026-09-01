@@ -64,7 +64,16 @@ export default function Shell({
             </button>
           ))}
         </nav>
-        <div className="sidebar-kaki">Website Crawl Simple Membantu Pemerintah RI</div>
+        <div className="sidebar-kaki">
+          <div className="sidebar-akun">
+            <div className="sidebar-akun-label">Login as</div>
+            <div className="sidebar-akun-nama">{nama || "…"}</div>
+          </div>
+          <button className="logout-btn" onClick={logout}>
+            Logout
+          </button>
+          <div className="sidebar-tagline">Website Crawl Simple Membantu Pemerintah RI</div>
+        </div>
       </aside>
 
       {buka && <div className="sidebar-tirai" onClick={() => setBuka(false)} />}
@@ -82,12 +91,6 @@ export default function Shell({
           <div style={{ flex: 1 }} />
           {aksi}
           <ThemeToggle />
-          <span className="login-sebagai">
-            Login as <b>{nama || "…"}</b>
-          </span>
-          <button className="logout-btn" onClick={logout}>
-            Logout
-          </button>
         </header>
 
         <main className="shell-utama">{children}</main>
