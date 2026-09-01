@@ -282,21 +282,6 @@ function TargetView() {
       judul="Subject Target"
       aksi={
         <>
-          <form
-            className="mini-search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const n = box.trim();
-              if (n) openTarget(n);
-            }}
-          >
-            <input
-              value={box}
-              onChange={(e) => setBox(e.target.value)}
-              placeholder="nama orang / target…"
-            />
-            <button type="submit">Sisir</button>
-          </form>
           <select
             className="days-sel"
             value={days}
