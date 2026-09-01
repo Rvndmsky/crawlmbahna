@@ -231,24 +231,18 @@ function Detail() {
 
             {d.lokasi.length > 0 && (
               <div className="panel">
-                <div className="panel-title">📍 Lokasi Terkait (TKP di peta)</div>
-                <div className="loc-list">
-                  {d.lokasi.map((l, i) => (
-                    <a
-                      key={i}
-                      className={`loc-chip${i === 0 ? " loc-primary" : ""}`}
-                      href={gmaps(l.nama)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {i === 0 ? "🎯 " : "📍 "}
-                      {l.nama} ↗
-                    </a>
-                  ))}
-                </div>
+                <div className="panel-title">📍 Tempat Kejadian Perkara</div>
+                <a
+                  className="loc-chip loc-primary"
+                  href={gmaps(d.lokasi[0].nama)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  🎯 {d.lokasi[0].nama} ↗
+                </a>
                 <iframe
                   className="loc-map"
-                  title="peta lokasi"
+                  title="peta tempat kejadian"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   src={gmapsEmbed(d.lokasi[0].nama)}

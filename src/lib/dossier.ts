@@ -77,11 +77,14 @@ Isi berkas:
 - rekomendasi_pantau: array hal yang perlu dipantau / tindak lanjut tim intel.
 - saran_tindakan: array tindakan yang HARUS dilakukan (mis. koordinasi dengan kementerian/lembaga terkait,
   pemantauan lanjutan, langkah mitigasi).
-- lokasi: daftar TEMPAT yang disebut berita. Item PERTAMA WAJIB = TEMPAT KEJADIAN PERKARA utama sesuai
-  JUDUL berita (mis. berita kebakaran -> lokasi yang terbakar; berita bentrok -> lokasi bentrok). Sisanya
-  lokasi pendukung. Tiap item {nama, lat, lon}. "nama" harus LENGKAP & bisa dicari di peta (nama tempat +
-  kelurahan/kota, mis. "PT Raw Botanical Nusantara, Ngaliyan, Kota Semarang"). Koordinat seakurat mungkin
-  (boleh 0 bila ragu — peta pakai nama). Kosongkan array bila tak ada lokasi spesifik.
+- lokasi: TEPAT SATU tempat, yaitu TEMPAT KEJADIAN PERKARA (TKP) sesuai JUDUL berita — bukan daftar
+  semua tempat yang disebut. Contoh: berita kebakaran -> bangunan/pabrik yang terbakar; berita bentrok ->
+  titik bentrokan; berita OTT -> lokasi penangkapan; berita sidang -> gedung pengadilannya. Bila berita
+  menyebut banyak tempat, pilih SATU yang paling menjadi pusat peristiwa.
+  Bentuk: [{nama, lat, lon}] berisi satu item. "nama" harus SPESIFIK & bisa dicari di peta (nama tempat +
+  kelurahan/kota, mis. "PT Raw Botanical Nusantara, Ngaliyan, Kota Semarang") — jangan hanya nama provinsi
+  atau negara. Koordinat seakurat mungkin (boleh 0 bila ragu — peta memakai nama).
+  Kosongkan array bila peristiwanya memang tidak punya tempat kejadian spesifik.
 - sumber_terkait: 3-6 berita terkait (OSINT) — {title, url asli, source}. Sertakan beragam media pendukung.
 
 Keluarkan HANYA JSON valid tanpa penjelasan lain, bentuk:
@@ -149,7 +152,10 @@ function parse(text: string): Dossier {
       .filter(
         (l: Lokasi) =>
           l.nama && Number.isFinite(l.lat) && Number.isFinite(l.lon)
-      ),
+      )
+      // Hanya TKP utama yang dipakai; sisanya dibuang supaya peta menunjuk
+      // satu titik, bukan sebaran tempat yang kebetulan disebut berita.
+      .slice(0, 1),
     sumberTerkait: arr(p.sumber_terkait)
       .filter((s: any) => s?.url)
       .map((s: any) => ({
