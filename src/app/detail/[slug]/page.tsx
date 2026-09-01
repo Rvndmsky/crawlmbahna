@@ -47,11 +47,24 @@ type DossierResult = {
 };
 
 const URG = ["Rendah", "Perlu dicatat", "Serius", "Kritis"];
-// Pakai NAMA tempat (Google yang geocode) — lebih akurat daripada koordinat model.
+// Peta memakai KOORDINAT bila ada. Pencarian teks sering meleset: nama seperti
+// "Gedung Mahkamah Konstitusi, Jakarta Pusat" bisa dijawab Google dengan tempat
+// lain yang kebetulan cocok sebagian katanya. Nama hanya dipakai bila koordinat
+// tidak tersedia.
+const adaKoordinat = (lat: number, lon: number) =>
+  Number.isFinite(lat) &&
+  Number.isFinite(lon) &&
+  (Math.abs(lat) > 0.001 || Math.abs(lon) > 0.001) &&
+  Math.abs(lat) <= 90 &&
+  Math.abs(lon) <= 180;
+
+const kueriPeta = (l: { nama: string; lat: number; lon: number }) =>
+  adaKoordinat(l.lat, l.lon) ? `${l.lat},${l.lon}` : l.nama;
+
 const gmaps = (q: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
-const gmapsEmbed = (q: string) =>
-  `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
+const gmapsEmbed = (q: string, zoom = 16) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=${zoom}&output=embed`;
 const KRED: Record<string, { label: string; cls: string }> = {
   kredibel: { label: "Kredibel", cls: "positive" },
   perlu_verifikasi: { label: "Perlu Verifikasi", cls: "neutral" },
@@ -235,19 +248,32 @@ function Detail() {
                 <div className="panel-title">Tempat Kejadian Perkara</div>
                 <a
                   className="loc-chip loc-primary"
-                  href={gmaps(d.lokasi[0].nama)}
+                  href={gmaps(kueriPeta(d.lokasi[0]))}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {d.lokasi[0].nama} 
+                  {d.lokasi[0].nama}
                 </a>
                 <iframe
                   className="loc-map"
                   title="peta tempat kejadian"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  src={gmapsEmbed(d.lokasi[0].nama)}
+                  src={gmapsEmbed(kueriPeta(d.lokasi[0]))}
                 />
+                <div className="hint">
+                  {adaKoordinat(d.lokasi[0].lat, d.lokasi[0].lon) ? (
+                    <>
+                      Peta menunjuk koordinat {d.lokasi[0].lat.toFixed(5)},{" "}
+                      {d.lokasi[0].lon.toFixed(5)}.
+                    </>
+                  ) : (
+                    <>
+                      Koordinat tidak tersedia, peta memakai pencarian nama —
+                      titiknya bisa meleset. Periksa dengan membuka tautan di atas.
+                    </>
+                  )}
+                </div>
               </div>
             )}
 

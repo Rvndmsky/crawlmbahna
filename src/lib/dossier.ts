@@ -89,7 +89,12 @@ Isi berkas:
   menyebut banyak tempat, pilih SATU yang paling menjadi pusat peristiwa.
   Bentuk: [{nama, lat, lon}] berisi satu item. "nama" harus SPESIFIK & bisa dicari di peta (nama tempat +
   kelurahan/kota, mis. "PT Raw Botanical Nusantara, Ngaliyan, Kota Semarang") — jangan hanya nama provinsi
-  atau negara. Koordinat seakurat mungkin (boleh 0 bila ragu — peta memakai nama).
+  atau negara.
+  KOORDINAT WAJIB dan menentukan: peta menunjuk lat/lon, BUKAN nama. Isi lat/lon tempat itu seakurat
+  mungkin dalam derajat desimal (mis. Gedung Mahkamah Konstitusi Jakarta Pusat = lat -6.1754, lon 106.8317).
+  Bila tempat persisnya tidak diketahui, pakai koordinat kelurahan/kecamatan terdekat yang disebut berita.
+  Angka 0 TIDAK diterima — kalau benar-benar tidak tahu, kosongkan array lokasi sekalian daripada
+  menunjuk titik yang salah.
   Kosongkan array bila peristiwanya memang tidak punya tempat kejadian spesifik.
 - tanggal_berita: tanggal terbit berita UTAMA dalam ISO 8601 (mis. "2026-08-25"). Ambil dari halaman
   beritanya. Wajib diisi bila terbaca.
@@ -164,10 +169,21 @@ function parse(text: string): Dossier {
         lat: Number(l?.lat),
         lon: Number(l?.lon),
       }))
-      .filter(
-        (l: Lokasi) =>
-          l.nama && Number.isFinite(l.lat) && Number.isFinite(l.lon)
-      )
+      .filter((l: Lokasi) => {
+        if (!l.nama) return false;
+        // Koordinat 0,0 (Samudra Atlantik) berarti model tidak tahu. Nolkan
+        // saja supaya UI tahu harus jatuh ke pencarian nama, bukan menunjuk
+        // titik yang salah.
+        if (!Number.isFinite(l.lat) || !Number.isFinite(l.lon)) {
+          l.lat = 0;
+          l.lon = 0;
+        }
+        if (Math.abs(l.lat) > 90 || Math.abs(l.lon) > 180) {
+          l.lat = 0;
+          l.lon = 0;
+        }
+        return true;
+      })
       // Hanya TKP utama yang dipakai; sisanya dibuang supaya peta menunjuk
       // satu titik, bukan sebaran tempat yang kebetulan disebut berita.
       .slice(0, 1),
