@@ -41,14 +41,14 @@ export default function IndonesiaMap({
     const map = mapRef.current;
     if (!map) return;
     if (tileRef.current) map.removeLayer(tileRef.current);
-    const url = isDark()
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    // Esri Gray Canvas: tanpa API key. CARTO basemaps kini wajib API key
+    // (tile-nya berubah jadi gambar "API KEY REQUIRED").
+    const varian = isDark() ? "Dark" : "Light";
+    const url = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${varian}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
     tileRef.current = L.tileLayer(url, {
-      subdomains: "abcd",
       maxZoom: 12,
       minZoom: 3,
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
+      attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap",
     }).addTo(map);
   }
 
