@@ -1,7 +1,9 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Popup chat ke Duryudana Agent (Hermes Agent di VPS), pojok kanan bawah.
 // Dipasang di root layout supaya jawaban yang sedang mengalir tidak putus
@@ -61,23 +63,24 @@ function waktuRelatif(ms: number): string {
   return new Date(ms).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 }
 
-// Teks -> React: baris baru, **tebal**, dan URL jadi tautan.
-function Teks({ isi }: { isi: string }) {
-  const bagian = isi.split(/(\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g);
+// Jawaban agent = Markdown (GFM: tabel, list, heading). HTML mentah di dalam
+// jawaban TIDAK dirender (default react-markdown), jadi aman dari XSS.
+// Tabel dibungkus agar bisa digeser horizontal di panel yang sempit.
+const komponenMd: Components = {
+  a: ({ node, ...p }) => <a {...p} target="_blank" rel="noopener noreferrer" />,
+  table: ({ node, ...p }) => (
+    <div className="md-tabel">
+      <table {...p} />
+    </div>
+  ),
+};
+function Markdown({ isi }: { isi: string }) {
   return (
-    <>
-      {bagian.map((b, i) => {
-        if (b.startsWith("**") && b.endsWith("**") && b.length > 4)
-          return <strong key={i}>{b.slice(2, -2)}</strong>;
-        if (/^https?:\/\//.test(b))
-          return (
-            <a key={i} href={b} target="_blank" rel="noopener noreferrer">
-              {b}
-            </a>
-          );
-        return <Fragment key={i}>{b}</Fragment>;
-      })}
-    </>
+    <div className="md">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={komponenMd}>
+        {isi}
+      </ReactMarkdown>
+    </div>
   );
 }
 
@@ -418,7 +421,7 @@ export default function HermesChat() {
               {pesan.map((p, i) =>
                 p.role === "assistant" && !p.content ? null : (
                   <div key={i} className={`hermes-gelembung ${p.role === "user" ? "saya" : "dia"}`}>
-                    <Teks isi={p.content} />
+                    {p.role === "user" ? p.content : <Markdown isi={p.content} />}
                   </div>
                 )
               )}
