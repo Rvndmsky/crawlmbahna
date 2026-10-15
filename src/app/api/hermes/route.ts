@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   const key = process.env.HERMES_KEY || "";
   if (!base || !key) {
     return NextResponse.json(
-      { error: "Hermes belum dihubungkan (HERMES_URL / HERMES_KEY kosong)." },
+      { error: "Duryudana belum dihubungkan (HERMES_URL / HERMES_KEY kosong)." },
       { status: 503 }
     );
   }
@@ -64,14 +64,14 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     return NextResponse.json(
-      { error: `Hermes tidak bisa dihubungi: ${err?.message || err}` },
+      { error: `Duryudana tidak bisa dihubungi: ${err?.message || err}` },
       { status: 502 }
     );
   }
   if (!up.ok || !up.body) {
     const t = await up.text().catch(() => "");
     return NextResponse.json(
-      { error: `Hermes ${up.status}: ${t.slice(0, 300)}` },
+      { error: `Duryudana ${up.status}: ${t.slice(0, 300)}` },
       { status: 502 }
     );
   }

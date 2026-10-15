@@ -27,6 +27,13 @@ function simpan(p: Pesan[]) {
   }
 }
 
+function layarSempit() {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+}
+function layarSentuh() {
+  return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+}
+
 // Teks -> React: baris baru, **tebal**, dan URL jadi tautan.
 function Teks({ isi }: { isi: string }) {
   const bagian = isi.split(/(\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g);
@@ -63,8 +70,25 @@ export default function HermesChat() {
     bawah.current?.scrollIntoView({ block: "end" });
   }, [pesan, alat, buka]);
   useEffect(() => {
-    if (buka) input.current?.focus();
+    if (!buka) return;
+    // Di HP panel tampil layar penuh: kunci scroll halaman di belakangnya, dan
+    // jangan langsung munculkan keyboard begitu chat dibuka.
+    if (layarSempit()) {
+      const lama = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = lama;
+      };
+    }
+    input.current?.focus();
   }, [buka]);
+  useEffect(() => {
+    // Kolom ketik tumbuh mengikuti isi (dibatasi max-height di CSS).
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draf, buka]);
 
   async function kirim() {
     const q = draf.trim();
@@ -124,7 +148,7 @@ export default function HermesChat() {
             );
             continue;
           }
-          if (j.error) throw new Error(j.error.message || "Hermes error");
+          if (j.error) throw new Error(j.error.message || "Duryudana error");
           const d = j?.choices?.[0]?.delta?.content;
           if (d) {
             jawaban += d;
@@ -133,7 +157,7 @@ export default function HermesChat() {
         }
       }
     } catch (err: any) {
-      if (err?.name !== "AbortError") setGalat(err?.message || "gagal menghubungi Hermes");
+      if (err?.name !== "AbortError") setGalat(err?.message || "gagal menghubungi Duryudana");
     } finally {
       const akhir: Pesan[] = jawaban
         ? [...riwayat, { role: "assistant", content: jawaban }]
@@ -156,10 +180,10 @@ export default function HermesChat() {
   return (
     <>
       {buka && (
-        <section className="hermes-panel" role="dialog" aria-label="Chat Hermes Agent">
+        <section className="hermes-panel" role="dialog" aria-label="Chat Duryudana Agent">
           <header className="hermes-kepala">
             <div>
-              <div className="hermes-nama">Hermes Agent</div>
+              <div className="hermes-nama">Duryudana Agent</div>
               <div className="hermes-sub">{jalan ? "sedang bekerja…" : "asisten riset · bisa cari web"}</div>
             </div>
             <button className="hermes-ikon" title="Percakapan baru" onClick={baru}>
@@ -173,7 +197,7 @@ export default function HermesChat() {
           <div className="hermes-isi">
             {pesan.length === 0 && (
               <div className="hermes-kosong">
-                Tanya apa saja — Hermes bisa mencari & membaca web sebelum menjawab.
+                Tanya apa saja — Duryudana bisa mencari & membaca web sebelum menjawab.
               </div>
             )}
             {pesan.map((p, i) =>
@@ -211,9 +235,11 @@ export default function HermesChat() {
               rows={1}
               value={draf}
               placeholder="Tulis pesan…"
+              enterKeyHint="send"
               onChange={(e) => setDraf(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                // Keyboard HP: Enter = baris baru, kirim lewat tombol.
+                if (e.key === "Enter" && !e.shiftKey && !layarSentuh()) {
                   e.preventDefault();
                   kirim();
                 }
@@ -234,7 +260,7 @@ export default function HermesChat() {
 
       <button
         className={`hermes-bubble ${buka ? "buka" : ""}`}
-        aria-label={buka ? "Tutup chat Hermes" : "Buka chat Hermes"}
+        aria-label={buka ? "Tutup chat Duryudana" : "Buka chat Duryudana"}
         onClick={() => setBuka((v) => !v)}
       >
         {buka ? (

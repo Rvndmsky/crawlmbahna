@@ -1802,7 +1802,30 @@ body {
   cursor: pointer;
 }
 .hermes-kirim:disabled { opacity: 0.45; cursor: default; }
+/* HP: chat jadi layar penuh ala aplikasi chat; dvh mengikuti address bar &
+   keyboard, safe-area menjaga notch / home bar iPhone. */
 @media (max-width: 640px) {
-  .hermes-bubble { right: 16px; bottom: 16px; }
-  .hermes-panel { right: 8px; left: 8px; bottom: 82px; width: auto; height: calc(100vh - 100px); }
+  .hermes-bubble {
+    right: calc(16px + env(safe-area-inset-right));
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .hermes-bubble.buka { display: none; }
+  .hermes-panel {
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    animation-name: hermes-masuk-hp;
+  }
+  @keyframes hermes-masuk-hp { from { opacity: 0; transform: translateY(24px); } }
+  .hermes-kepala { padding: calc(10px + env(safe-area-inset-top)) 8px 10px 16px; }
+  .hermes-ikon { padding: 11px; }
+  .hermes-isi { padding: 14px 12px; overscroll-behavior: contain; }
+  .hermes-gelembung { max-width: 92%; font-size: 15px; }
+  .hermes-form { padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); }
+  .hermes-form textarea { font-size: 16px; } /* < 16px memicu zoom otomatis di iOS */
+  .hermes-kirim { width: 44px; }
 }
