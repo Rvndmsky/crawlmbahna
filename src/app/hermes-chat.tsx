@@ -109,6 +109,9 @@ export default function HermesChat() {
   const [jalan, setJalan] = useState(false);
   const [alat, setAlat] = useState<Alat[]>([]);
   const [galat, setGalat] = useState("");
+  const [calonHapus, setCalonHapus] = useState<Thread | null>(null);
+  const [menghapus, setMenghapus] = useState(false);
+  const tombolBatal = useRef<HTMLButtonElement>(null);
   const henti = useRef<AbortController | null>(null);
   const bawah = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
@@ -297,15 +300,36 @@ export default function HermesChat() {
     if (id !== aktif) await bukaThread(id);
   }
 
+  // Dialog konfirmasi sendiri (bukan window.confirm): fokus ke "Batal",
+  // Esc menutup.
+  useEffect(() => {
+    if (!calonHapus) return;
+    tombolBatal.current?.focus();
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !menghapus) setCalonHapus(null);
+    };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [calonHapus, menghapus]);
+
   async function hapus(t: Thread) {
-    if (!window.confirm(`Hapus percakapan "${t.title}"?`)) return;
+    setMenghapus(true);
     try {
       const r = await fetch(`/api/hermes/threads?id=${encodeURIComponent(t.id)}`, { method: "DELETE" });
       if (!r.ok) throw new Error();
       setThreads((x) => x.filter((y) => y.id !== t.id));
-      if (t.id === aktif) baru();
+      if (t.id === aktif) {
+        // Kosongkan chat aktif tapi tetap di daftar riwayat.
+        henti.current?.abort();
+        setAktif(null);
+        ingatAktif(null);
+        setPesan([]);
+      }
     } catch {
       setGalat("Gagal menghapus percakapan.");
+    } finally {
+      setMenghapus(false);
+      setCalonHapus(null);
     }
   }
 
@@ -365,7 +389,7 @@ export default function HermesChat() {
                       <span className="hermes-thread-waktu">{waktuRelatif(t.updatedAt)}</span>
                     </button>
                     <button className="hermes-thread-hapus" title="Hapus" aria-label={`Hapus ${t.title}`}
-                      onClick={() => hapus(t)}>
+                      onClick={() => setCalonHapus(t)}>
                       <Svg d={Ikon.hapus} ukuran={15} />
                     </button>
                   </div>
@@ -453,6 +477,38 @@ export default function HermesChat() {
               </div>
               <div className="hermes-petunjuk">Enter kirim · Shift+Enter baris baru</div>
             </form>
+          )}
+
+          {calonHapus && (
+            <div className="hermes-tirai" onClick={() => !menghapus && setCalonHapus(null)}>
+              <div
+                className="hermes-dialog"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="hermes-dialog-judul"
+                aria-describedby="hermes-dialog-isi"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="hermes-dialog-ikon" aria-hidden>
+                  <Svg d={Ikon.hapus} ukuran={20} />
+                </div>
+                <div id="hermes-dialog-judul" className="hermes-dialog-judul">Hapus percakapan?</div>
+                <div id="hermes-dialog-isi" className="hermes-dialog-isi">
+                  <span className="hermes-dialog-thread">{calonHapus.title}</span>
+                  akan dihapus permanen beserta seluruh pesannya.
+                </div>
+                <div className="hermes-dialog-aksi">
+                  <button ref={tombolBatal} type="button" className="hermes-btn" disabled={menghapus}
+                    onClick={() => setCalonHapus(null)}>
+                    Batal
+                  </button>
+                  <button type="button" className="hermes-btn bahaya" disabled={menghapus}
+                    onClick={() => hapus(calonHapus)}>
+                    {menghapus ? "Menghapus…" : "Hapus"}
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </section>
       )}

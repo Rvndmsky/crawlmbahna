@@ -1949,6 +1949,78 @@ body {
 .hermes-kirim.henti { background: var(--neg); box-shadow: 0 4px 12px rgba(242, 104, 96, 0.35); }
 .hermes-petunjuk { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; opacity: 0.8; }
 
+/* dialog konfirmasi hapus (di dalam panel) */
+.hermes-tirai {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 8, 14, 0.55);
+  backdrop-filter: blur(3px);
+  animation: hermes-pudar 0.15s ease;
+}
+@keyframes hermes-pudar { from { opacity: 0; } }
+.hermes-dialog {
+  width: 100%;
+  max-width: 320px;
+  background: var(--panel);
+  border: 1px solid var(--border-2);
+  border-radius: 16px;
+  padding: 20px 18px 16px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: hermes-muncul 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes hermes-muncul { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
+.hermes-dialog-ikon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neg);
+  background: rgba(242, 104, 96, 0.12);
+  border: 1px solid rgba(242, 104, 96, 0.3);
+}
+.hermes-dialog-judul { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+.hermes-dialog-isi { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.hermes-dialog-thread {
+  display: block;
+  margin: 8px 0 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.hermes-dialog-aksi { display: flex; gap: 10px; margin-top: 18px; }
+.hermes-btn {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.hermes-btn:hover:not(:disabled) { border-color: var(--muted); }
+.hermes-btn:active:not(:disabled) { transform: scale(0.98); }
+.hermes-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hermes-btn.bahaya { background: var(--neg); border-color: var(--neg); color: #fff; }
+.hermes-btn.bahaya:hover:not(:disabled) { background: #e2554d; border-color: #e2554d; }
+.hermes-btn:disabled { opacity: 0.6; cursor: default; }
+
 /* HP: chat jadi layar penuh ala aplikasi chat; dvh mengikuti address bar &
    keyboard, safe-area menjaga notch / home bar iPhone. */
 @media (max-width: 640px) {
