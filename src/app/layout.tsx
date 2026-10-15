@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import HermesChat from "./hermes-chat";
 
 export const metadata: Metadata = {
   title: "MBAHNA - Website Untuk Keamanan NKRI",
@@ -20,7 +21,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Di layout (bukan Shell) agar chat tidak terputus saat pindah halaman. */}
+        <HermesChat />
+      </body>
     </html>
   );
 }

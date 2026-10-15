@@ -1663,145 +1663,292 @@ body {
   padding: 1px 7px;
 }
 
-/* ============ CHAT HERMES (popup kanan bawah) ============ */
+/* ============ CHAT DURYUDANA (popup kanan bawah) ============ */
+:root {
+  --chat-grad: linear-gradient(135deg, #4f8cff 0%, #7a5cff 100%);
+  --chat-glow: rgba(99, 120, 255, 0.35);
+}
 .hermes-bubble {
   position: fixed;
   right: 22px;
   bottom: 22px;
   z-index: 1200;
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   border: 0;
-  background: var(--accent);
+  background: var(--chat-grad);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 10px 28px var(--chat-glow), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.hermes-bubble:hover { transform: translateY(-2px); background: var(--accent-2); }
+.hermes-bubble:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 14px 34px var(--chat-glow), 0 2px 6px rgba(0, 0, 0, 0.3); }
+.hermes-bubble:active { transform: scale(0.97); }
 .hermes-titik {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 11px;
-  height: 11px;
+  top: 5px;
+  right: 5px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--warn);
   border: 2px solid var(--bg);
   animation: pulse 1.2s infinite;
 }
+
 .hermes-panel {
   position: fixed;
   right: 22px;
-  bottom: 90px;
+  bottom: 92px;
   z-index: 1200;
-  width: 380px;
-  height: min(560px, calc(100vh - 120px));
+  width: 390px;
+  height: min(600px, calc(100vh - 124px));
   display: flex;
   flex-direction: column;
   background: var(--panel);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   overflow: hidden;
-  animation: hermes-masuk 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: hermes-masuk 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@keyframes hermes-masuk { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@keyframes hermes-masuk { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+
+/* kepala */
 .hermes-kepala {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 12px 12px 12px 16px;
+  gap: 10px;
+  padding: 12px 10px 12px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--panel-2);
+  background:
+    linear-gradient(180deg, rgba(79, 140, 255, 0.08), transparent),
+    var(--panel-2);
 }
-.hermes-kepala > div { flex: 1; min-width: 0; }
-.hermes-nama { font-weight: 700; font-size: 14.5px; }
-.hermes-sub { font-size: 12px; color: var(--muted); }
+.hermes-avatar, .hermes-kosong-avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--chat-grad);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.hermes-avatar { width: 36px; height: 36px; font-size: 15px; box-shadow: 0 4px 12px var(--chat-glow); }
+.hermes-avatar.kerja { animation: hermes-denyut 1.4s ease-in-out infinite; }
+@keyframes hermes-denyut { 50% { box-shadow: 0 0 0 6px rgba(122, 92, 255, 0.18); } }
+.hermes-identitas { flex: 1; min-width: 0; }
+.hermes-nama { font-weight: 700; font-size: 14.5px; line-height: 1.25; }
+.hermes-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hermes-status-titik { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--pos); }
+.hermes-status-titik.kerja { background: var(--warn); animation: pulse 1s infinite; }
 .hermes-ikon {
+  flex: none;
   background: none;
   border: 1px solid transparent;
   color: var(--muted);
-  border-radius: var(--radius-sm);
-  padding: 6px;
+  border-radius: 10px;
+  padding: 7px;
   line-height: 0;
   cursor: pointer;
+  transition: color 0.15s, background 0.15s;
 }
-.hermes-ikon:hover { color: var(--text); border-color: var(--border-2); }
+.hermes-ikon:hover { color: var(--text); background: var(--bg-2); }
+
+/* isi percakapan */
 .hermes-isi {
   flex: 1;
   overflow-y: auto;
-  padding: 14px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
 }
-.hermes-kosong { color: var(--muted); font-size: 13.5px; text-align: center; margin: auto 10px; }
-.hermes-gelembung {
-  max-width: 88%;
-  padding: 9px 12px;
+.hermes-memuat { color: var(--muted); font-size: 13px; text-align: center; margin: auto; }
+.hermes-kosong { margin: auto 6px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hermes-kosong-avatar { width: 54px; height: 54px; font-size: 22px; margin-bottom: 4px; box-shadow: 0 8px 22px var(--chat-glow); }
+.hermes-kosong-judul { font-weight: 700; font-size: 16px; }
+.hermes-kosong-teks { color: var(--muted); font-size: 13.5px; max-width: 280px; }
+.hermes-saran { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 12px; }
+.hermes-saran button {
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
   border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.hermes-saran button:hover { border-color: var(--accent); transform: translateX(2px); }
+
+.hermes-gelembung {
+  max-width: 86%;
+  padding: 10px 13px;
+  border-radius: 16px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.hermes-gelembung.saya { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-.hermes-gelembung.dia { align-self: flex-start; background: var(--bg-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-.hermes-gelembung.dia a { color: var(--accent-2); text-decoration: underline; }
-.hermes-status { align-self: flex-start; display: flex; flex-direction: column; gap: 5px; }
+.hermes-gelembung.saya {
+  align-self: flex-end;
+  background: var(--chat-grad);
+  color: #fff;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0 4px 14px rgba(79, 140, 255, 0.22);
+}
+.hermes-gelembung.dia {
+  align-self: flex-start;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 5px;
+}
+.hermes-gelembung.dia a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 2px; }
+.hermes-status { align-self: flex-start; display: flex; flex-direction: column; gap: 6px; }
 .hermes-alat {
   font-size: 12px;
   color: var(--muted);
-  font-family: var(--mono);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
   max-width: 300px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.hermes-alat:not(.selesai) { color: var(--accent-2); }
-.hermes-ketik { display: inline-flex; gap: 4px; padding: 10px 12px; background: var(--bg-2); border-radius: 12px; }
-.hermes-ketik i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: pulse 1s infinite; }
+.hermes-alat:not(.selesai) { color: var(--accent-2); border-color: rgba(79, 140, 255, 0.4); }
+.hermes-ketik { display: inline-flex; gap: 5px; padding: 12px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 5px; width: max-content; }
+.hermes-ketik i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: hermes-lompat 1s infinite ease-in-out; }
 .hermes-ketik i:nth-child(2) { animation-delay: 0.15s; }
 .hermes-ketik i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes hermes-lompat { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
 .hermes-galat {
   font-size: 13px;
   color: var(--neg);
   border: 1px solid rgba(242, 104, 96, 0.4);
   background: rgba(242, 104, 96, 0.08);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   padding: 8px 10px;
 }
-.hermes-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); }
-.hermes-form textarea {
+
+/* riwayat thread */
+.hermes-riwayat {
   flex: 1;
-  resize: none;
-  max-height: 120px;
-  background: var(--bg-2);
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.hermes-riwayat-kosong { color: var(--muted); font-size: 13.5px; text-align: center; margin: auto; }
+.hermes-thread { display: flex; align-items: center; border-radius: 12px; border: 1px solid transparent; }
+.hermes-thread:hover { background: var(--bg-2); }
+.hermes-thread.aktif { background: var(--bg-2); border-color: rgba(79, 140, 255, 0.45); }
+.hermes-thread-buka {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  font: inherit;
   color: var(--text);
+  background: none;
+  border: 0;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.hermes-thread-judul { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hermes-thread-waktu { font-size: 11.5px; color: var(--muted); }
+.hermes-thread-hapus {
+  flex: none;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  padding: 10px;
+  border-radius: 10px;
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.hermes-thread:hover .hermes-thread-hapus { opacity: 1; }
+.hermes-thread-hapus:hover { color: var(--neg); }
+
+/* kolom ketik: satu kapsul dengan tombol kirim di dalamnya */
+.hermes-form { padding: 10px 12px 8px; border-top: 1px solid var(--border); background: var(--panel); }
+.hermes-komposer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 5px 5px 5px 16px;
+  background: var(--bg-2);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 9px 11px;
+  border-radius: 24px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.hermes-komposer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.18); }
+.hermes-komposer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  overflow-y: hidden;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  outline: none;
+  padding: 8px 0;
   font: inherit;
   font-size: 14px;
+  line-height: 1.45;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
 }
-.hermes-form textarea:focus { outline: none; border-color: var(--accent); }
+.hermes-komposer textarea::placeholder { color: var(--muted); }
+.hermes-komposer textarea::-webkit-scrollbar { width: 6px; }
+.hermes-komposer textarea::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; }
 .hermes-kirim {
-  width: 40px;
+  flex: none;
+  width: 36px;
+  height: 36px;
   border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
+  border-radius: 50%;
+  background: var(--chat-grad);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 4px 12px var(--chat-glow);
+  transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
-.hermes-kirim:disabled { opacity: 0.45; cursor: default; }
+.hermes-kirim:not(:disabled):hover { transform: scale(1.06); }
+.hermes-kirim:disabled { background: var(--border-2); color: var(--muted); box-shadow: none; cursor: default; }
+.hermes-kirim.henti { background: var(--neg); box-shadow: 0 4px 12px rgba(242, 104, 96, 0.35); }
+.hermes-petunjuk { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; opacity: 0.8; }
+
 /* HP: chat jadi layar penuh ala aplikasi chat; dvh mengikuti address bar &
    keyboard, safe-area menjaga notch / home bar iPhone. */
 @media (max-width: 640px) {
@@ -1821,11 +1968,15 @@ body {
     animation-name: hermes-masuk-hp;
   }
   @keyframes hermes-masuk-hp { from { opacity: 0; transform: translateY(24px); } }
-  .hermes-kepala { padding: calc(10px + env(safe-area-inset-top)) 8px 10px 16px; }
-  .hermes-ikon { padding: 11px; }
+  .hermes-kepala { padding: calc(10px + env(safe-area-inset-top)) 6px 10px 14px; gap: 8px; }
+  .hermes-ikon { padding: 10px; }
   .hermes-isi { padding: 14px 12px; overscroll-behavior: contain; }
-  .hermes-gelembung { max-width: 92%; font-size: 15px; }
-  .hermes-form { padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); }
-  .hermes-form textarea { font-size: 16px; } /* < 16px memicu zoom otomatis di iOS */
-  .hermes-kirim { width: 44px; }
+  .hermes-gelembung { max-width: 90%; font-size: 15px; }
+  .hermes-form { padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); }
+  .hermes-komposer textarea { font-size: 16px; } /* < 16px memicu zoom otomatis di iOS */
+  .hermes-kirim { width: 40px; height: 40px; }
+}
+/* keyboard sentuh: kirim lewat tombol, petunjuk Enter tidak relevan */
+@media (max-width: 640px), (pointer: coarse) {
+  .hermes-petunjuk { display: none; }
 }

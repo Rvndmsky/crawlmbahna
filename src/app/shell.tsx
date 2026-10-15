@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "./theme-toggle";
-import HermesChat from "./hermes-chat";
 
 // Kerangka tetap seluruh aplikasi: sidebar kiri untuk perpindahan halaman,
 // bilah atas hanya untuk identitas pengguna, ganti tema, dan keluar.
@@ -104,8 +103,6 @@ export default function Shell({
           {children}
         </main>
       </div>
-
-      <HermesChat />
     </div>
   );
 }
