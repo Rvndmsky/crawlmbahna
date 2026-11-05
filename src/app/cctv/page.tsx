@@ -14,7 +14,7 @@ const KOTA = [
 ];
 
 const PER_PAGE = 9;
-const MAX_PAGES_BANDUNG = 9;
+const PAGE_WINDOW = 9;
 
 const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => ({
   id: c.id, name: c.name, embed: c.stream, type: "hls" as const, badge: c.dinas,
@@ -76,7 +76,6 @@ function getCams(kota: string, page: number, search: string): Data {
     const q = search.toLowerCase();
     list = list.filter((c) => c.name.toLowerCase().includes(q) || (c.badge || "").toLowerCase().includes(q));
   }
-  if (kota === "bandung") list = list.slice(0, PER_PAGE * MAX_PAGES_BANDUNG);
   const total = list.length;
   const pages = Math.ceil(total / PER_PAGE) || 1;
   const start = (page - 1) * PER_PAGE;
@@ -91,6 +90,7 @@ export default function CctvPage() {
   const loading = false;
   const error: string | null = null;
   const data = getCams(kota, page, query);
+  const winStart = Math.floor((page - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
 
   function gantiKota(id: string) {
     if (id === kota) return;
@@ -197,10 +197,14 @@ export default function CctvPage() {
 
             {data.pages > 1 && (
               <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 20, flexWrap: "wrap" }}>
-                {Array.from({ length: data.pages }, (_, i) => i + 1).map((p) => (
+                <button className="fchip" disabled={page <= 1}
+                  onClick={() => setPage(page - 1)} style={{ minWidth: 36 }}>« Prev</button>
+                {Array.from({ length: Math.min(PAGE_WINDOW, data.pages - winStart + 1) }, (_, i) => winStart + i).map((p) => (
                   <button key={p} className={`fchip ${page === p ? "active" : ""}`}
                     onClick={() => setPage(p)} style={{ minWidth: 36 }}>{p}</button>
                 ))}
+                <button className="fchip" disabled={page >= data.pages}
+                  onClick={() => setPage(page + 1)} style={{ minWidth: 36 }}>Next »</button>
               </div>
             )}
           </>
