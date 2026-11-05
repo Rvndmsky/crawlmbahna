@@ -24,7 +24,6 @@ const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => ({
   name: c.name,
   embed: String(c.stream).replace(/^https:\/+pelindung\.bandung\.go\.id(:3443)?/, BANDUNG_PROXY),
   type: "hls" as const,
-  badge: c.dinas,
 }));
 
 const JAKARTA_CAMS: Cam[] = jakartaRaw.map((c: any) => ({
