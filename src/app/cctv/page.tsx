@@ -23,8 +23,9 @@ function HlsPlayer({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
+    const el = ref.current;
+    if (!el) return;
+    const video: HTMLVideoElement = el;
     let hls: any = null;
 
     function init() {

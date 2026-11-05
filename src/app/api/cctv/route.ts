@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/auth";
+import { validateToken, COOKIE } from "@/lib/auth";
 
 const PER_PAGE = 9; // Bandung. Jakarta fixed 8 from upstream.
 
@@ -57,8 +57,7 @@ async function fetchBandung(page: number, search: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const sess = await verifySession(req);
-  if (!sess) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!validateToken(req.cookies.get(COOKIE)?.value)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const kota = req.nextUrl.searchParams.get("kota") || "jakarta";
   const page = Math.max(1, Number(req.nextUrl.searchParams.get("page") || "1") || 1);
