@@ -16,8 +16,15 @@ const KOTA = [
 const PER_PAGE = 9;
 const PAGE_WINDOW = 9;
 
+// Server stream Pelindung hanya izinkan CORS dari domainnya sendiri; lewat proxy Caddy di VPS.
+const BANDUNG_PROXY = process.env.NEXT_PUBLIC_CCTV_PROXY || "https://cctv.139-190-102-88.sslip.io";
+
 const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => ({
-  id: c.id, name: c.name, embed: c.stream, type: "hls" as const, badge: c.dinas,
+  id: c.id,
+  name: c.name,
+  embed: String(c.stream).replace(/^https:\/+pelindung\.bandung\.go\.id(:3443)?/, BANDUNG_PROXY),
+  type: "hls" as const,
+  badge: c.dinas,
 }));
 
 const JAKARTA_CAMS: Cam[] = jakartaRaw.map((c: any) => ({
