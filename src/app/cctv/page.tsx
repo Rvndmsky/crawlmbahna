@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import Shell from "../shell";
 import bandungRaw from "./bandung-data.json";
+import jakartaRaw from "./jakarta-data.json";
 
 type Cam = { id: string; name: string; embed: string; type: "iframe" | "hls"; badge?: string };
 type Data = { cameras: Cam[]; total: number; page: number; pages: number };
@@ -18,6 +18,10 @@ const MAX_PAGES_BANDUNG = 9;
 
 const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => ({
   id: c.id, name: c.name, embed: c.stream, type: "hls" as const, badge: c.dinas,
+}));
+
+const JAKARTA_CAMS: Cam[] = jakartaRaw.map((c: any) => ({
+  id: c.id, name: c.name, embed: c.embed, type: "iframe" as const, badge: c.badge,
 }));
 
 function HlsPlayer({ src }: { src: string }) {
@@ -66,13 +70,13 @@ function toggleFullscreen(el: HTMLElement) {
   else body.requestFullscreen().catch(() => {});
 }
 
-function getBandung(page: number, search: string): Data {
-  let list = BANDUNG_CAMS;
+function getCams(kota: string, page: number, search: string): Data {
+  let list = kota === "bandung" ? BANDUNG_CAMS : JAKARTA_CAMS;
   if (search) {
     const q = search.toLowerCase();
     list = list.filter((c) => c.name.toLowerCase().includes(q) || (c.badge || "").toLowerCase().includes(q));
   }
-  list = list.slice(0, PER_PAGE * MAX_PAGES_BANDUNG);
+  if (kota === "bandung") list = list.slice(0, PER_PAGE * MAX_PAGES_BANDUNG);
   const total = list.length;
   const pages = Math.ceil(total / PER_PAGE) || 1;
   const start = (page - 1) * PER_PAGE;
@@ -80,48 +84,23 @@ function getBandung(page: number, search: string): Data {
 }
 
 export default function CctvPage() {
-  const router = useRouter();
   const [kota, setKota] = useState("jakarta");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [data, setData] = useState<Data | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (k: string, p: number, q: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (k === "bandung") {
-        setData(getBandung(p, q));
-        setLoading(false);
-        return;
-      }
-      const params = new URLSearchParams({ kota: "jakarta", page: String(p) });
-      if (q) params.set("q", q);
-      const res = await fetch(`/api/cctv?${params}`);
-      if (res.status === 401) { router.replace("/login"); return; }
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "gagal memuat");
-      setData(json);
-    } catch (e: any) {
-      setError(e?.message || "gagal memuat");
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
-  useEffect(() => { load(kota, page, search); }, [kota, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [query, setQuery] = useState("");
+  const loading = false;
+  const error: string | null = null;
+  const data = getCams(kota, page, query);
 
   function gantiKota(id: string) {
     if (id === kota) return;
     setKota(id);
     setPage(1);
     setSearch("");
-    setData(null);
+    setQuery("");
   }
 
-  function cari() { setPage(1); load(kota, 1, search); }
+  function cari() { setPage(1); setQuery(search); }
 
   const kotaLabel = KOTA.find((k) => k.id === kota)?.label || kota;
 
