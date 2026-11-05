@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Shell from "../shell";
+import bandungRaw from "./bandung-data.json";
 
 type Cam = { id: string; name: string; embed: string; type: "iframe" | "hls"; badge?: string };
 type Data = { cameras: Cam[]; total: number; page: number; pages: number };
@@ -13,9 +14,11 @@ const KOTA = [
 ];
 
 const PER_PAGE = 9;
-const BANDUNG_API = "https://pelindung.bandung.go.id:8443/api/cek";
 
-// --- HLS Player ---
+const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => ({
+  id: c.id, name: c.name, embed: c.stream, type: "hls" as const, badge: c.dinas,
+}));
+
 function HlsPlayer({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -38,9 +41,8 @@ function HlsPlayer({ src }: { src: string }) {
       }
     }
 
-    if ((window as any).Hls) {
-      init();
-    } else {
+    if ((window as any).Hls) init();
+    else {
       const s = document.createElement("script");
       s.src = "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js";
       s.onload = init;
@@ -50,11 +52,8 @@ function HlsPlayer({ src }: { src: string }) {
   }, [src]);
 
   return (
-    <video
-      ref={ref}
-      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#000" }}
-      autoPlay muted playsInline controls
-    />
+    <video ref={ref} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#000" }}
+      autoPlay muted playsInline controls />
   );
 }
 
@@ -65,19 +64,8 @@ function toggleFullscreen(el: HTMLElement) {
   else body.requestFullscreen().catch(() => {});
 }
 
-// --- Bandung client-side fetch + cache ---
-let bdgCache: Cam[] | null = null;
-
-async function loadBandung(page: number, search: string): Promise<Data> {
-  if (!bdgCache) {
-    const res = await fetch(BANDUNG_API);
-    if (!res.ok) throw new Error("Bandung CCTV API error");
-    const arr: { id: string; cctv_name: string; stream_cctv: string; dinas?: string }[] = await res.json();
-    bdgCache = arr.map((c) => ({
-      id: c.id, name: c.cctv_name, embed: c.stream_cctv, type: "hls" as const, badge: c.dinas,
-    }));
-  }
-  let list = bdgCache;
+function getBandung(page: number, search: string): Data {
+  let list = BANDUNG_CAMS;
   if (search) {
     const q = search.toLowerCase();
     list = list.filter((c) => c.name.toLowerCase().includes(q) || (c.badge || "").toLowerCase().includes(q));
@@ -86,17 +74,6 @@ async function loadBandung(page: number, search: string): Promise<Data> {
   const pages = Math.ceil(total / PER_PAGE) || 1;
   const start = (page - 1) * PER_PAGE;
   return { cameras: list.slice(start, start + PER_PAGE), total, page, pages };
-}
-
-// --- Jakarta via server API proxy ---
-async function loadJakarta(page: number, search: string): Promise<Data> {
-  const params = new URLSearchParams({ kota: "jakarta", page: String(page) });
-  if (search) params.set("q", search);
-  const res = await fetch(`/api/cctv?${params}`);
-  if (res.status === 401) throw new Error("__401__");
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "gagal memuat");
-  return json;
 }
 
 export default function CctvPage() {
@@ -112,10 +89,19 @@ export default function CctvPage() {
     setLoading(true);
     setError(null);
     try {
-      const d = k === "bandung" ? await loadBandung(p, q) : await loadJakarta(p, q);
-      setData(d);
+      if (k === "bandung") {
+        setData(getBandung(p, q));
+        setLoading(false);
+        return;
+      }
+      const params = new URLSearchParams({ kota: "jakarta", page: String(p) });
+      if (q) params.set("q", q);
+      const res = await fetch(`/api/cctv?${params}`);
+      if (res.status === 401) { router.replace("/login"); return; }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "gagal memuat");
+      setData(json);
     } catch (e: any) {
-      if (e?.message === "__401__") { router.replace("/login"); return; }
       setError(e?.message || "gagal memuat");
     } finally {
       setLoading(false);
@@ -139,8 +125,6 @@ export default function CctvPage() {
   return (
     <Shell judul="Pemantauan CCTV">
       <div className="wrap" style={{ maxWidth: 1300 }}>
-
-        {/* Tombol kota */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
           {KOTA.map((k) => (
             <button key={k.id} className={`fchip ${kota === k.id ? "active" : ""}`} onClick={() => gantiKota(k.id)}>
@@ -149,7 +133,6 @@ export default function CctvPage() {
           ))}
         </div>
 
-        {/* Header bar */}
         <div style={{
           display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12,
           padding: "14px 20px", background: "var(--card)", borderRadius: 10,
@@ -180,7 +163,6 @@ export default function CctvPage() {
         {loading && !data && (
           <div className="state"><div className="spinner" /> memuat CCTV {kotaLabel}…</div>
         )}
-
         {error && <div className="error">{error}</div>}
 
         {data && (
@@ -197,11 +179,8 @@ export default function CctvPage() {
                 }}>
                   <div className="cctv-body" style={{ position: "relative", aspectRatio: "16/9", background: "#000" }}>
                     {cam.type === "iframe" ? (
-                      <iframe
-                        src={cam.embed}
-                        style={{ width: "100%", height: "100%", border: 0, display: "block" }}
-                        loading="lazy" allowFullScreen referrerPolicy="no-referrer"
-                      />
+                      <iframe src={cam.embed} style={{ width: "100%", height: "100%", border: 0, display: "block" }}
+                        loading="lazy" allowFullScreen referrerPolicy="no-referrer" />
                     ) : (
                       <HlsPlayer src={cam.embed} />
                     )}
@@ -213,46 +192,32 @@ export default function CctvPage() {
                     <span style={{
                       fontSize: 13, fontWeight: 500, flex: 1,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {cam.name}
-                    </span>
+                    }}>{cam.name}</span>
                     {cam.badge && (
                       <span style={{
                         fontSize: 11, padding: "2px 8px", borderRadius: 4,
                         background: "var(--accent)", color: "#fff", fontWeight: 600, flexShrink: 0,
-                      }}>
-                        {cam.badge}
-                      </span>
+                      }}>{cam.badge}</span>
                     )}
-                    <button
-                      type="button" title="Fullscreen"
+                    <button type="button" title="Fullscreen"
                       onClick={(e) => toggleFullscreen(e.currentTarget)}
                       style={{
                         background: "none", border: "1px solid var(--border)",
                         borderRadius: 6, padding: "4px 8px", cursor: "pointer",
                         color: "var(--fg)", fontSize: 14, flexShrink: 0,
-                      }}
-                    >⛶</button>
+                      }}>⛶</button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {data.cameras.length === 0 && (
-              <div className="state">Tidak ada kamera ditemukan.</div>
-            )}
+            {data.cameras.length === 0 && <div className="state">Tidak ada kamera ditemukan.</div>}
 
             {data.pages > 1 && (
               <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 20, flexWrap: "wrap" }}>
                 {Array.from({ length: data.pages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    className={`fchip ${page === p ? "active" : ""}`}
-                    onClick={() => setPage(p)}
-                    style={{ minWidth: 36 }}
-                  >
-                    {p}
-                  </button>
+                  <button key={p} className={`fchip ${page === p ? "active" : ""}`}
+                    onClick={() => setPage(p)} style={{ minWidth: 36 }}>{p}</button>
                 ))}
               </div>
             )}
