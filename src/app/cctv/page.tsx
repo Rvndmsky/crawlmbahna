@@ -12,10 +12,7 @@ export default function CctvPage() {
     <Shell judul="Pemantauan CCTV">
       <div className="wrap" style={{ maxWidth: 1200 }}>
         <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
-          Pemantauan CCTV publik DKI Jakarta — sumber:{" "}
-          <a href={CCTV_URL} target="_blank" rel="noreferrer">
-            jakcctv.jakarta.go.id
-          </a>
+          Pemantauan CCTV publik DKI Jakarta
         </div>
 
         <div style={{ position: "relative", width: "100%", minHeight: 600 }}>
