@@ -18,9 +18,9 @@ const ICONS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2" />
     </svg>
   ),
-  "/facebook": (
+  "/cctv": (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+      <path d="M2 12l5-3v6l-5-3z" /><rect x="7" y="7" width="10" height="10" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M17 10l3-2M17 14l3 2M12 17v3" />
     </svg>
   ),
   "/infografis": (
@@ -38,7 +38,7 @@ const ICONS: Record<string, React.ReactNode> = {
 const MENU = [
   { href: "/", label: "Dashboard" },
   { href: "/gettarget", label: "Subject Target" },
-  { href: "/facebook", label: "Crawl Social Media" },
+  { href: "/cctv", label: "Pemantauan CCTV" },
   { href: "/infografis", label: "Infografis" },
   { href: "/settings", label: "Settings" },
 ];

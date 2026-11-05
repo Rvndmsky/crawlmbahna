@@ -40,7 +40,7 @@ function envDefaults(): Settings {
     model:
       process.env.AI_MODEL ||
       process.env.ANTHROPIC_MODEL ||
-      (provider === "anthropic" ? "claude-opus-4-8" : "google/gemini-2.0-flash-exp:free"),
+      (provider === "anthropic" ? "claude-opus-4-8" : "nvidia/llama-3.1-nemotron-70b-instruct:free"),
     webSearch: process.env.AI_WEBSEARCH !== "false",
   };
 }
