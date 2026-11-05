@@ -80,7 +80,7 @@ async function runOpenAI(
       Authorization: `Bearer ${s.apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "http://localhost:3000",
-      "X-Title": "mbahna",
+      "X-Title": "duryudana",
     },
     body: JSON.stringify(body),
   });

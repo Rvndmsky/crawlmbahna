@@ -7,13 +7,13 @@ import crypto from "node:crypto";
 // Catatan: karena stateless, "single active session" ketat butuh store (DB/KV).
 // Di sini token berlaku sampai expired (12 jam) atau cookie dihapus (logout).
 
-export const COOKIE = "mbahna_session";
+export const COOKIE = "duryudana_session";
 const TTL_SEC = 12 * 60 * 60;
 
 const EMAIL = process.env.AUTH_EMAIL || "pejaten@mbahrazu.com";
 const PASSWORD = process.env.AUTH_PASSWORD || "pejatenkeren";
 // WAJIB set AUTH_SECRET di production untuk keamanan.
-const SECRET = process.env.AUTH_SECRET || `mbahna::${EMAIL}::${PASSWORD}::v1`;
+const SECRET = process.env.AUTH_SECRET || `duryudana::${EMAIL}::${PASSWORD}::v1`;
 
 function b64url(buf: Buffer): string {
   return buf

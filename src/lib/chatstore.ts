@@ -64,7 +64,7 @@ async function redis(cmd: (string | number)[]): Promise<any> {
 // ---------- berkas JSON (mode lokal) ----------
 type Berkas = Record<string, { meta: ChatThread; messages: ChatPesan[] }>;
 const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), "mbahna-data")
+  ? path.join(os.tmpdir(), "duryudana-data")
   : path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "duryudana-chats.json");
 

@@ -34,7 +34,7 @@ export default function LoginPage() {
     <main className="login-wrap">
       <form className="login-card" onSubmit={submit}>
         <div className="login-brand">
-          mbah<span className="dot">na</span>
+          Duryu<span className="dot">dana</span>
         </div>
         <div className="login-sub">PUSAT PANTAU INTELIJEN · AKSES TERBATAS</div>
 

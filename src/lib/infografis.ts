@@ -685,7 +685,7 @@ export function rakitSvg(spec: InfoSpec, tanggal = new Date(), ilustrasi = ""): 
     )}</text>`,
     `<text x="${M + W - 18}" y="${T - 54}" font-size="13" fill="#c9d4e6" text-anchor="end">Disusun ${esc(
       tgl
-    )} · mbahna</text>`,
+    )} · Duryudana</text>`,
     `<rect x="0" y="${T - 26}" width="${L}" height="26" fill="${warnaKlas}"/>`,
     `<text x="${L / 2}" y="${T - 8}" font-size="12" font-weight="800" fill="#ffffff" ` +
       `letter-spacing="3" text-anchor="middle">${esc(spec.klasifikasi)}</text>`

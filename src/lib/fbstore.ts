@@ -38,7 +38,7 @@ export type FbEntry = {
 };
 
 const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), "mbahna-data")
+  ? path.join(os.tmpdir(), "duryudana-data")
   : path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "fb-posts.json");
 

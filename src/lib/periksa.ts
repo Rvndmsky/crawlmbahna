@@ -85,8 +85,8 @@ export async function periksaInfografis(
       headers: {
         Authorization: `Bearer ${s.apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://pejatenkeren.vercel.app",
-        "X-Title": "mbahna",
+        "HTTP-Referer": "https://duryudana.online",
+        "X-Title": "duryudana",
       },
       body: JSON.stringify({
         model,

@@ -7,9 +7,37 @@ import ThemeToggle from "./theme-toggle";
 // Kerangka tetap seluruh aplikasi: sidebar kiri untuk perpindahan halaman,
 // bilah atas hanya untuk identitas pengguna, ganti tema, dan keluar.
 
+const ICONS: Record<string, React.ReactNode> = {
+  "/": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  ),
+  "/gettarget": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2" />
+    </svg>
+  ),
+  "/facebook": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+    </svg>
+  ),
+  "/infografis": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+    </svg>
+  ),
+  "/settings": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+};
+
 const MENU = [
   { href: "/", label: "Dashboard" },
-  { href: "/gettargetmbahna", label: "Subject Target" },
+  { href: "/gettarget", label: "Subject Target" },
   { href: "/facebook", label: "Crawl Social Media" },
   { href: "/infografis", label: "Infografis" },
   { href: "/settings", label: "Settings" },
@@ -51,7 +79,7 @@ export default function Shell({
     <div className="shell">
       <aside className={`sidebar ${buka ? "buka" : ""}`}>
         <div className="sidebar-brand" onClick={() => router.push("/")}>
-          mbah<span className="dot">na</span>
+          Duryu<span className="dot">dana</span>
         </div>
         <nav className="sidebar-menu">
           {MENU.map((m) => (
@@ -60,6 +88,7 @@ export default function Shell({
               className={`sidebar-item ${aktif(m.href) ? "aktif" : ""}`}
               onClick={() => router.push(m.href)}
             >
+              <span className="sidebar-ikon">{ICONS[m.href]}</span>
               {m.label}
             </button>
           ))}

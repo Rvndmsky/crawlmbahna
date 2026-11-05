@@ -257,7 +257,7 @@ export default function InfografisPage() {
         if (!b) return;
         const a = document.createElement("a");
         a.href = URL.createObjectURL(b);
-        a.download = `infografis-${aktif?.id || "mbahna"}.png`;
+        a.download = `infografis-${aktif?.id || "duryudana"}.png`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       }, "image/png");
@@ -271,7 +271,7 @@ export default function InfografisPage() {
     const b = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(b);
-    a.download = `infografis-${aktif?.id || "mbahna"}.svg`;
+    a.download = `infografis-${aktif?.id || "duryudana"}.svg`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }

@@ -3,7 +3,7 @@ import "./globals.css";
 import HermesChat from "./hermes-chat";
 
 export const metadata: Metadata = {
-  title: "MBAHNA - Website Untuk Keamanan NKRI",
+  title: "Duryudana - Website Untuk Keamanan NKRI",
   description: "Monitoring intelijen OSINT — politik & pemerintahan Indonesia",
 };
 
@@ -15,6 +15,9 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,

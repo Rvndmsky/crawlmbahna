@@ -239,7 +239,7 @@ function TargetView() {
   }, [nameParam]);
 
   function openTarget(name: string) {
-    router.push(`/gettargetmbahna?name=${encodeURIComponent(name)}`);
+    router.push(`/gettarget?name=${encodeURIComponent(name)}`);
   }
 
   function openDossier(p: SocialPost) {

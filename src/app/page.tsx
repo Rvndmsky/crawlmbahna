@@ -291,7 +291,7 @@ export default function IntelDashboard() {
         {/* Search bar utama (di body, gaya Google) */}
         <div className="hero">
           <div className="hero-brand">
-            mbah<span className="dot">na</span>
+            Duryu<span className="dot">dana</span>
           </div>
           <form
             className="big-search"

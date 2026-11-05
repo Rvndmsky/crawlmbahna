@@ -12,7 +12,7 @@ import os from "node:os";
 // 2. Berkas data/cache.json saat aplikasi jalan lokal.
 
 const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), "mbahna-data")
+  ? path.join(os.tmpdir(), "duryudana-data")
   : path.join(process.cwd(), "data");
 const CACHE_FILE = path.join(DATA_DIR, "cache.json");
 

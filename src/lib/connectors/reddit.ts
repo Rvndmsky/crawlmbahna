@@ -4,7 +4,7 @@ import type { NewsItem } from "../types";
 // Bikin app "script" di https://www.reddit.com/prefs/apps -> client_id + secret.
 // Skip otomatis kalau REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET belum di-set.
 
-const UA = "mbahna-osint/0.1 (by /u/anonymous)";
+const UA = "duryudana-osint/0.1 (by /u/anonymous)";
 let cachedToken: { token: string; exp: number } | null = null;
 
 async function getToken(): Promise<string | null> {

@@ -18,7 +18,7 @@ export type InfoItem = {
 };
 
 const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), "mbahna-data")
+  ? path.join(os.tmpdir(), "duryudana-data")
   : path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "infografis.json");
 const SVG_DIR = path.join(DATA_DIR, "infografis");

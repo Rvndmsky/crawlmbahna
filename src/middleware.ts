@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Presence-check ringan di edge (tanpa fs). Validasi token sebenarnya
 // dilakukan di tiap API route (lib/auth.validateToken) -> tidak bisa di-bypass.
-const COOKIE = "mbahna_session";
+const COOKIE = "duryudana_session";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

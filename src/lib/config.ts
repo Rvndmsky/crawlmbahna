@@ -16,7 +16,7 @@ export type Settings = {
 };
 
 const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), "mbahna-data")
+  ? path.join(os.tmpdir(), "duryudana-data")
   : path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "settings.json");
 

@@ -457,7 +457,7 @@ async function wikiPhoto(
         `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
           name
         )}`,
-        { headers: { "User-Agent": "mbahna-osint/1.0" } }
+        { headers: { "User-Agent": "duryudana-osint/1.0" } }
       );
       if (!res.ok) continue;
       const json: any = await res.json();
