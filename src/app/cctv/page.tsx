@@ -19,35 +19,32 @@ const PAGE_WINDOW = 9;
 // Server stream Pelindung hanya izinkan CORS dari domainnya sendiri; lewat proxy Caddy di VPS.
 const BANDUNG_PROXY = process.env.NEXT_PUBLIC_CCTV_PROXY || "https://cctv.139-190-102-88.sslip.io";
 
-// "CCTV BRAGA 01" -> { lokasi: "BRAGA", nomor: "01" }, seperti format Jakarta.
-function pecahNamaBandung(nama: string) {
+// "CCTV BRAGA 01" -> "BRAGA"; nomor kamera diganti urutan global.
+function lokasiBandung(nama: string) {
   const s = nama.trim().replace(/^CCTV[\s_-]+/i, "");
   const angka = [...s.matchAll(/(^|[\s_-])(\d{1,3})(?=[\s_-]|$)/g)];
   const last = angka[angka.length - 1];
   let lokasi = s;
-  let nomor = 1;
   if (last && last.index !== undefined) {
-    nomor = Number(last[2]);
     lokasi = s.slice(0, last.index) + s.slice(last.index + last[0].length);
   }
   lokasi = lokasi.replace(/_/g, " ").replace(/\s+-\s*$|^\s*-\s+/g, "").replace(/\s{2,}/g, " ").trim();
-  return { lokasi: (lokasi || s).toUpperCase(), nomor: String(nomor).padStart(2, "0") };
+  return (lokasi || s).toUpperCase();
 }
 
-const BANDUNG_CAMS: Cam[] = bandungRaw.map((c: any) => {
-  const { lokasi, nomor } = pecahNamaBandung(String(c.name));
-  return {
-    id: c.id,
-    name: lokasi,
-    embed: String(c.stream).replace(/^https:\/+pelindung\.bandung\.go\.id(:3443)?/, BANDUNG_PROXY),
-    type: "hls" as const,
-    badge: `CCTV-${nomor}`,
-  };
-});
+const nomorUrut = (cams: Omit<Cam, "badge">[]): Cam[] =>
+  cams.map((c, i) => ({ ...c, badge: `CCTV-${String(i + 1).padStart(2, "0")}` }));
 
-const JAKARTA_CAMS: Cam[] = jakartaRaw.map((c: any) => ({
-  id: c.id, name: c.name, embed: c.embed, type: "iframe" as const, badge: c.badge,
-}));
+const BANDUNG_CAMS: Cam[] = nomorUrut(bandungRaw.map((c: any) => ({
+  id: c.id,
+  name: lokasiBandung(String(c.name)),
+  embed: String(c.stream).replace(/^https:\/+pelindung\.bandung\.go\.id(:3443)?/, BANDUNG_PROXY),
+  type: "hls" as const,
+})));
+
+const JAKARTA_CAMS: Cam[] = nomorUrut(jakartaRaw.map((c: any) => ({
+  id: c.id, name: c.name, embed: c.embed, type: "iframe" as const,
+})));
 
 function HlsPlayer({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null);
