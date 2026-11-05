@@ -38,17 +38,6 @@ export default function CctvPage() {
           />
         </div>
 
-        <div style={{ marginTop: 12, textAlign: "center" }}>
-          <a
-            href={CCTV_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="btn"
-            style={{ display: "inline-block" }}
-          >
-            Buka di tab baru
-          </a>
-        </div>
       </div>
     </Shell>
   );
