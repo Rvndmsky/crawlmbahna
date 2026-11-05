@@ -399,7 +399,6 @@ export default function IntelDashboard() {
                         {t.threat} · level {t.threatLevel}
                       </span>
                       <span className="platform">{t.category}</span>
-                      <span className="heat-num">{t.heat}</span>
                     </div>
                     <div className="title">{t.topic}</div>
                     {t.summary && <div className="summary">{t.summary}</div>}
@@ -457,11 +456,8 @@ export default function IntelDashboard() {
                     {c.provinsi}
                   </div>
                   <div className="prov-headline">{c.headline}</div>
-                  <div className="heatbar">
-                    <div className="heatbar-fill" style={{ width: `${c.heat}%` }} />
-                  </div>
                   <div className="prov-src">
-                    [{c.platform}] {c.source} · {c.heat} · dossier
+                    [{c.platform}] {c.source}
                   </div>
                 </div>
               ))}
@@ -479,12 +475,8 @@ export default function IntelDashboard() {
                       <span className="threat-badge sm">{t.threat}</span>
                     )}
                     <span className={`sent ${t.sentiment}`}>{t.sentiment}</span>
-                    <span className="heat-num">{t.heat}</span>
                   </div>
                   <div className="title">{t.topic}</div>
-                  <div className="heatbar">
-                    <div className="heatbar-fill" style={{ width: `${t.heat}%` }} />
-                  </div>
                   {t.summary && <div className="summary">{t.summary}</div>}
                   <div className="sources">
                     {t.sources.map((s, j) => (
