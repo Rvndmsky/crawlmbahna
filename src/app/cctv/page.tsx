@@ -3,28 +3,49 @@
 import { useState } from "react";
 import Shell from "../shell";
 
-const CCTV_URL = "https://jakcctv.jakarta.go.id/publik";
+const KOTA = [
+  { id: "jakarta", label: "Jakarta", url: "https://jakcctv.jakarta.go.id/publik" },
+  { id: "bandung", label: "Bandung", url: "https://pelindung.bandung.go.id/" },
+];
 
 export default function CctvPage() {
+  const [aktif, setAktif] = useState(KOTA[0].id);
   const [loading, setLoading] = useState(true);
 
+  const kota = KOTA.find((k) => k.id === aktif)!;
+
+  function ganti(id: string) {
+    if (id === aktif) return;
+    setAktif(id);
+    setLoading(true);
+  }
+
   return (
-    <Shell judul="CCTV Jakarta">
+    <Shell judul="Pemantauan CCTV">
       <div className="wrap" style={{ maxWidth: 1200 }}>
-        <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
-          Pemantauan CCTV publik DKI Jakarta
+        <div className="filter-row" style={{ marginBottom: 16, gap: 8, display: "flex", flexWrap: "wrap" }}>
+          {KOTA.map((k) => (
+            <button
+              key={k.id}
+              className={`fchip ${aktif === k.id ? "active" : ""}`}
+              onClick={() => ganti(k.id)}
+            >
+              {k.label}
+            </button>
+          ))}
         </div>
 
         <div style={{ position: "relative", width: "100%", minHeight: 600 }}>
           {loading && (
             <div className="state" style={{ position: "absolute", inset: 0, zIndex: 1 }}>
               <div className="spinner" />
-              memuat CCTV Jakarta…
+              memuat CCTV {kota.label}…
             </div>
           )}
           <iframe
-            src={CCTV_URL}
-            title="Jakarta CCTV Publik"
+            key={aktif}
+            src={kota.url}
+            title={`CCTV Publik ${kota.label}`}
             style={{
               width: "100%",
               height: "calc(100vh - 160px)",
@@ -37,7 +58,6 @@ export default function CctvPage() {
             allow="fullscreen"
           />
         </div>
-
       </div>
     </Shell>
   );
