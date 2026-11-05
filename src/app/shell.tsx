@@ -23,6 +23,11 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M2 12l5-3v6l-5-3z" /><rect x="7" y="7" width="10" height="10" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M17 10l3-2M17 14l3 2M12 17v3" />
     </svg>
   ),
+  "/cctv-bandung": (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12l5-3v6l-5-3z" /><rect x="7" y="7" width="10" height="10" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M17 10l3-2M17 14l3 2M12 17v3" />
+    </svg>
+  ),
   "/infografis": (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
@@ -38,7 +43,8 @@ const ICONS: Record<string, React.ReactNode> = {
 const MENU = [
   { href: "/", label: "Dashboard" },
   { href: "/gettarget", label: "Subject Target" },
-  { href: "/cctv", label: "Pemantauan CCTV" },
+  { href: "/cctv", label: "CCTV Jakarta" },
+  { href: "/cctv-bandung", label: "CCTV Bandung" },
   { href: "/infografis", label: "Infografis" },
   { href: "/settings", label: "Settings" },
 ];

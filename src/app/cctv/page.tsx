@@ -9,7 +9,7 @@ export default function CctvPage() {
   const [loading, setLoading] = useState(true);
 
   return (
-    <Shell judul="Pemantauan CCTV">
+    <Shell judul="CCTV Jakarta">
       <div className="wrap" style={{ maxWidth: 1200 }}>
         <div className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
           Pemantauan CCTV publik DKI Jakarta
